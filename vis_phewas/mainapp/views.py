@@ -91,10 +91,10 @@ def get_allele_data(disease_id):
     edges = []
 
     for allele in alleles:
-        allele_id = f"allele-{allele['allele_string'].replace(' ', '_')}"
+        allele_id = f"allele-{allele['snp'].replace(' ', '_')}"
         nodes.append({
             'id': allele_id,
-            'label': allele['allele_string'],
+            'label': allele['snp'],
             'node_type': 'allele'
         })
         edges.append({
