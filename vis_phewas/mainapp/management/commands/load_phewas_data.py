@@ -26,5 +26,8 @@ class Command(BaseCommand):
                     a1=row[12],
                     a2=row[13],
                     chromosome=row[14],
-                    nchrobs=row[15]
+                    nchrobs=row[15],
+                    gene_class=row[16],
+                    serotype=row[17],
+                    subtype=row[18]
                 )
