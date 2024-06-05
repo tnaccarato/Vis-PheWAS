@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-HLA_PHEWAS_CATALOG_CSV = '../../Data/hla-phewas-catalog.csv'
+HLA_PHEWAS_CATALOG_CSV = '../../Data/hla-phewas-catalog_original.csv'
 
 
 def clean_data() -> None:
