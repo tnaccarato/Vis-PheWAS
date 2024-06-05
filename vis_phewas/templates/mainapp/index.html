@@ -1,14 +1,27 @@
 {% extends "base.html" %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    {% block title %}Home{% endblock %}
-    {% block head %}{% endblock %}
-</head>
-<body>
-{% block content %}
-There are {{ num_entries }} entries in the db.
+{% load static %}
+{% block title %}Index{% endblock %}
+
+{% block head %}
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<style>
+    .node circle {
+        fill: #999;
+    }
+    .node text {
+        font: 10px sans-serif;
+    }
+    .link {
+        fill: none;
+        stroke: #555;
+        stroke-opacity: 0.4;
+    }
+</style>
 {% endblock %}
-</body>
-</html>
+
+{% block content %}
+    <div id="trees-container"></div>
+
+<script type="text/javascript" src="{% static 'mainapp/js/mindmap.js' %}"></script>
+
+{% endblock %}
