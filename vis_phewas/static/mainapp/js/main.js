@@ -11,11 +11,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial data (categories only)
     fetchGraphData();
 
-    function fetchGraphData(query = {}) {
-        fetch('/api/graph-data/?' + new URLSearchParams(query))
+    function fetchGraphData(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        const url = '/api/graph-data/' + (query ? '?' + query : '');
+        console.log('Fetching data from:', url);
+
+        fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (query.type) {
+            console.log('Data received:', data);
+            if (params.type) {
                 updateGraph(data.nodes, data.edges);
             } else {
                 initializeGraph(data.nodes, data.edges);
@@ -25,10 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeGraph(nodes, edges) {
+        console.log('Initializing graph with nodes and edges');
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label,
+                    node_type: node.node_type,  // Ensure the type is set
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 10,
@@ -47,10 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateGraph(nodes, edges) {
+        console.log('Updating graph with new nodes and edges');
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label,
+                    node_type: node.node_type,  // Ensure the type is set
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 8,
@@ -69,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getNodeColor(node) {
-        switch (node.type) {
+        switch (node.node_type) {
             case 'category':
                 return '#FF5733';
             case 'disease':
@@ -93,10 +102,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sigmaInstance.on('clickNode', ({node}) => {
         const nodeData = graph.getNodeAttributes(node);
+        console.log('Node clicked:', nodeData); // Debugging log
 
-        if (nodeData.type === 'category') {
+        if (nodeData.node_type === 'category') {
+            console.log('Fetching diseases for category:', nodeData.label);
             fetchGraphData({type: 'diseases', category_id: node});
-        } else if (nodeData.type === 'disease') {
+        } else if (nodeData.node_type === 'disease') {
+            console.log('Fetching alleles for disease:', nodeData.label);
             fetchGraphData({type: 'alleles', disease_id: node});
         }
     });
