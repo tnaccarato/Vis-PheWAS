@@ -3,7 +3,7 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
-    .attr("transform", "translate(40,0)");
+    .attr("transform", "translate(100,0)"); // Adjusted for better centering
 
 var treeLayout = d3.tree().size([height - 100, width - 200]);
 
@@ -13,7 +13,8 @@ fetchData('category');
 function fetchData(level, identifier = '') {
     var url = `/get_data/${level}/${identifier}`;
     d3.json(url).then(function(data) {
-        var root = d3.hierarchy({name: "Root", children: data});
+        var rootNode = {name: "Root", children: data}; // Invisible root node
+        var root = d3.hierarchy(rootNode); // Create a hierarchy from the root
         update(root);
     }).catch(function(error) {
         console.error('Error loading or processing data:', error);
@@ -23,29 +24,30 @@ function fetchData(level, identifier = '') {
 function update(source) {
     treeLayout(source);
 
-    // Create the links
+    // Create the links, excluding those from the invisible root
     var links = svg.selectAll(".link")
-        .data(source.links())
+        .data(source.links().filter(link => link.source.depth > 0))
         .enter()
         .append("path")
         .attr("class", "link")
         .attr("d", d3.linkHorizontal()
-            .x(function(d) { return d.y; })
-            .y(function(d) { return d.x; }));
+            .x(d => d.y)
+            .y(d => d.x));
 
-    // Create the node groups
+    // Create the node groups, excluding the invisible root
     var nodes = svg.selectAll(".node")
-        .data(source.descendants())
+        .data(source.descendants().slice(1)) // Slice to skip the invisible root node
         .enter()
         .append("g")
         .attr("class", "node")
-        .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+        .attr("transform", d => `translate(${d.y},${d.x})`);
 
     // Add circles for each node
     nodes.append("circle")
         .attr("r", 4)
         .on("click", function(d) {
-            if (d.data.level) {
+            // Trigger further data fetching based on node's level and id
+            if (d.data.level && d.data.id) {
                 fetchData(d.data.level, d.data.id);
             }
         });
@@ -53,10 +55,11 @@ function update(source) {
     // Add labels for each node
     nodes.append("text")
         .attr("dy", "0.35em")
-        .attr("x", function(d) { return d.children ? -8 : 8; })
-        .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
-        .text(function(d) { return d.data.name; });
+        .attr("x", d => d.children ? -8 : 8)
+        .style("text-anchor", d => d.children ? "end" : "start")
+        .text(d => d.data.name);
 
+    // Remove old nodes and links
     svg.selectAll(".node").exit().remove();
     svg.selectAll(".link").exit().remove();
 }
