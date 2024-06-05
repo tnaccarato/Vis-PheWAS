@@ -1,0 +1,25 @@
+/* Ensure the containers take up full height of the viewport */
+    html, body, .container-fluid {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .row {
+        height: 100%;
+    }
+    .col-md-6 {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #sigma-container {
+        background-color: lightblue;
+        width: 100%;
+        height: 100%;
+    }
+    .blank-container {
+        background-color: lightgray;
+        width: 100%;
+        height: 100%;
+    }
