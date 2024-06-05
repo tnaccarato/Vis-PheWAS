@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Loads data from CSV into the HlaPheWasCatalog model'
 
     def handle(self, *args, **kwargs):
-        with open('../Data/hla-phewas-catalog.csv', 'r', encoding='utf-8') as file:
+        with open('../Data/hla-phewas-catalog-cleaned.csv', 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             next(reader)  # Skip the header row
             for row in reader:
