@@ -26,12 +26,12 @@ class HlaPheWasCatalog(models.Model):
     serotype: The serotype.
     subtype: The subtype.
     """
+
     class Meta:
         db_table = 'hla_phewas_catalog'
         verbose_name = 'HLA PheWAS Catalog'
         verbose_name_plural = 'HLA PheWAS Catalog'
 
-    snp = models.CharField(max_length=100)
     phewas_code = models.FloatField()
     phewas_string = models.CharField(max_length=255)
     cases = models.IntegerField()
@@ -52,4 +52,5 @@ class HlaPheWasCatalog(models.Model):
     subtype = models.CharField(max_length=10)
 
     def __str__(self):
-        return self.snp
+        """Return a string representation of the model."""
+        return f"HLA_{self.gene_name}_{self.serotype}_{self.subtype}"
