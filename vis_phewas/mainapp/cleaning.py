@@ -13,9 +13,9 @@ def clean_data() -> None:
     # Load the data
     data = pd.read_csv('%s' % HLA_PHEWAS_CATALOG_CSV)
 
-    impute_missing_categories(data)
+    data = impute_missing_categories(data)
 
-    add_data_cols(data)
+    data = add_data_cols(data)
 
     # Save the cleaned data to a csv file
     data.to_csv(HLA_PHEWAS_CATALOG_CSV, index=False)
@@ -23,7 +23,7 @@ def clean_data() -> None:
     print('Changes saved successfully')
 
 
-def impute_missing_categories(data) -> None:
+def impute_missing_categories(data) -> pd.DataFrame:
     """
     This function imputes missing values in the category_string column with 'infectious diseases'
     :param data:
@@ -33,9 +33,10 @@ def impute_missing_categories(data) -> None:
     data['category_string'] = data['category_string'].fillna('infectious diseases')
     # Print a statement to indicate the completion of the cleaning process
     print('Missing values imputed successfully')
+    return data
 
 
-def add_data_cols(data) -> None:
+def add_data_cols(data) -> pd.DataFrame:
     """
     This function adds a new column to the data to indicate the class based on the gene name and extracts the serotype
     and subtype from the snp column
@@ -52,11 +53,12 @@ def add_data_cols(data) -> None:
     # Extract the serotype and subtype from the snp column
     data[['name', 'serotype', 'subtype']] = data['snp'].str.extract(pattern)
     # Drop the snp column and redundant name column
-    cleaned_data = data.drop(['snp', 'name'], axis=1)
+    data = data.drop(['snp', 'name'], axis=1)
     # Fill missing values in subtype column with '00' as an indicator of no deeper specificity
-    cleaned_data['subtype'] = cleaned_data['subtype'].fillna('00')
+    data['subtype'] = data['subtype'].fillna('00')
     # Print a statement to indicate the completion of the cleaning process
     print('Serotype and subtype extracted successfully')
+    return data
 
 
 clean_data()
