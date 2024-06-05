@@ -45,7 +45,6 @@ def add_data_cols(data) -> pd.DataFrame:
     """
     # Add a new column to the data to indicate the class based on the gene name
     data['gene_class'] = np.where(data['gene_name'].isin(['A', 'B', 'C']), 1, 2)
-    data.to_csv(HLA_PHEWAS_CATALOG_CSV, index=False)
     # Print a statement to indicate the completion of the cleaning process
     print('Gene class added successfully')
     # Defines a regex pattern to extract the serotype and subtype from the snp column
