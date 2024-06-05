@@ -1,5 +1,6 @@
-from django.shortcuts import render
 from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 from .models import HlaPheWasCatalog
 
 
@@ -7,37 +8,107 @@ def index(request):
     """
     View function for the home page of the site.
     """
-    num_entries = HlaPheWasCatalog.objects.count()  # Count of all entries
-    context = {
-        'num_entries': num_entries,
-    }
-    return render(request, 'mainapp/index.html', context)
+    return render(request, 'mainapp/index.html')
 
 
-def mind_map_data(request, level, identifier=None):
-    """
-    Respond to data requests at different levels of the mind map.
-    'level' specifies the data depth: category, disease, or allele.
-    'identifier' specifies the specific category or disease to fetch deeper data.
-    """
-    if level == 'category':
-        # Return all categories
-        categories = HlaPheWasCatalog.objects.values('category_string').distinct()
-        data = [{"name": cat['category_string'], "id": cat['category_string'], "level": "disease"} for cat in
-                categories]
+@require_http_methods(["GET"])
+def graph_data(request):
+    """Get the data for the graph."""
+    # Get the data type from the request
+    data_type = request.GET.get('type', 'initial')
 
-    elif level == 'disease' and identifier:
-        # Return all diseases for a given category
-        diseases = HlaPheWasCatalog.objects.filter(category_string=identifier).values('phewas_string').distinct()
-        data = [{"name": dis['phewas_string'], "id": dis['phewas_string'], "level": "allele"} for dis in diseases]
-
-    elif level == 'allele' and identifier:
-        # Return top 5 alleles for a given disease
-        alleles = HlaPheWasCatalog.objects.filter(phewas_string=identifier).order_by('-odds_ratio')[:5]
-        data = [{"name": allele.snp, "value": allele.odds_ratio} for allele in alleles]
-
+    # Get the data based on the data type
+    if data_type == 'initial':
+        nodes, edges = get_initial_data()
+    elif data_type == 'diseases':
+        category_id = request.GET.get('category_id')
+        nodes, edges = get_disease_data(category_id)
+    elif data_type == 'alleles':
+        disease_id = request.GET.get('disease_id')
+        nodes, edges = get_allele_data(disease_id)
+    # If the data type is invalid, return an error
     else:
-        data = []
+        return JsonResponse({'error': 'Invalid request'}, status=400)
 
-    return JsonResponse(data, safe=False)  # safe=False is necessary to allow top-level arrays to be serialized
+    # Return the nodes and edges as JSON
+    return JsonResponse({'nodes': nodes, 'edges': edges})
 
+
+def get_initial_data():
+    """Helper function to get initial data for the graph."""
+    # Get all unique disease categories
+    categories = HlaPheWasCatalog.objects.values('category_string').distinct()
+    # Initialize the nodes and edges lists
+    nodes = []
+    edges = []
+
+    # Iterate over the categories and create nodes
+    for category in categories:
+        # Append the category node
+        category_id = f"cat-{category['category_string'].replace(' ', '_')}"
+        # Append the category node
+        nodes.append({
+            'id': category_id,
+            'label': category['category_string'],
+            'type': 'category'  # We retain the type here for coloring purposes
+        })
+
+    # Return the nodes and edges
+    return nodes, edges
+
+
+def get_disease_data(category_id):
+    """Helper function to get disease data for a given category."""
+    # Extract the category string from the category ID
+    category_string = category_id.replace('cat-', '').replace('_', ' ')
+    # Get all diseases for the given category
+    diseases = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
+    # Initialize the nodes and edges lists
+    nodes = []
+    edges = []
+
+    # Iterate over the diseases and create nodes and edges
+    for disease in diseases:
+        disease_id = f"disease-{disease['phewas_string'].replace(' ', '_')}"
+        # Append the disease node
+        nodes.append({
+            'id': disease_id,
+            'label': disease['phewas_string'],
+            'type': 'disease'  # We retain the type here for coloring purposes
+        })
+        # Append the edge connecting the category and disease
+        edges.append({
+            'source': category_id,
+            'target': disease_id
+        })
+    # Return the nodes and edges
+    return nodes, edges
+
+
+def get_allele_data(disease_id):
+    """Helper function to get allele data for a given disease."""
+    # Extract the disease string from the disease ID
+    disease_string = disease_id.replace('disease-', '').replace('_', ' ')
+    # Get all alleles for the given disease
+    alleles = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values('allele_string').distinct()
+    # Initialize the nodes and edges lists
+    nodes = []
+    edges = []
+
+    # Iterate over the alleles and create nodes and edges
+    for allele in alleles:
+        # Append the allele node
+        allele_id = f"allele-{allele['allele_string'].replace(' ', '_')}"
+        # Append the allele node
+        nodes.append({
+            'id': allele_id,
+            'label': allele['allele_string'],
+            'type': 'allele'  # We retain the type here for coloring purposes
+        })
+        # Append the edge connecting the disease and allele
+        edges.append({
+            'source': disease_id,
+            'target': allele_id
+        })
+    # Return the nodes and edges
+    return nodes, edges
