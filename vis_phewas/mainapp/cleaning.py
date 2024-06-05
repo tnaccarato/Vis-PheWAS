@@ -17,8 +17,8 @@ def clean_data() -> None:
 
     data = add_data_cols(data)
 
-    # Save the cleaned data to a csv file
-    data.to_csv(HLA_PHEWAS_CATALOG_CSV, index=False)
+    # Save the cleaned data to a new csv file
+    data.to_csv('../../Data/hla-phewas-catalog-cleaned.csv', index=False)
     # Print a statement to indicate the completion of the cleaning process
     print('Changes saved successfully')
 
