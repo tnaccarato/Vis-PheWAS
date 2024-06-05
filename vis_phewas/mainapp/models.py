@@ -54,4 +54,4 @@ class HlaPheWasCatalog(models.Model):
 
     def __str__(self):
         """Return a string representation of the model."""
-        return f"HLA_{self.gene_name}_{self.serotype}{"_" + self.subtype if self.subtype != '00' else ''}"
+        return self.snp
