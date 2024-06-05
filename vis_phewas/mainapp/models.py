@@ -22,6 +22,9 @@ class HlaPheWasCatalog(models.Model):
     a2: The second allele.
     chromosome: The chromosome number.
     nchrobs: The number of chromosome observations.
+    gene_class: The gene class.
+    serotype: The serotype.
+    subtype: The subtype.
     """
     class Meta:
         db_table = 'hla_phewas_catalog'
@@ -44,6 +47,9 @@ class HlaPheWasCatalog(models.Model):
     a2 = models.CharField(max_length=10)
     chromosome = models.IntegerField()
     nchrobs = models.IntegerField()
+    gene_class = models.IntegerField()
+    serotype = models.CharField(max_length=10)
+    subtype = models.CharField(max_length=10)
 
     def __str__(self):
         return self.snp
