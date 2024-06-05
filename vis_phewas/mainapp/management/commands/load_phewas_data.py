@@ -1,11 +1,13 @@
 from django.core.management.base import BaseCommand
 import csv
 from mainapp.models import HlaPheWasCatalog
+from mainapp.cleaning import clean_data
 
 class Command(BaseCommand):
     help = 'Loads data from CSV into the HlaPheWasCatalog model'
 
     def handle(self, *args, **kwargs):
+        clean_data() # Clean the data before loading it into the database
         with open('../Data/hla-phewas-catalog-cleaned.csv', 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             next(reader)  # Skip the header row
