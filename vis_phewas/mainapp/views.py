@@ -18,6 +18,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import HlaPheWasCatalog
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .models import HlaPheWasCatalog
+import urllib.parse
+
 
 @require_http_methods(["GET"])
 def graph_data(request):
@@ -31,7 +36,7 @@ def graph_data(request):
         print(f"Fetching diseases for category_id: {category_id}")
         nodes, edges = get_disease_data(category_id)
     elif data_type == 'alleles':
-        disease_id = request.GET.get('disease_id')
+        disease_id = urllib.parse.unquote(request.GET.get('disease_id'))
         print(f"Fetching alleles for disease_id: {disease_id}")
         nodes, edges = get_allele_data(disease_id)
     else:
@@ -50,7 +55,7 @@ def get_initial_data():
         nodes.append({
             'id': category_id,
             'label': category['category_string'],
-            'node_type': 'category'  # Ensure type is set
+            'node_type': 'category'
         })
 
     print(f"Initial categories: {nodes}")
@@ -68,7 +73,7 @@ def get_disease_data(category_id):
         nodes.append({
             'id': disease_id,
             'label': disease['phewas_string'],
-            'node_type': 'disease'  # Ensure type is set
+            'node_type': 'disease'
         })
         edges.append({
             'source': category_id,
@@ -81,7 +86,7 @@ def get_disease_data(category_id):
 
 def get_allele_data(disease_id):
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
-    alleles = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values('allele_string').distinct()
+    alleles = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values('snp').distinct()
     nodes = []
     edges = []
 
@@ -90,7 +95,7 @@ def get_allele_data(disease_id):
         nodes.append({
             'id': allele_id,
             'label': allele['allele_string'],
-            'node_type': 'allele'  # Ensure type is set
+            'node_type': 'allele'
         })
         edges.append({
             'source': disease_id,
