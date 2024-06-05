@@ -13,10 +13,6 @@ def clean_data() -> None:
     # Load the data
     data = pd.read_csv('%s' % HLA_PHEWAS_CATALOG_CSV)
 
-    # Replace / with _ in the category_string and phewas_string columns
-    data['category_string'] = data['category_string'].str.replace('/', '_')
-    data['phewas_string'] = data['phewas_string'].str.replace('/', '_')
-
     data = impute_missing_categories(data)
 
     data = add_data_cols(data)
