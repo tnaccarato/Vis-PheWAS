@@ -32,6 +32,7 @@ class HlaPheWasCatalog(models.Model):
         verbose_name = 'HLA PheWAS Catalog'
         verbose_name_plural = 'HLA PheWAS Catalog'
 
+    snp = models.CharField(max_length=50)
     phewas_code = models.FloatField()
     phewas_string = models.CharField(max_length=255)
     cases = models.IntegerField()

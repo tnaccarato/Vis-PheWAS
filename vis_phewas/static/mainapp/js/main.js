@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label,
-                    node_type: node.node_type,  // Ensure the type is set
+                    node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 10,
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label,
-                    node_type: node.node_type,  // Ensure the type is set
+                    node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 8,
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchGraphData({type: 'diseases', category_id: node});
         } else if (nodeData.node_type === 'disease') {
             console.log('Fetching alleles for disease:', nodeData.label);
-            fetchGraphData({type: 'alleles', disease_id: node});
+            fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node)});
         }
     });
 });

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-HLA_PHEWAS_CATALOG_CSV = '../../Data/hla-phewas-catalog_original.csv'
+HLA_PHEWAS_CATALOG_CSV = '../Data/hla-phewas-catalog_original.csv'
 
 
 def clean_data() -> None:
@@ -22,7 +22,7 @@ def clean_data() -> None:
     data = add_data_cols(data)
 
     # Save the cleaned data to a new csv file
-    data.to_csv('../../Data/hla-phewas-catalog-cleaned.csv', index=False)
+    data.to_csv('../Data/hla-phewas-catalog-cleaned.csv', index=False)
     # Print a statement to indicate the completion of the cleaning process
     print('Changes saved successfully')
 
@@ -55,8 +55,8 @@ def add_data_cols(data) -> pd.DataFrame:
     pattern = r'HLA_([A-Z0-9]+)_(\d{2})(\d{2})?$'
     # Extract the serotype and subtype from the snp column
     data[['name', 'serotype', 'subtype']] = data['snp'].str.extract(pattern)
-    # Drop the snp column and redundant name column
-    data = data.drop(['snp', 'name'], axis=1)
+    # Drop the redundant name column
+    data = data.drop(['name'], axis=1)
     # Fill missing values in subtype column with '00' as an indicator of no deeper specificity
     data['subtype'] = data['subtype'].fillna('00')
     # Print a statement to indicate the completion of the cleaning process
