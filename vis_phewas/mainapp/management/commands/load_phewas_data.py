@@ -8,7 +8,6 @@ class Command(BaseCommand):
     help = 'Loads data from CSV into the HlaPheWasCatalog model'
 
     def handle(self, *args, **kwargs):
-        clean_data()  # Clean the data before loading it into the database
         with open('../Data/hla-phewas-catalog-cleaned.csv', 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             next(reader)  # Skip the header row
@@ -34,3 +33,5 @@ class Command(BaseCommand):
                     serotype=row[17],
                     subtype=row[18]
                 )
+
+        self.stdout.write(self.style.SUCCESS('Data loaded successfully'))
