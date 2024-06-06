@@ -1,0 +1,16 @@
+<div class="toolbar" style="background-color: aliceblue">
+    <div id="filters-container">
+        <div class="filter-group">
+            <label for="field-select">Field:</label>
+            <select id="field-select" onchange="updateFilterInput(this)">
+                <option value="size">Size</option>
+                <option value="color">Color</option>
+                <option value="node_type">Node Type</option>
+            </select>
+            <div id="filter-input-container">
+                <!-- Filter input will be dynamically generated here -->
+            </div>
+            <button onclick="addFilter()">+</button>
+        </div>
+    </div>
+    <
