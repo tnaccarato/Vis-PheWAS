@@ -33,7 +33,7 @@ def graph_data(request):
     """
     # Get the type of data requested
     data_type = request.GET.get('type', 'initial')
-    print(f"Received request with type: {data_type}") # Debug print statement
+    print(f"Received request with type: {data_type}")  # Debug print statement
 
     # If the request is for initial data, fetch the categories
     if data_type == 'initial':
@@ -94,7 +94,7 @@ def get_disease_data(category_id):
     nodes = []
     edges = []
 
-# Iterate over the diseases and add them to the nodes list
+    # Iterate over the diseases and add them to the nodes list
     for disease in diseases:
         disease_id = f"disease-{disease['phewas_string'].replace(' ', '_')}"
         nodes.append({
@@ -143,3 +143,13 @@ def get_allele_data(disease_id):
 
     print(f"Alleles for disease {disease_id}: {nodes}")
     return nodes, edges
+
+
+def get_model_fields():
+    """
+    Helper function to get the model fields for the HlaPheWasCatalog model.
+    :return:
+    """
+    fields = HlaPheWasCatalog._meta.get_fields()
+    field_names = [field.name for field in fields]
+    return field_names
