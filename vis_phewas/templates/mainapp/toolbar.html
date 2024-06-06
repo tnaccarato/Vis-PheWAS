@@ -3,9 +3,9 @@
         <div class="filter-group">
             <label for="field-select">Field:</label>
             <select id="field-select" onchange="updateFilterInput(this)">
-                <option value="size">Size</option>
-                <option value="color">Color</option>
-                <option value="node_type">Node Type</option>
+                {% for field in model_fields %}
+                <option value="{{ field }}">{{ field }}</option>
+                {% endfor %}
             </select>
             <div id="filter-input-container">
                 <!-- Filter input will be dynamically generated here -->
