@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         filterGroup.remove();
 
         adjustSigmaContainerHeight();
+        filterCount--;
     }
 
 
