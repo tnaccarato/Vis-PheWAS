@@ -8,15 +8,17 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sigma container box -->
-            <div class="col-md-6" style="height: 100vh;">
-                <div id="sigma-container"></div>
-            </div>
-            <!-- Blank box for text and other content -->
-            <div class="col-md-6" style="background-color: lightgray; height: 100vh;">
-                <div class="blank-container">Blank Container</div>
+            <div class="col-md-6" style="height: 100vh; display: flex; flex-direction: column;">
+                <div id="sigma-container" style="flex-grow: 1;"></div>
+                {% include 'mainapp/toolbar.html' %}
             </div>
         </div>
+        <!-- Blank box for text and other content -->
+        <div class="col-md-6" style="background-color: lightgray; height: 100vh;">
+            <div class="blank-container">Blank Container</div>
+        </div>
     </div>
+
 
     <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
 {% endblock %}
