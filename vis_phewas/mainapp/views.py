@@ -1,6 +1,9 @@
+import urllib.parse
+
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+
 from .models import HlaPheWasCatalog
 
 
@@ -9,19 +12,6 @@ def index(request):
     View function for the home page of the site.
     """
     return render(request, 'mainapp/index.html')
-
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from .models import HlaPheWasCatalog
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from .models import HlaPheWasCatalog
-import urllib.parse
 
 
 @require_http_methods(["GET"])
