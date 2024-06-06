@@ -7,15 +7,17 @@ from django.views.decorators.http import require_http_methods
 from .models import HlaPheWasCatalog
 
 
-def index(request):
+def index(request) -> render:
     """
     View function for the home page of the site.
+    :param request:
+    :return: render
     """
     return render(request, 'mainapp/index.html')
 
 
 @require_http_methods(["GET"])
-def graph_data(request):
+def graph_data(request) -> JsonResponse:
     """
     View function to return the graph data based on the request type.
     :param request:
@@ -45,7 +47,7 @@ def graph_data(request):
     return JsonResponse({'nodes': nodes, 'edges': edges})
 
 
-def get_initial_data():
+def get_initial_data() -> tuple:
     """
     Helper function to fetch the initial data for the graph.
     :return:
@@ -70,7 +72,7 @@ def get_initial_data():
     return nodes, edges
 
 
-def get_disease_data(category_id):
+def get_disease_data(category_id) -> tuple:
     """
     Helper function to fetch the diseases for a given category.
     :param category_id:
@@ -103,7 +105,7 @@ def get_disease_data(category_id):
     return nodes, edges
 
 
-def get_allele_data(disease_id):
+def get_allele_data(disease_id) -> tuple:
     """
     Helper function to fetch the HLA alleles for a given disease.
     :param disease_id:
@@ -134,12 +136,3 @@ def get_allele_data(disease_id):
     print(f"Alleles for disease {disease_id}: {nodes}")
     return nodes, edges
 
-
-def get_model_fields():
-    """
-    Helper function to get the model fields for the HlaPheWasCatalog model.
-    :return:
-    """
-    fields = HlaPheWasCatalog._meta.get_fields()
-    field_names = [field.name for field in fields]
-    return field_names
