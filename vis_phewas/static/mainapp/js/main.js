@@ -163,6 +163,8 @@ document.addEventListener('DOMContentLoaded', function () {
             input.type = 'text';
             input.placeholder = 'Enter node type (e.g., category)';
             filterInputContainer.appendChild(input);
+
+            adjustSigmaContainerHeight();
         }
     };
 
@@ -179,10 +181,10 @@ document.addEventListener('DOMContentLoaded', function () {
             updateFilterInput(select);
         };
         select.innerHTML = `
-                    <option value="size">Size</option>
-                    <option value="color">Color</option>
-                    <option value="node_type">Node Type</option>
-                `;
+        <option value="size">Size</option>
+        <option value="color">Color</option>
+        <option value="node_type">Node Type</option>
+    `;
         filterGroup.appendChild(select);
 
         const filterInputContainer = document.createElement('div');
@@ -194,8 +196,37 @@ document.addEventListener('DOMContentLoaded', function () {
         plusButton.onclick = addFilter;
         filterGroup.appendChild(plusButton);
 
+        const minusButton = document.createElement('button');
+        minusButton.textContent = '-';
+        minusButton.onclick = function () {
+            removeFilter(minusButton);
+        };
+        filterGroup.appendChild(minusButton);
+
         document.getElementById('filters-container').appendChild(filterGroup);
+
+        // Adjust the width of the Sigma container
+        adjustSigmaContainerHeight();
     };
+
+    // Function to remove a filter
+    window.removeFilter = function (button) {
+        const filterGroup = button.parentNode;
+        filterGroup.remove();
+
+        adjustSigmaContainerHeight();
+    }
+
+
+// Function to adjust the width of the Sigma container
+    function adjustSigmaContainerHeight() {
+        const filtersContainer = document.getElementById('filters-container');
+        const filtersHeight = filtersContainer.offsetHeight;
+
+        container.style.height = `calc(100% - ${filtersHeight}px)`;
+        sigmaInstance.refresh();
+    }
+
 
     window.applyFilters = function () {
         const filterGroups = document.querySelectorAll('.filter-group');

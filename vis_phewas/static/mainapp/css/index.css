@@ -1,24 +1,67 @@
 /* Ensure the containers take up full height of the viewport */
-    html, body, .container-fluid {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    .row {
-        height: 100%;
-    }
-    .col-md-6 {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    #sigma-container {
-        width: 100%;
-        height: 100%;
-    }
-    .blank-container {
-        background-color: lightgray;
-        width: 100%;
-        height: 100%;
-    }
+html, body, .container-fluid {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.row {
+    height: 100%;
+}
+
+.col-md-6 {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sigma-container {
+    width: 100%;
+    height: 100%;
+}
+
+.blank-container {
+    background-color: lightgray;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.toolbar {
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+.filter-group {
+    margin-bottom: 10px;
+}
+
+.filter-group label {
+    margin-right: 10px;
+}
+
+.filter-group select,
+.filter-group input,
+.filter-group button {
+    margin-right: 10px;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#sigma-container {
+    flex-grow: 1;
+    width: 100%;
+}
+
+.toolbar-wrapper {
+    width: 100%;
+}
