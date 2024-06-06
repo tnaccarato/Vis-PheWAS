@@ -146,80 +146,123 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Clear the input container
         filterInputContainer.innerHTML = '';
+        console.log('Selected field:', selectedField); // Debugging log
 
         // Add the appropriate input element based on the selected field
-        if (selectedField === 'size') {
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.min = '1';
-            slider.max = '20';
-            slider.value = '10';
-            filterInputContainer.appendChild(slider);
-        } else if (selectedField === 'color') {
+        if (['snp', 'phewas_code', 'phewas_string', 'category_string', 'serotype', 'subtype'].includes(selectedField)) {
             const input = document.createElement('input');
             input.type = 'text';
-            input.placeholder = 'Enter color (e.g., #FF5733)';
+            input.placeholder = 'Enter value';
             filterInputContainer.appendChild(input);
-        } else if (selectedField === 'node_type') {
+        } else if (['cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'].includes(selectedField)) {
+            const select = document.createElement('select');
+            select.innerHTML = `
+            <option value="=">== (Equal to)</option>
+            <option value=">">\> (Greater than)</option>
+            <option value="<">\< (Less than)</option>
+            <option value=">=">=\>(Greater than or equal to)</option>
+            <option value="<=">=\<(Less than or equal to)</option>
+        `;
+            filterInputContainer.appendChild(select);
             const input = document.createElement('input');
-            input.type = 'text';
-            input.placeholder = 'Enter node type (e.g., category)';
+            input.type = 'float';
+            input.placeholder = 'Enter value';
             filterInputContainer.appendChild(input);
+        } else if (['gene_class', 'gene_name', 'a1', 'a2'].includes(selectedField)) {
+            const select = document.createElement('select');
+            if (selectedField === 'gene_class') {
+                select.innerHTML = `
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            `;
+            } else if (selectedField === 'gene_name') {
+                select.innerHTML = `
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="DPA1">DPA1</option>
+            <option value="DPB1">DPB1</option>
+            <option value="DQA1">DQA1</option>
+            <option value="DQB1">DQB1</option>
+            <option value="DRB1">DRB1</option>
+            `;
+            } else {
+                select.innerHTML = `
+                <option value="A">A</option>
+                <option value="P">P</option>
+                `;
+            }
+            filterInputContainer.appendChild(select);
 
-            adjustSigmaContainerHeight();
         }
+
+
+        adjustSigmaContainerHeight();
     };
 
     window.addFilter = function () {
         if (filterCount >= 8) {
             alert('Maximum of 8 filters allowed');
-            return;
-        }
-        else{
-        const filterGroup = document.createElement('div');
-        filterGroup.className = 'filter-group';
 
-        const label = document.createElement('label');
-        label.textContent = 'Field:';
-        filterGroup.appendChild(label);
+        } else {
+            const filterGroup = document.createElement('div');
+            filterGroup.className = 'filter-group';
 
-        const select = document.createElement('select');
-        select.onchange = function () {
-            updateFilterInput(select);
-        };
-        select.innerHTML = `
-        <option value="size">Size</option>
-        <option value="color">Color</option>
-        <option value="node_type">Node Type</option>
+            const label = document.createElement('label');
+            label.textContent = 'Field:';
+            filterGroup.appendChild(label);
+
+            const select = document.createElement('select');
+            select.onchange = function () {
+                updateFilterInput(select);
+            };
+            select.innerHTML = `
+        <option value="snp">SNP</option>
+                <option value="gene_class">Gene Class</option>
+                <option value="gene_name">HLA Type</option>
+                <option value="serotype">Serotype</option>
+                <option value="subtype">Subtype</option>
+                <option value="phewas_code">Phecode</option>
+                <option value="phewas_string">Phenotype</option>
+                <option value="category_string">Disease Category</option>
+                <option value="cases">Number of Cases</option>
+                <option value="controls">Number of Controls</option>
+                <option value="p">P-Value</option>
+                <option value="odds_ratio">Odds Ratio</option>
+                <option value="l95">95% CI Lower Bound</option>
+                <option value="u95">95% CI Upper Bound</option>
+                <option value="maf">Minor Allele Frequency</option>
+                <option value="a1">Allele 1</option>
+                <option value="a2">Allele 2</option>
     `;
-        filterGroup.appendChild(select);
+            filterGroup.appendChild(select);
 
-        const filterInputContainer = document.createElement('div');
-        filterInputContainer.id = 'filter-input-container';
-        filterGroup.appendChild(filterInputContainer);
+            const filterInputContainer = document.createElement('div');
+            filterInputContainer.id = 'filter-input-container';
+            filterGroup.appendChild(filterInputContainer);
 
-        const plusButton = document.createElement('button');
-        plusButton.textContent = '+';
-        plusButton.onclick = addFilter;
-        filterGroup.appendChild(plusButton);
+            const plusButton = document.createElement('button');
+            plusButton.textContent = '+';
+            plusButton.onclick = addFilter;
+            filterGroup.appendChild(plusButton);
 
-        const minusButton = document.createElement('button');
-        minusButton.textContent = '-';
-        minusButton.onclick = function () {
-            removeFilter(minusButton);
-        };
-        filterGroup.appendChild(minusButton);
+            const minusButton = document.createElement('button');
+            minusButton.textContent = '-';
+            minusButton.onclick = function () {
+                removeFilter(minusButton);
+            };
+            filterGroup.appendChild(minusButton);
 
-        document.getElementById('filters-container').appendChild(filterGroup);
+            document.getElementById('filters-container').appendChild(filterGroup);
 
-        // Adjust the width of the Sigma container
-        adjustSigmaContainerHeight();
+            // Adjust the width of the Sigma container
+            adjustSigmaContainerHeight();
 
-        filterCount++;
+            filterCount++;
         }
     };
 
-    // Function to remove a filter
+// Function to remove a filter
     window.removeFilter = function (button) {
         const filterGroup = button.parentNode;
         filterGroup.remove();
@@ -262,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             filters.forEach(filter => {
                 if (filter.field === 'size') {
-                    visible = visible && (attributes.size == filter.value);
+                    visible = visible && (attributes.size === filter.value);
                 } else if (filter.field === 'color') {
                     visible = visible && (attributes.color === filter.value);
                 } else if (filter.field === 'node_type') {
@@ -275,4 +318,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
         sigmaInstance.refresh();
     };
-});
+})
+;
