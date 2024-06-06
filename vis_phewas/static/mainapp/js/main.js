@@ -2,6 +2,8 @@ import Graph from 'graphology';
 import {Sigma} from 'sigma';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
+let filterCount = 1;
+
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize the Sigma instance
@@ -169,6 +171,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.addFilter = function () {
+        if (filterCount >= 8) {
+            alert('Maximum of 8 filters allowed');
+            return;
+        }
+        else{
         const filterGroup = document.createElement('div');
         filterGroup.className = 'filter-group';
 
@@ -207,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Adjust the width of the Sigma container
         adjustSigmaContainerHeight();
+
+        filterCount++;
+        }
     };
 
     // Function to remove a filter
