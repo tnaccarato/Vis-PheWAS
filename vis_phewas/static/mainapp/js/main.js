@@ -2,7 +2,7 @@ import Graph from 'graphology';
 import {Sigma} from 'sigma';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
-let filterCount = 1;
+let filterCount = 0;
 let filters = [];
 
 // Ensure the DOM is loaded
@@ -270,8 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
         filterGroups.forEach(group => {
             group.remove();
         });
-        filterCount = 1;
-        addFilter();
+        filterCount = 0;
         fetchGraphData();
         updateGraph();
     }
