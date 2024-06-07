@@ -3,7 +3,7 @@ import {Sigma} from 'sigma';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
 let filterCount = 1;
-
+let filters = [];
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -154,87 +154,47 @@ document.addEventListener('DOMContentLoaded', function () {
         container.style.height = `calc(100% - ${filtersHeight}px)`;
         sigmaInstance.refresh();
     }
-
-    // Initialize the Sigma instance
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
-    const sigmaInstance = new Sigma(graph, container);
-    let field_select = document.getElementById('field-select')
-    field_select.value = 'snp'
-    updateFilterInput(field_select)
+    const sigmaInstance = new Sigma(graph, container)
+    fetchGraphData()
 
-    // Load initial data (categories only)
-    fetchGraphData();
-
-    // Fetch graph data from the server
     function fetchGraphData(params = {}) {
         const query = new URLSearchParams(params).toString();
         const url = '/api/graph-data/' + (query ? '?' + query : '');
-        console.log('Fetching data from:', url);
 
         fetch(url)
-            .then(response => {
-                // Check for errors
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            // Parse the JSON response
+            .then(response => response.json())
             .then(data => {
-                console.log('Data received:', data);
                 if (params.type) {
                     updateGraph(data.nodes, data.edges);
                 } else {
                     initializeGraph(data.nodes, data.edges);
                 }
             })
-            // Catch any errors and log them
             .catch(error => console.error('Error loading graph data:', error));
     }
 
-    // Initialize the graph with nodes and edges
     function initializeGraph(nodes, edges) {
-        // Debugging log
-        console.log('Initializing graph with nodes and edges');
-        // For each node in the data, add it to the graph
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
-                graph.addNode(node.id, {
-                    label: node.label,
-                    node_type: node.node_type,
-                    x: Math.random() * 100, // Random x position
-                    y: Math.random() * 100, // Random y position
-                    size: 10, // Default size
-                    color: getNodeColor(node) // Get color based on node type
-                });
+                graph.addNode(node.id, {label: node.label, node_type: node.node_type, x: Math.random() * 100, y: Math.random() * 100, size: 10, color: getNodeColor(node)});
             }
         });
 
-        // For each edge in the data, add it to the graph
         edges.forEach(edge => {
             if (!graph.hasEdge(edge.id)) {
                 graph.addEdge(edge.source, edge.target);
             }
         });
 
-        // Apply the layout to the graph
         applyLayout();
     }
 
-    // Update the graph with new nodes and edges
     function updateGraph(nodes, edges) {
-        console.log('Updating graph with new nodes and edges');
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
-                graph.addNode(node.id, {
-                    label: node.label,
-                    node_type: node.node_type,
-                    x: Math.random() * 100,
-                    y: Math.random() * 100,
-                    size: 8,
-                    color: getNodeColor(node)
-                });
+                graph.addNode(node.id, {label: node.label, node_type: node.node_type, x: Math.random() * 100, y: Math.random() * 100, size: 8, color: getNodeColor(node)});
             }
         });
 
@@ -247,78 +207,73 @@ document.addEventListener('DOMContentLoaded', function () {
         applyLayout();
     }
 
-    // Get the color based on the node type
     function getNodeColor(node) {
         switch (node.node_type) {
-            case 'category':
-                return '#FF5733';
-            case 'disease':
-                return '#33C1FF';
-            case 'allele':
-                return '#FFFF33';
-            default:
-                return '#000000';
+            case 'category': return '#FF5733';
+            case 'disease': return '#33C1FF';
+            case 'allele': return '#FFFF33';
+            default: return '#000000';
         }
     }
 
-    // Apply the ForceAtlas2 layout to the graph
     function applyLayout() {
-        const settings = {
-            iterations: 100,
-            settings: {gravity: 0.5, scalingRatio: 2.0} // Gravity and scaling ratio for the layout
-        };
-
-        // Apply the layout to the graph
+        const settings = {iterations: 100, settings: {gravity: 0.5, scalingRatio: 2.0}};
         forceAtlas2.assign(graph, settings);
-        // Refresh the Sigma instance to display the updated graph
         sigmaInstance.refresh();
     }
 
-    // Handle node click events
     sigmaInstance.on('clickNode', ({node}) => {
         const nodeData = graph.getNodeAttributes(node);
-        console.log('Node clicked:', nodeData); // Debugging log
-
-        // Fetch data based on the node type
         if (nodeData.node_type === 'category') {
-            console.log('Fetching diseases for category:', nodeData.label);
-            fetchGraphData({type: 'diseases', category_id: node});
+            fetchGraphData({type: 'diseases', category_id: node, filters: filters });
         } else if (nodeData.node_type === 'disease') {
-            console.log('Fetching alleles for disease:', nodeData.label);
-            const encodedNode = encodeURIComponent(node);
-            console.log('Encoded node ID:', encodedNode); // Debugging log
-            fetchGraphData({type: 'alleles', disease_id: encodedNode});
+            fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters });
         }
     });
 
-
     window.applyFilters = function () {
+        filters = [];
         const filterGroups = document.querySelectorAll('.filter-group');
+        console.log('Filter groups:', filterGroups); // Debugging log
 
-        let filters = [];
         filterGroups.forEach(group => {
             const select = group.querySelector('select');
-            let operator = group.querySelector('.operator-select');
-            if (!operator) {
-                operator = '==';
-            } else {
-                operator = operator.value;
+
+            const operatorSelect = group.querySelector('.operator-select');
+            const input = group.querySelector('.field-input');
+            // Make sure that the input is not empty
+            if (input.value === '') {
+                alert('Please enter a value for the filter');
+                return;
             }
-            const input = group.querySelector('input');
-            console.log('Select:', select, 'Input:', input, operator); // Debugging log
+            console.log('Test')
+            console.log('Select:', select); // Debugging log
+            console.log('Operator select:', operatorSelect); // Debugging log
+            console.log('Input:', input); // Debugging log
             if (select && input) {
-                filters.push({
-                    field: select.value,
-                    value: input.type === 'range' ? input.value : input.value.toLowerCase(),
-                    operator: operator
-                });
+                filters.push(`${select.value}:${operatorSelect ? operatorSelect.value : '=='}:${input.value.toLowerCase()}`);
             }
         });
 
-        console.log('Applying filters:', filters);
+        console.log('Filters:', filters); // Debugging log
 
-
+        fetchGraphData({type: 'initial', filters});
+        updateGraph();
         sigmaInstance.refresh();
     };
-})
-;
+
+
+
+    window.clearFilters = function () {
+        filters = [];
+        const filterGroups = document.querySelectorAll('.filter-group');
+        filterGroups.forEach(group => {
+            group.remove();
+        });
+        filterCount = 1;
+        addFilter();
+        fetchGraphData();
+        updateGraph();
+    }
+
+});
