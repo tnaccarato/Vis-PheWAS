@@ -8,11 +8,21 @@ from .models import HlaPheWasCatalog
 
 
 def index(request) -> render:
+    """
+    View function for the index page.
+    :param request:
+    :return:
+    """
     return render(request, 'mainapp/index.html')
 
 
 @require_http_methods(["GET"])
 def graph_data(request) -> JsonResponse:
+    """
+    View function to return the graph data in JSON format.
+    :param request:
+    :return:
+    """
     data_type = request.GET.get('type', 'initial')
     filters = request.GET.getlist('filters')
     if filters == ['']:
@@ -34,6 +44,12 @@ def graph_data(request) -> JsonResponse:
 
 
 def apply_filters(queryset, filters):
+    """
+    Apply filters to the queryset based on the provided filter strings.
+    :param queryset:
+    :param filters:
+    :return:
+    """
     print("Initial queryset length:", len(queryset))
     print("Filters:", filters)
 
@@ -58,6 +74,11 @@ def apply_filters(queryset, filters):
 
 
 def get_initial_data(filters) -> tuple:
+    """
+    Get the initial data for the graph.
+    :param filters:
+    :return:
+    """
     categories = HlaPheWasCatalog.objects.values('category_string').distinct()
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
@@ -68,6 +89,12 @@ def get_initial_data(filters) -> tuple:
 
 
 def get_disease_data(category_id, filters) -> tuple:
+    """
+    Get the disease data for the selected category.
+    :param category_id:
+    :param filters:
+    :return:
+    """
     print(filters)
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
@@ -80,6 +107,12 @@ def get_disease_data(category_id, filters) -> tuple:
 
 
 def get_allele_data(disease_id, filters) -> tuple:
+    """
+    Get the allele data for the selected disease.
+    :param disease_id:
+    :param filters:
+    :return:
+    """
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
         'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
