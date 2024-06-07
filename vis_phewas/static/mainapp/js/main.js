@@ -309,7 +309,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (select && input) {
                 filters.push({
                     field: select.value,
-                    value: input.type === 'range' ? input.value : input.value.toLowerCase()
+                    value: input.type === 'range' ? input.value : input.value.toLowerCase(),
+                    operator: operator
                 });
             }
         });
