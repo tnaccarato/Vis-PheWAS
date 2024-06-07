@@ -21,23 +21,27 @@ document.addEventListener('DOMContentLoaded', function () {
             const input = document.createElement('input');
             input.type = 'text';
             input.placeholder = 'Enter value';
+            input.className = 'field-input';
             filterInputContainer.appendChild(input);
         } else if (['cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'].includes(selectedField)) {
             const operator = document.createElement('select');
             operator.innerHTML = `
-            <option value="=">== (Equal to)</option>
+            <option value="==">== (Equal to)</option>
             <option value=">">\> (Greater than)</option>
             <option value="<">\< (Less than)</option>
             <option value=">=">=\>(Greater than or equal to)</option>
             <option value="<=">=\<(Less than or equal to)</option>
         `;
+            operator.className = 'operator-select';
             filterInputContainer.appendChild(operator);
             const input = document.createElement('input');
             input.type = 'float';
             input.placeholder = 'Enter value';
+            input.className = 'field-input';
             filterInputContainer.appendChild(input);
         } else if (['gene_class', 'gene_name', 'a1', 'a2'].includes(selectedField)) {
             const select = document.createElement('select');
+            select.className = 'field-input';
             if (selectedField === 'gene_class') {
                 select.innerHTML = `
             <option value="1">Class 1</option>
@@ -81,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
             filterGroup.appendChild(label);
 
             const select = document.createElement('select');
+            select.className = 'field-select';
             select.onchange = function () {
                 updateFilterInput(select);
             };
@@ -292,7 +297,15 @@ document.addEventListener('DOMContentLoaded', function () {
         let filters = [];
         filterGroups.forEach(group => {
             const select = group.querySelector('select');
+            let operator = group.querySelector('.operator-select');
+            if(!operator){
+                operator = '==';
+            }
+            else{
+                operator = operator.value;
+            }
             const input = group.querySelector('input');
+            console.log('Select:', select, 'Input:', input, operator); // Debugging log
             if (select && input) {
                 filters.push({
                     field: select.value,
