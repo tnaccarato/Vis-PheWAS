@@ -23,15 +23,15 @@ document.addEventListener('DOMContentLoaded', function () {
             input.placeholder = 'Enter value';
             filterInputContainer.appendChild(input);
         } else if (['cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'].includes(selectedField)) {
-            const select = document.createElement('select');
-            select.innerHTML = `
+            const operator = document.createElement('select');
+            operator.innerHTML = `
             <option value="=">== (Equal to)</option>
             <option value=">">\> (Greater than)</option>
             <option value="<">\< (Less than)</option>
             <option value=">=">=\>(Greater than or equal to)</option>
             <option value="<=">=\<(Less than or equal to)</option>
         `;
-            filterInputContainer.appendChild(select);
+            filterInputContainer.appendChild(operator);
             const input = document.createElement('input');
             input.type = 'float';
             input.placeholder = 'Enter value';
