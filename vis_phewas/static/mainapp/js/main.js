@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <option value="==">== (Equal to)</option>
             <option value=">">\> (Greater than)</option>
             <option value="<">\< (Less than)</option>
-            <option value=">=">=\>(Greater than or equal to)</option>
-            <option value="<=">=\<(Less than or equal to)</option>
+            <option value=">=">>\=(Greater than or equal to)</option>
+            <option value="<="><\=(Less than or equal to)</option>
         `;
             operator.className = 'operator-select';
             filterInputContainer.appendChild(operator);
@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Adjust the width of the Sigma container
             adjustSigmaContainerHeight();
+
 
             filterCount++;
         }
@@ -298,10 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
         filterGroups.forEach(group => {
             const select = group.querySelector('select');
             let operator = group.querySelector('.operator-select');
-            if(!operator){
+            if (!operator) {
                 operator = '==';
-            }
-            else{
+            } else {
                 operator = operator.value;
             }
             const input = group.querySelector('input');
@@ -317,22 +317,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Applying filters:', filters);
 
-        // Apply filters to the graph nodes
-        graph.forEachNode((node, attributes) => {
-            let visible = true;
-
-            filters.forEach(filter => {
-                if (filter.field === 'size') {
-                    visible = visible && (attributes.size === filter.value);
-                } else if (filter.field === 'color') {
-                    visible = visible && (attributes.color === filter.value);
-                } else if (filter.field === 'node_type') {
-                    visible = visible && (attributes.node_type.toLowerCase() === filter.value);
-                }
-            });
-
-            graph.setNodeAttribute(node, 'hidden', !visible);
-        });
 
         sigmaInstance.refresh();
     };
