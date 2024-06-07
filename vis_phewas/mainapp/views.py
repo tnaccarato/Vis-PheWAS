@@ -57,7 +57,6 @@ def apply_filters(queryset, filters):
     return queryset
 
 
-
 def get_initial_data(filters) -> tuple:
     categories = HlaPheWasCatalog.objects.values('category_string').distinct()
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
@@ -90,7 +89,8 @@ def get_allele_data(disease_id, filters) -> tuple:
     # Order by maf and then slice
     filtered_queryset = filtered_queryset.order_by('-maf')[:20]
     nodes = [
-        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for allele in filtered_queryset]
-    edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in filtered_queryset]
+        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for
+        allele in filtered_queryset]
+    edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
+             filtered_queryset]
     return nodes, edges
-
