@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.addFilter = function () {
+        console.log('Filter count:', filterCount); // Debugging log
         if (filterCount >= 8) {
             alert('Maximum of 8 filters allowed');
 
@@ -156,7 +157,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
-    const sigmaInstance = new Sigma(graph, container)
+    const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true})
+
+
     fetchGraphData()
 
     function fetchGraphData(params = {}) {
