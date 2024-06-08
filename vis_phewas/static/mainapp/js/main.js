@@ -155,6 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
         container.style.height = `calc(100% - ${filtersHeight}px)`;
         sigmaInstance.refresh();
     }
+
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
     const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true})
@@ -181,7 +182,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function initializeGraph(nodes, edges) {
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
-                graph.addNode(node.id, {label: node.label, node_type: node.node_type, x: Math.random() * 100, y: Math.random() * 100, size: 10, color: getNodeColor(node)});
+                graph.addNode(node.id, {
+                    label: node.label,
+                    node_type: node.node_type,
+                    x: Math.random() * 100,
+                    y: Math.random() * 100,
+                    size: 10,
+                    color: getNodeColor(node)
+                });
             }
         });
 
@@ -197,7 +205,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateGraph(nodes, edges) {
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
-                graph.addNode(node.id, {label: node.label, node_type: node.node_type, x: Math.random() * 100, y: Math.random() * 100, size: 8, color: getNodeColor(node)});
+                graph.addNode(node.id, {
+                    label: node.label,
+                    node_type: node.node_type,
+                    x: Math.random() * 100,
+                    y: Math.random() * 100,
+                    size: 8,
+                    color: getNodeColor(node)
+                });
             }
         });
 
@@ -212,10 +227,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getNodeColor(node) {
         switch (node.node_type) {
-            case 'category': return '#FF5733';
-            case 'disease': return '#33C1FF';
-            case 'allele': return '#FFFF33';
-            default: return '#000000';
+            case 'category':
+                return '#FF5733';
+            case 'disease':
+                return '#33C1FF';
+            case 'allele':
+                return '#FFFF33';
+            default:
+                return '#000000';
         }
     }
 
@@ -226,13 +245,54 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     sigmaInstance.on('clickNode', ({node}) => {
-        const nodeData = graph.getNodeAttributes(node);
-        if (nodeData.node_type === 'category') {
-            fetchGraphData({type: 'diseases', category_id: node, filters: filters });
-        } else if (nodeData.node_type === 'disease') {
-            fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters });
+            const nodeData = graph.getNodeAttributes(node);
+            if (nodeData.node_type === 'category') {
+                fetchGraphData({type: 'diseases', category_id: node, filters: filters});
+            } else if (nodeData.node_type === 'disease') {
+                fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters});
+            } else if (nodeData.node_type === 'allele') {
+                const infoContainer = document.getElementsByClassName('info-container')[0];
+                // Clear the container
+                infoContainer.innerHTML = '';
+                const title = document.createElement('h3');
+                // Gets title from nodeData
+                title.textContent = nodeData.label + ' Information';
+                infoContainer.appendChild(title);
+                // Fetch data from the API for the allele
+                const allele = nodeData.label;
+                const encodedAllele = encodeURIComponent(allele);
+                const url = `/api/get-info/?allele=${encodedAllele}`;
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                            const table = document.createElement('table');
+                            table.className = 'allele-info-table table table-striped table-bordered table-hover table-sm';
+                            const headerRow = document.createElement('tr');
+                            const header1 = document.createElement('th');
+                            header1.textContent = 'Field';
+                            headerRow.appendChild(header1);
+                            const header2 = document.createElement('th');
+                            header2.textContent = 'Value';
+                            headerRow.appendChild(header2);
+                            table.appendChild(headerRow);
+                            Object.entries(data).forEach(([key, value]) => {
+                                const row = document.createElement('tr');
+                                const cell1 = document.createElement('td');
+                                cell1.textContent = key;
+                                row.appendChild(cell1);
+                                const cell2 = document.createElement('td');
+                                cell2.textContent = value;
+                                row.appendChild(cell2);
+                                table.appendChild(row);
+                            });
+                            infoContainer.appendChild(table);
+                        }
+                    )
+                    .catch(error => console.error('Error loading allele info:', error));
+            }
         }
-    });
+    );
+
 
     window.applyFilters = function () {
         filters = [];
@@ -264,7 +324,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateGraph();
         sigmaInstance.refresh();
     };
-
 
 
     window.clearFilters = function () {
