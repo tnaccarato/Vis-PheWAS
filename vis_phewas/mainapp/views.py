@@ -128,11 +128,11 @@ def get_allele_data(disease_id, filters) -> tuple:
              filtered_queryset]
     return nodes, edges
 
-def get_info(request) -> render:
+def get_info(request) -> JsonResponse:
     """
-    View function for the index page.
+    Get the allele data for the selected allele.
     :param request:
-    :return:
+    :return: JsonResponse with the allele data
     """
     # Get allele from request
     allele = request.GET.get('allele')
