@@ -166,6 +166,49 @@ document.addEventListener('DOMContentLoaded', function () {
         sigmaInstance.refresh();
     }
 
+    window.applyFilters = function () {
+        filters = [];
+        const filterGroups = document.querySelectorAll('.filter-group');
+        console.log('Filter groups:', filterGroups); // Debugging log
+
+        filterGroups.forEach(group => {
+            const select = group.querySelector('select');
+
+            const operatorSelect = group.querySelector('.operator-select');
+            const input = group.querySelector('.field-input');
+            // Make sure that the input is not empty
+            if (input.value === '') {
+                alert('Please enter a value for the filter');
+                return;
+            }
+            console.log('Test')
+            console.log('Select:', select); // Debugging log
+            console.log('Operator select:', operatorSelect); // Debugging log
+            console.log('Input:', input); // Debugging log
+            if (select && input) {
+                filters.push(`${select.value}:${operatorSelect ? operatorSelect.value : '=='}:${input.value.toLowerCase()}`);
+            }
+        });
+
+        console.log('Filters:', filters); // Debugging log
+
+        fetchGraphData({type: 'initial', filters});
+        updateGraph();
+        sigmaInstance.refresh();
+    };
+
+
+    window.clearFilters = function () {
+        filters = [];
+        const filterGroups = document.querySelectorAll('.filter-group');
+        filterGroups.forEach(group => {
+            group.remove();
+        });
+        filterCount = 0;
+        fetchGraphData();
+        updateGraph();
+    };
+
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
     const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true})
@@ -286,6 +329,25 @@ document.addEventListener('DOMContentLoaded', function () {
                             headerRow.appendChild(header2);
                             table.appendChild(headerRow);
                             Object.entries(data).forEach(([key, value]) => {
+                                // Unpack the top_maf object and add each key-value pair as a row in the table
+                                if (key === 'top_maf') {
+                                    Object.entries(value).forEach(([index, top_maf]) => {
+                                        console.log(top_maf); // Debugging log
+                                        Object.entries(top_maf).forEach(([field, value]) => {
+                                            console.log('Field:', field);
+                                            console.log('Value:', value);
+                                            const row = document.createElement('tr');
+                                            const cell1 = document.createElement('td');
+                                            cell1.textContent = field;
+                                            row.appendChild(cell1);
+                                            const cell2 = document.createElement('td');
+                                            cell2.textContent = value.toString();
+                                            row.appendChild(cell2);
+                                            table.appendChild(row);
+                                        });
+                                    });
+                                    return;
+                                }
                                 const row = document.createElement('tr');
                                 const cell1 = document.createElement('td');
                                 cell1.textContent = key;
@@ -304,47 +366,6 @@ document.addEventListener('DOMContentLoaded', function () {
     );
 
 
-    window.applyFilters = function () {
-        filters = [];
-        const filterGroups = document.querySelectorAll('.filter-group');
-        console.log('Filter groups:', filterGroups); // Debugging log
 
-        filterGroups.forEach(group => {
-            const select = group.querySelector('select');
-
-            const operatorSelect = group.querySelector('.operator-select');
-            const input = group.querySelector('.field-input');
-            // Make sure that the input is not empty
-            if (input.value === '') {
-                alert('Please enter a value for the filter');
-                return;
-            }
-            console.log('Test')
-            console.log('Select:', select); // Debugging log
-            console.log('Operator select:', operatorSelect); // Debugging log
-            console.log('Input:', input); // Debugging log
-            if (select && input) {
-                filters.push(`${select.value}:${operatorSelect ? operatorSelect.value : '=='}:${input.value.toLowerCase()}`);
-            }
-        });
-
-        console.log('Filters:', filters); // Debugging log
-
-        fetchGraphData({type: 'initial', filters});
-        updateGraph();
-        sigmaInstance.refresh();
-    };
-
-
-    window.clearFilters = function () {
-        filters = [];
-        const filterGroups = document.querySelectorAll('.filter-group');
-        filterGroups.forEach(group => {
-            group.remove();
-        });
-        filterCount = 0;
-        fetchGraphData();
-        updateGraph();
-    }
 
 });
