@@ -55,11 +55,11 @@ def apply_filters(queryset, filters):
 
     for filter_str in filters:
         field, operator, value = filter_str.split(':')
-        if field == 'snp':
-            field = field.capitalize()
 
         if operator == '==':
             queryset = queryset.filter(**{f'{field}__iexact': value})
+        elif operator == 'contains':
+            queryset = queryset.filter(**{f'{field}__icontains': value})
         elif operator == '>':
             queryset = queryset.filter(**{f'{field}__gt': value})
         elif operator == '<':
