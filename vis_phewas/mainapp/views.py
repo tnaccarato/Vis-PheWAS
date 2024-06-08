@@ -127,3 +127,18 @@ def get_allele_data(disease_id, filters) -> tuple:
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
     return nodes, edges
+
+def get_info(request) -> render:
+    """
+    View function for the index page.
+    :param request:
+    :return:
+    """
+    # Get allele from request
+    allele = request.GET.get('allele')
+    # Get the allele data
+    allele_data = HlaPheWasCatalog.objects.filter(snp=allele).values(
+        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+    ).distinct()[0]
+    # Return the allele data in json format
+    return JsonResponse(allele_data)
