@@ -1,35 +1,34 @@
 <div class="toolbar" style="background-color: aliceblue">
-    <div id="filters-container">
-        <div class="filter-group">
-            <label for="field-select">Field:</label>
-            <select id="field-select" onchange="updateFilterInput(this)">
-                <option value="snp">SNP</option>
-                <option value="gene_class">Gene Class</option>
-                <option value="gene_name">HLA Type</option>
-                <option value="serotype">Serotype</option>
-                <option value="subtype">Subtype</option>
-                <option value="phewas_code">Phecode</option>
-                <option value="phewas_string">Phenotype</option>
-                <option value="category_string">Disease Category</option>
-                <option value="cases">Number of Cases</option>
-                <option value="controls">Number of Controls</option>
-                <option value="p">P-Value</option>
-                <option value="odds_ratio">Odds Ratio</option>
-                <option value="l95">95% CI Lower Bound</option>
-                <option value="u95">95% CI Upper Bound</option>
-                <option value="maf">Minor Allele Frequency</option>
-                <option value="a1">Allele 1</option>
-                <option value="a2">Allele 2</option>
-            </select>
-            <div id="filter-input-container">
-                <!-- Filter input will be dynamically generated here -->
-            </div>
-            <button class="button" onclick="addFilter()">+</button>
-        </div>
-    </div>
-    <div id="toolbar-buttons">
-        <button class="button" onclick="clearFilters()">Clear Filters</button>
-        <button class="button" onclick="applyFilters()">Apply Filters</button>
-    </div>
-
-
+                        <div id="filters-container">
+                            <div class="filter-group">
+                                <label for="field-select">Field:</label>
+                                <select id="field-select" onchange="updateFilterInput(this)">
+                                    <option value="snp">SNP</option>
+                                    <option value="gene_class">Gene Class</option>
+                                    <option value="gene_name">HLA Type</option>
+                                    <option value="serotype">Serotype</option>
+                                    <option value="subtype">Subtype</option>
+                                    <option value="phewas_code">Phecode</option>
+                                    <option value="phewas_string">Phenotype</option>
+                                    <option value="category_string">Disease Category</option>
+                                    <option value="cases">Number of Cases</option>
+                                    <option value="controls">Number of Controls</option>
+                                    <option value="p">P-Value</option>
+                                    <option value="odds_ratio">Odds Ratio</option>
+                                    <option value="l95">95% CI Lower Bound</option>
+                                    <option value="u95">95% CI Upper Bound</option>
+                                    <option value="maf">Minor Allele Frequency</option>
+                                    <option value="a1">Allele 1</option>
+                                    <option value="a2">Allele 2</option>
+                                </select>
+                            </div>
+                            <div id="filter-input-container">
+                                <!-- Filter input will be dynamically generated here -->
+                            </div>
+                            <button class="button" onclick="addFilter()">+</button>
+                        </div>
+                    </div>
+                    <div id="toolbar-buttons">
+                        <button class="button" onclick="clearFilters()">Clear Filters</button>
+                        <button class="button" onclick="applyFilters()">Apply Filters</button>
+                    </div>

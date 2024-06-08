@@ -14,14 +14,16 @@
                     {% include 'mainapp/toolbar.html' %}
                 </div>
             </div>
-        </div>
-        <!-- Blank box for text and other content -->
-        <div class="col-md-6" style="background-color: lightgray; height: 100vh;">
-            <div class="blank-container">Blank Container</div>
+
+
+            <!-- Blank box for text and other content -->
+            <div class="col-md-6 right-column" style="background-color: lightgray; height: 100vh;">
+                <div class="blank-container">Blank Container</div>
+            </div>
+
         </div>
 
     </div>
-
-
     <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
+
 {% endblock %}
