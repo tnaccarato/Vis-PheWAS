@@ -18,11 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Add the appropriate input element based on the selected field
         if (['snp', 'phewas_code', 'phewas_string', 'category_string', 'serotype', 'subtype'].includes(selectedField)) {
+            const operator = document.createElement('select');
+            operator.innerHTML = `
+            <option value="==">Exactly</option>
+            <option value="contains">Contains</option>
+            `;
+            operator.className = 'operator-select';
+            filterInputContainer.appendChild(operator);
             const input = document.createElement('input');
             input.type = 'text';
             input.placeholder = 'Enter value';
             input.className = 'field-input';
             filterInputContainer.appendChild(input);
+
         } else if (['cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'].includes(selectedField)) {
             const operator = document.createElement('select');
             operator.innerHTML = `
@@ -128,6 +136,8 @@ document.addEventListener('DOMContentLoaded', function () {
             filterGroup.appendChild(minusButton);
 
             document.getElementById('filters-container').appendChild(filterGroup);
+            // Gets content of the filter group
+            window.updateFilterInput(select);
 
             // Adjust the width of the Sigma container
             adjustSigmaContainerHeight();
