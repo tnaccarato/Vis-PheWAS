@@ -6,10 +6,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import HlaPheWasCatalog
 
-queryset_test = HlaPheWasCatalog.objects.filter(phewas_string='Asthma').values(
-    'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
-).distinct().order_by('-maf')[:20]
-print(queryset_test)
+
 def index(request) -> render:
     """
     View function for the index page.
@@ -134,9 +131,7 @@ def get_allele_data(disease_id, filters) -> tuple:
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     # Order by maf and then slice
-    filtered_queryset = filtered_queryset.order_by('-odds_ratio')[:20]
-    if filtered_queryset == queryset_test:
-        print("They are the same")
+    filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     nodes = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for
         allele in filtered_queryset]
