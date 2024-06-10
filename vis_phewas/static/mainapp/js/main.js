@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             headerRow.appendChild(header2);
                             table.appendChild(headerRow);
                             Object.entries(data).forEach(([key, value]) => {
-                                // Unpack the top_maf object and add each key-value pair as a row in the table
+                                // Unpack the top_odds object and add each key-value pair as a row in the table
                                 if (key === 'top_odds') {
                                     Object.entries(value).forEach(([index, top_odds]) => {
                                         console.log(top_odds); // Debugging log
@@ -380,8 +380,8 @@ document.addEventListener('DOMContentLoaded', function () {
             graph.setEdgeAttribute(edge, 'color', 'black');
 
             // Sets the color of the target node to light blue
-            const targetNode = graph.target(edge);
-            graph.setNodeAttribute(targetNode, 'color', '#69fb00');
+            const sourceNode = graph.source(edge);
+            graph.setNodeAttribute(sourceNode, 'color', '#69fb00');
         });
 
         sigmaInstance.refresh();
@@ -397,9 +397,9 @@ document.addEventListener('DOMContentLoaded', function () {
         edges.forEach(edge => {
             graph.setEdgeAttribute(edge, 'color', 'darkgrey');
             // Sets the color of the target node to original color
-            const targetNode = graph.target(edge);
-            const nodeData = graph.getNodeAttributes(targetNode);
-            graph.setNodeAttribute(targetNode, 'color', getNodeColor(nodeData));
+            const sourceNode = graph.source(edge);
+            const nodeData = graph.getNodeAttributes(sourceNode);
+            graph.setNodeAttribute(sourceNode, 'color', getNodeColor(nodeData));
 
         });
 
