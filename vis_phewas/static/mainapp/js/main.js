@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
             group.remove();
         });
         filterCount = 0;
-    fetchGraphData();
+        fetchGraphData();
     };
 
     const container = document.getElementById('sigma-container');
@@ -246,6 +246,8 @@ document.addEventListener('DOMContentLoaded', function () {
         edges.forEach(edge => {
             if (!graph.hasEdge(edge.id)) {
                 graph.addEdge(edge.source, edge.target);
+                graph.setEdgeAttribute(edge.source, edge.target, 'hidden', false);
+                console.log('Edge:', edge); // Debugging log
             }
         });
 
@@ -268,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         edges.forEach(edge => {
             if (!graph.hasEdge(edge.id)) {
-                graph.addEdge(edge.source, edge.target);
+                graph.addEdge(edge.source, edge.target, {'color': 'darkgrey'});
             }
         });
 
@@ -276,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getNodeColor(node) {
-        if (node.hidden){
+        if (node.hidden) {
             return rgbaToFloat(0, 0, 0, 0);
         }
         switch (node.node_type) {
@@ -364,6 +366,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     );
+
+    // Add event listener for when a node hover event is triggered
+    sigmaInstance.on('enterNode', ({node}) => {
+        const nodeId = node;
+        const edges = graph.edges().filter(edge => {
+            return graph.source(edge) === nodeId;
+        });
+
+        console.log('Edges:', edges); // Debugging log
+
+        edges.forEach(edge => {
+            graph.setEdgeAttribute(edge, 'color', 'black');
+        });
+
+        sigmaInstance.refresh();
+    });
+
+// Add event listener for when a node hover ends
+    sigmaInstance.on('leaveNode', ({node}) => {
+        const nodeId = node;
+        const edges = graph.edges().filter(edge => {
+            return graph.source(edge) === nodeId || graph.target(edge) === nodeId;
+        });
+
+        edges.forEach(edge => {
+            graph.setEdgeAttribute(edge, 'color', 'darkgrey'); // Reset to default color
+        });
+
+        sigmaInstance.refresh();
+    });
 
 
 });
