@@ -6,7 +6,10 @@ from django.views.decorators.http import require_http_methods
 
 from .models import HlaPheWasCatalog
 
-
+queryset_test = HlaPheWasCatalog.objects.filter(phewas_string='Asthma').values(
+    'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+).distinct().order_by('-maf')[:20]
+print(queryset_test)
 def index(request) -> render:
     """
     View function for the index page.
@@ -131,7 +134,9 @@ def get_allele_data(disease_id, filters) -> tuple:
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     # Order by maf and then slice
-    filtered_queryset = filtered_queryset.order_by('-maf')[:20]
+    filtered_queryset = filtered_queryset.order_by('-odds_ratio')[:20]
+    if filtered_queryset == queryset_test:
+        print("They are the same")
     nodes = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for
         allele in filtered_queryset]
@@ -149,10 +154,10 @@ def get_info(request) -> JsonResponse:
     allele = request.GET.get('allele')
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele).values(
-        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95'
+        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
     ).distinct()[0]
     # Gets the 5 highest maf values for the allele annotated with the disease
-    top_maf = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'maf').order_by('-maf')[:5]
-    allele_data['top_maf'] = list(top_maf)
+    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by('-odds_ratio')[:5]
+    allele_data['top_odds'] = list(top_odds)
     # Return the allele data in json format
     return JsonResponse(allele_data)

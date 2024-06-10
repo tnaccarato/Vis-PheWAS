@@ -330,10 +330,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             table.appendChild(headerRow);
                             Object.entries(data).forEach(([key, value]) => {
                                 // Unpack the top_maf object and add each key-value pair as a row in the table
-                                if (key === 'top_maf') {
-                                    Object.entries(value).forEach(([index, top_maf]) => {
-                                        console.log(top_maf); // Debugging log
-                                        Object.entries(top_maf).forEach(([field, value]) => {
+                                if (key === 'top_odds') {
+                                    Object.entries(value).forEach(([index, top_odds]) => {
+                                        console.log(top_odds); // Debugging log
+                                        Object.entries(top_odds).forEach(([field, value]) => {
                                             console.log('Field:', field);
                                             console.log('Value:', value);
                                             const row = document.createElement('tr');
