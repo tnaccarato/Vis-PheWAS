@@ -69,3 +69,14 @@ body {
 .toolbar-wrapper {
     width: 100%;
 }
+
+#filters-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    flex: 1 1 50%; /* Each filter group takes up half the width of the container */
+    box-sizing: border-box;
+    padding: 5px;
+}
