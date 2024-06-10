@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
     sigmaInstance.on('enterNode', ({node}) => {
         const nodeId = node;
         const edges = graph.edges().filter(edge => {
-            return graph.source(edge) === nodeId;
+            return graph.source(edge) === nodeId || graph.target(edge) === nodeId;
         });
 
         console.log('Edges:', edges); // Debugging log
