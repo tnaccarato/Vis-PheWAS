@@ -176,9 +176,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const operatorSelect = group.querySelector('.operator-select');
             const input = group.querySelector('.field-input');
-            // Make sure that the input is not empty
+            // If input is empty, skip the filter
             if (input.value === '') {
-                alert('Please enter a value for the filter');
                 return;
             }
             console.log('Test')
