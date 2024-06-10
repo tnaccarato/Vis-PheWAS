@@ -378,6 +378,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         edges.forEach(edge => {
             graph.setEdgeAttribute(edge, 'color', 'black');
+
+            // Sets the color of the target node to light blue
+            const targetNode = graph.target(edge);
+            graph.setNodeAttribute(targetNode, 'color', '#69fb00');
         });
 
         sigmaInstance.refresh();
@@ -391,7 +395,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         edges.forEach(edge => {
-            graph.setEdgeAttribute(edge, 'color', 'darkgrey'); // Reset to default color
+            graph.setEdgeAttribute(edge, 'color', 'darkgrey');
+            // Sets the color of the target node to original color
+            const targetNode = graph.target(edge);
+            const nodeData = graph.getNodeAttributes(targetNode);
+            graph.setNodeAttribute(targetNode, 'color', getNodeColor(nodeData));
+
         });
 
         sigmaInstance.refresh();
