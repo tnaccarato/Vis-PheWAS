@@ -24,7 +24,7 @@ def graph_data(request) -> JsonResponse:
     :return:
     """
     data_type = request.GET.get('type', 'initial')
-    filters = request.GET.getlist('filters')
+    filters = request.GET.get('filters')
     if filters == ['']:
         filters = []
 
@@ -53,9 +53,19 @@ def apply_filters(queryset, filters):
     print("Initial queryset length:", len(queryset))
     print("Filters:", filters)
 
+    # If no filters are provided, return the queryset as is
+    if not filters:
+        return queryset
+
+    # Split the filters string into a list of filter strings
+    filters = filters.split(',')
+
+    # Apply each filter to the queryset
     for filter_str in filters:
+        print(filter_str)
         field, operator, value = filter_str.split(':')
 
+        # Apply the filter based on the operator
         if operator == '==':
             queryset = queryset.filter(**{f'{field}__iexact': value})
         elif operator == 'contains':
@@ -70,6 +80,7 @@ def apply_filters(queryset, filters):
             queryset = queryset.filter(**{f'{field}__lte': value})
 
     print("Filtered queryset length:", len(queryset))
+    # Return the filtered queryset
     return queryset
 
 
