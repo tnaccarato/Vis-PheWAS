@@ -76,7 +76,59 @@ body {
 }
 
 .filter-group {
-    flex: 1 1 50%; /* Each filter group takes up half the width of the container */
+    flex: 1 1 33%; /* Each filter group takes up half the width of the container */
     box-sizing: border-box;
     padding: 5px;
+}
+
+#filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.filter-group {
+    flex: 1 1 25%; /* Each filter group takes up a quarter of the width of the container */
+    box-sizing: border-box;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label,
+.filter-group select,
+.filter-group input,
+.filter-group button {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 1024px) {
+    .filter-group {
+        flex: 1 1 50%; /* Each filter group takes up half the width of the container on smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-group {
+        flex: 1 1 100%; /* Each filter group takes up full width of the container on even smaller screens */
+    }
+
+    .filter-group label,
+    .filter-group select,
+    .filter-group input,
+    .filter-group button {
+        font-size: 0.8em; /* Reduce font size */
+        padding: 5px; /* Reduce padding */
+    }
+
+    .filter-input {
+        width: 100%; /* Ensure input takes full width */
+    }
+
+    .toolbar {
+        font-size: 0.8em; /* Reduce font size for toolbar */
+        padding: 5px; /* Reduce padding for toolbar */
+    }
 }
