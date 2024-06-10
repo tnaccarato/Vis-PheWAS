@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Filter count:', filterCount); // Debugging log
         if (filterCount >= 8) {
             alert('Maximum of 8 filters allowed');
-
         } else {
             const filterGroup = document.createElement('div');
             filterGroup.className = 'filter-group';
@@ -99,34 +98,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateFilterInput(select);
             };
             select.innerHTML = `
-                <option value="snp">SNP</option>
-                <option value="gene_class">Gene Class</option>
-                <option value="gene_name">HLA Type</option>
-                <option value="serotype">Serotype</option>
-                <option value="subtype">Subtype</option>
-                <option value="phewas_code">Phecode</option>
-                <option value="phewas_string">Phenotype</option>
-                <option value="category_string">Disease Category</option>
-                <option value="cases">Number of Cases</option>
-                <option value="controls">Number of Controls</option>
-                <option value="p">P-Value</option>
-                <option value="odds_ratio">Odds Ratio</option>
-                <option value="l95">95% CI Lower Bound</option>
-                <option value="u95">95% CI Upper Bound</option>
-                <option value="maf">Minor Allele Frequency</option>
-                <option value="a1">Allele 1</option>
-                <option value="a2">Allele 2</option>
-    `;
+            <option value="snp">SNP</option>
+            <option value="gene_class">Gene Class</option>
+            <option value="gene_name">HLA Type</option>
+            <option value="serotype">Serotype</option>
+            <option value="subtype">Subtype</option>
+            <option value="phewas_code">Phecode</option>
+            <option value="phewas_string">Phenotype</option>
+            <option value="category_string">Disease Category</option>
+            <option value="cases">Number of Cases</option>
+            <option value="controls">Number of Controls</option>
+            <option value="p">P-Value</option>
+            <option value="odds_ratio">Odds Ratio</option>
+            <option value="l95">95% CI Lower Bound</option>
+            <option value="u95">95% CI Upper Bound</option>
+            <option value="maf">Minor Allele Frequency</option>
+            <option value="a1">Allele 1</option>
+            <option value="a2">Allele 2</option>
+        `;
             filterGroup.appendChild(select);
 
             const filterInputContainer = document.createElement('div');
             filterInputContainer.id = 'filter-input-container';
             filterGroup.appendChild(filterInputContainer);
-
-            const plusButton = document.createElement('button');
-            plusButton.textContent = '+';
-            plusButton.onclick = addFilter;
-            filterGroup.appendChild(plusButton);
 
             const minusButton = document.createElement('button');
             minusButton.textContent = '-';
@@ -136,16 +130,18 @@ document.addEventListener('DOMContentLoaded', function () {
             filterGroup.appendChild(minusButton);
 
             document.getElementById('filters-container').appendChild(filterGroup);
+
             // Gets content of the filter group
             window.updateFilterInput(select);
 
             // Adjust the width of the Sigma container
             adjustSigmaContainerHeight();
 
-
             filterCount++;
+            console.log(filterCount);
         }
     };
+
 
 // Function to remove a filter
     window.removeFilter = function (button) {
@@ -205,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         filterCount = 0;
         fetchGraphData();
-        updateGraph();
+        // updateGraph();
     };
 
     const container = document.getElementById('sigma-container');
@@ -363,8 +359,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     );
-
-
 
 
 });
