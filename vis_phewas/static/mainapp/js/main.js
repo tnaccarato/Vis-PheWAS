@@ -1,6 +1,7 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
+import {rgbaToFloat} from "sigma/utils";
 
 let filterCount = 0;
 let filters = [];
@@ -236,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 10,
+                    hidden: false, // Initially set to false
                     color: getNodeColor(node)
                 });
             }
@@ -274,6 +276,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getNodeColor(node) {
+        if (node.hidden){
+            return rgbaToFloat(0, 0, 0, 0);
+        }
         switch (node.node_type) {
             case 'category':
                 return '#FF5733';
