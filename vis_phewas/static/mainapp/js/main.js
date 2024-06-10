@@ -201,8 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
             group.remove();
         });
         filterCount = 0;
-        fetchGraphData();
-        // updateGraph();
+    fetchGraphData();
     };
 
     const container = document.getElementById('sigma-container');
@@ -229,6 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initializeGraph(nodes, edges) {
+        graph.clear();
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
