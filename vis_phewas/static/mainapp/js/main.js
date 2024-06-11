@@ -6,6 +6,31 @@ import {rgbaToFloat} from "sigma/utils";
 let filterCount = 0;
 let filters = [];
 
+function push_filters() {
+    filters = [];
+    const filterGroups = document.querySelectorAll('.filter-group');
+    console.log('Filter groups:', filterGroups); // Debugging log
+
+    filterGroups.forEach(group => {
+        const select = group.querySelector('select');
+
+        const operatorSelect = group.querySelector('.operator-select');
+        const input = group.querySelector('.field-input');
+        // If input is empty, skip the filter
+        if (input.value === '') {
+            return;
+        }
+        console.log('Test')
+        console.log('Select:', select); // Debugging log
+        console.log('Operator select:', operatorSelect); // Debugging log
+        console.log('Input:', input); // Debugging log
+        if (select && input) {
+            filters.push(`${select.value}:${operatorSelect ? operatorSelect.value : '=='}:${input.value.toLowerCase()}`);
+        }
+        console.log('Filters:', filters); // Debugging log
+    });
+}
+
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Define the filter logic functions
@@ -164,27 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.applyFilters = function () {
-        filters = [];
-        const filterGroups = document.querySelectorAll('.filter-group');
-        console.log('Filter groups:', filterGroups); // Debugging log
-
-        filterGroups.forEach(group => {
-            const select = group.querySelector('select');
-
-            const operatorSelect = group.querySelector('.operator-select');
-            const input = group.querySelector('.field-input');
-            // If input is empty, skip the filter
-            if (input.value === '') {
-                return;
-            }
-            console.log('Test')
-            console.log('Select:', select); // Debugging log
-            console.log('Operator select:', operatorSelect); // Debugging log
-            console.log('Input:', input); // Debugging log
-            if (select && input) {
-                filters.push(`${select.value}:${operatorSelect ? operatorSelect.value : '=='}:${input.value.toLowerCase()}`);
-            }
-        });
+        push_filters();
 
         console.log('Filters:', filters); // Debugging log
 
@@ -406,5 +411,23 @@ document.addEventListener('DOMContentLoaded', function () {
         sigmaInstance.refresh();
     });
 
+    // Exports the current query to a CSV file
+    window.exportQuery = function () {
+        // Pushes the currently selected filters to the filters array
+        push_filters();
+        console.log('Filters:', filters); // Debugging log
+        if (!filters){
+            filters = [];
+        }
+
+        // Convert the filters to a query string
+        const query = new URLSearchParams({filters: filters}).toString();
+        console.log(query)
+        // Open the export query endpoint in a new tab
+        const url = '/api/export-query/' + (query ? '?' + query : '');
+        window.open(url, '_blank');
+    }
+
 
 });
+
