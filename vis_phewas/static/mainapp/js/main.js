@@ -409,19 +409,59 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Exports the current query to a CSV file
     window.exportQuery = function () {
-        // Pushes the currently selected filters to the filters array
+        // Push filters to the filters array to make sure the filters are applied
         push_filters();
         console.log('Filters:', filters); // Debugging log
-        if (!filters){
+
+        // If filters is empty, set it to an empty array
+        if (!filters) {
             filters = [];
         }
 
-        // Convert the filters to a query string
+        // Construct the query string
         const query = new URLSearchParams({filters: filters}).toString();
-        console.log(query)
-        // Open the export query endpoint in a new tab
+        // Construct the URL from which to fetch the data
         const url = '/api/export-query/' + (query ? '?' + query : '');
-        window.open(url, '_blank');
+
+        // Fetch the data from the URL
+        fetch(url)
+            // Get the response as a blob
+            .then(response => {
+                console.log(url)
+                // Get the dataset length from the response headers
+                const length = response.headers.get('Dataset-Length');
+                // Construct the alert message
+                const filtersDisplay = filters.length > 0 ? filters.join(', ') : 'None';
+                const alertMessage = `Exporting Data...<br>Filters selected: ${filtersDisplay}<br>Dataset length: ${length}`;
+                showAlert(alertMessage);
+                // Return the response as a blob object
+                return response.blob();
+            })
+            // Convert the blob to a URL and download the file
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'exported_data.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            // Log any errors to the console
+            .catch(error => console.error('Error:', error));
+    };
+
+    // Function to show an alert message
+    function showAlert(message) {
+        // Get the alert container
+        const alertContainer = document.getElementById('alert-container');
+        // Set the inner HTML of the alert container
+        alertContainer.innerHTML = `
+        <div class="alert alert-info alert-dismissible fade show" role="alert" style="margin: 0">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
     }
 
 
