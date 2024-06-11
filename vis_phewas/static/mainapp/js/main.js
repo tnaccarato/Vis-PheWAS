@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     );
 
-    // Add event listener for when a node hover event is triggered
+    // Event listener for when a node hover event is triggered
     sigmaInstance.on('enterNode', ({node}) => {
         const nodeId = node;
         const edges = graph.edges().filter(edge => {
@@ -401,16 +401,21 @@ document.addEventListener('DOMContentLoaded', function () {
         edges.forEach(edge => {
             graph.setEdgeAttribute(edge, 'color', 'black');
 
-            // Sets the color of the target node to light blue
+            // Sets the color of the target node to green
             const sourceNode = graph.source(edge);
             graph.setNodeAttribute(sourceNode, 'color', '#69fb00');
+
+            // Sets the color of the target node to a darker green
+            const targetNode = graph.target(edge);
+            graph.setNodeAttribute(targetNode, 'color', '#46af01');
         });
 
         sigmaInstance.refresh();
     });
 
-// Add event listener for when a node hover ends
+// Event listener for when a node hover ends
     sigmaInstance.on('leaveNode', ({node}) => {
+        // Get the edges connected to the node
         const nodeId = node;
         const edges = graph.edges().filter(edge => {
             return graph.source(edge) === nodeId || graph.target(edge) === nodeId;
@@ -418,15 +423,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         edges.forEach(edge => {
             graph.setEdgeAttribute(edge, 'color', 'darkgrey');
-            // Sets the color of the target node to original color
+            // Sets the color of the source and target nodes to their original color
             const sourceNode = graph.source(edge);
-            const nodeData = graph.getNodeAttributes(sourceNode);
-            graph.setNodeAttribute(sourceNode, 'color', getNodeColor(nodeData));
-
+            const sourceNodeData = graph.getNodeAttributes(sourceNode);
+            graph.setNodeAttribute(sourceNode, 'color', getNodeColor(sourceNodeData));
+            const targetNode = graph.target(edge);
+            const targetNodeData = graph.getNodeAttributes(targetNode);
+            graph.setNodeAttribute(targetNode, 'color', getNodeColor(targetNodeData));
         });
 
+        // Refresh the Sigma instance
         sigmaInstance.refresh();
     });
+
+    // Function to sanitize the filters
+    function sanitizeFilter(filter) {
+        return filter.replace(/&/g, 'and').replace(/</g, 'lt').replace(/>/g, 'gt')
+    }
 
     // Exports the current query to a CSV file
     window.exportQuery = function () {
@@ -463,7 +476,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = 'exported_data.csv';
+                console.log(filters.join('&'))
+                a.download = 'exported_data_' + (filters.length > 0 ? filters.map(sanitizeFilter).join('_') : 'full') + '.csv';
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
