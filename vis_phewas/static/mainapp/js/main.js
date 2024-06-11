@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 row.appendChild(cell2);
                                 table.appendChild(row);
                             });
+                            infoContainer.style.overflowY = 'auto';
                             infoContainer.appendChild(table);
                         }
                     )

@@ -1,4 +1,3 @@
-/* Ensure the containers take up full height of the viewport */
 html, body, .container-fluid {
     height: 100%;
     margin: 0;
@@ -25,10 +24,31 @@ html, body, .container-fluid {
     height: 100%;
 }
 
-.blank-container {
+.right-column {
+    display: flex;
+    flex-direction: column;
     background-color: lightgray;
+    height: 100vh;
+    padding: 0;
+}
+
+#info-container {
     width: 100%;
+    max-width: 100%;
     height: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #ddd;
 }
 
 body {
@@ -73,22 +93,17 @@ body {
 #filters-container {
     display: flex;
     flex-wrap: wrap;
-}
-
-.filter-group {
-    flex: 1 1 33%; /* Each filter group takes up half the width of the container */
-    box-sizing: border-box;
-    padding: 5px;
-}
-
-#filters-container {
-    display: flex;
-    flex-wrap: wrap;
     width: 100%;
 }
 
 .filter-group {
-    flex: 1 1 25%; /* Each filter group takes up a quarter of the width of the container */
+    flex: 1 1 33%;
+    box-sizing: border-box;
+    padding: 5px;
+}
+
+.filter-group {
+    flex: 1 1 25%;
     box-sizing: border-box;
     padding: 5px;
     display: flex;
@@ -103,37 +118,36 @@ body {
     margin-bottom: 5px;
 }
 
-/* Adjust for smaller screens */
 @media (max-width: 1024px) {
     .filter-group {
-        flex: 1 1 50%; /* Each filter group takes up half the width of the container on smaller screens */
+        flex: 1 1 50%;
     }
 }
 
 @media (max-width: 768px) {
     .filter-group {
-        flex: 1 1 100%; /* Each filter group takes up full width of the container on even smaller screens */
+        flex: 1 1 100%;
     }
 
     .filter-group label,
     .filter-group select,
     .filter-group input,
     .filter-group button {
-        font-size: 0.8em; /* Reduce font size */
-        padding: 5px; /* Reduce padding */
+        font-size: 0.8em;
+        padding: 5px;
     }
 
     .filter-input {
-        width: 100%; /* Ensure input takes full width */
+        width: 100%;
     }
 
     .toolbar {
-        font-size: 0.8em; /* Reduce font size for toolbar */
-        padding: 5px; /* Reduce padding for toolbar */
+        font-size: 0.8em;
+        padding: 5px;
     }
 }
 
-#toolbar-buttons{
+#toolbar-buttons {
     display: flex;
     justify-content: center;
 }
