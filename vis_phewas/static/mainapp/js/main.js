@@ -216,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Hide the toolbar
         const toolbar = document.getElementsByClassName('toolbar')[0];
         toolbar.style.display = 'none';
+        // Display an alert message for confirmation of filters cleared
+        showAlert('Filters cleared. Showing all data.');
         fetchGraphData();
     };
 
