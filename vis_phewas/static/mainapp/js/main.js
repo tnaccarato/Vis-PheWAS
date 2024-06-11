@@ -314,6 +314,69 @@ document.addEventListener('DOMContentLoaded', function () {
         sigmaInstance.refresh();
     }
 
+    function getInfoTable(nodeData) {
+        const infoContainer = document.getElementsByClassName('info-container')[0];
+        // Clear the container
+        infoContainer.innerHTML = '';
+        const title = document.createElement('h3');
+        // Gets title from nodeData
+        title.textContent = nodeData.label + ' Information';
+        // Aligns the title to the center
+        title.style.textAlign = 'center';
+        infoContainer.appendChild(title);
+        // Fetch data from the API for the allele
+        const allele = nodeData.label;
+        const encodedAllele = encodeURIComponent(allele);
+        const url = `/api/get-info/?allele=${encodedAllele}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                    const table = document.createElement('table');
+                    table.className = 'allele-info-table table table-striped table-bordered table-hover table-sm';
+                    const headerRow = document.createElement('tr');
+                    const header1 = document.createElement('th');
+                    header1.textContent = 'Field';
+                    headerRow.appendChild(header1);
+                    const header2 = document.createElement('th');
+                    header2.textContent = 'Value';
+                    headerRow.appendChild(header2);
+                    table.appendChild(headerRow);
+                    Object.entries(data).forEach(([key, value]) => {
+                        // Unpack the top_odds object and add each key-value pair as a row in the table
+                        if (key === 'top_odds') {
+                            Object.entries(value).forEach(([index, top_odds]) => {
+                                console.log(top_odds); // Debugging log
+                                Object.entries(top_odds).forEach(([field, value]) => {
+                                    console.log('Field:', field);
+                                    console.log('Value:', value);
+                                    const row = document.createElement('tr');
+                                    const cell1 = document.createElement('td');
+                                    cell1.textContent = field;
+                                    row.appendChild(cell1);
+                                    const cell2 = document.createElement('td');
+                                    cell2.textContent = value.toString();
+                                    row.appendChild(cell2);
+                                    table.appendChild(row);
+                                });
+                            });
+                            return;
+                        }
+                        const row = document.createElement('tr');
+                        const cell1 = document.createElement('td');
+                        cell1.textContent = key;
+                        row.appendChild(cell1);
+                        const cell2 = document.createElement('td');
+                        cell2.textContent = value;
+                        row.appendChild(cell2);
+                        table.appendChild(row);
+                    });
+                    infoContainer.style.overflowY = 'auto';
+                    infoContainer.appendChild(table);
+                }
+            )
+            .catch(error => console.error('Error loading allele info:', error));
+    }
+
     sigmaInstance.on('clickNode', ({node}) => {
             const nodeData = graph.getNodeAttributes(node);
             if (nodeData.node_type === 'category') {
@@ -321,64 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (nodeData.node_type === 'disease') {
                 fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters});
             } else if (nodeData.node_type === 'allele') {
-                const infoContainer = document.getElementsByClassName('info-container')[0];
-                // Clear the container
-                infoContainer.innerHTML = '';
-                const title = document.createElement('h3');
-                // Gets title from nodeData
-                title.textContent = nodeData.label + ' Information';
-                infoContainer.appendChild(title);
-                // Fetch data from the API for the allele
-                const allele = nodeData.label;
-                const encodedAllele = encodeURIComponent(allele);
-                const url = `/api/get-info/?allele=${encodedAllele}`;
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                            const table = document.createElement('table');
-                            table.className = 'allele-info-table table table-striped table-bordered table-hover table-sm';
-                            const headerRow = document.createElement('tr');
-                            const header1 = document.createElement('th');
-                            header1.textContent = 'Field';
-                            headerRow.appendChild(header1);
-                            const header2 = document.createElement('th');
-                            header2.textContent = 'Value';
-                            headerRow.appendChild(header2);
-                            table.appendChild(headerRow);
-                            Object.entries(data).forEach(([key, value]) => {
-                                // Unpack the top_odds object and add each key-value pair as a row in the table
-                                if (key === 'top_odds') {
-                                    Object.entries(value).forEach(([index, top_odds]) => {
-                                        console.log(top_odds); // Debugging log
-                                        Object.entries(top_odds).forEach(([field, value]) => {
-                                            console.log('Field:', field);
-                                            console.log('Value:', value);
-                                            const row = document.createElement('tr');
-                                            const cell1 = document.createElement('td');
-                                            cell1.textContent = field;
-                                            row.appendChild(cell1);
-                                            const cell2 = document.createElement('td');
-                                            cell2.textContent = value.toString();
-                                            row.appendChild(cell2);
-                                            table.appendChild(row);
-                                        });
-                                    });
-                                    return;
-                                }
-                                const row = document.createElement('tr');
-                                const cell1 = document.createElement('td');
-                                cell1.textContent = key;
-                                row.appendChild(cell1);
-                                const cell2 = document.createElement('td');
-                                cell2.textContent = value;
-                                row.appendChild(cell2);
-                                table.appendChild(row);
-                            });
-                            infoContainer.style.overflowY = 'auto';
-                            infoContainer.appendChild(table);
-                        }
-                    )
-                    .catch(error => console.error('Error loading allele info:', error));
+                getInfoTable(nodeData);
             }
         }
     );
