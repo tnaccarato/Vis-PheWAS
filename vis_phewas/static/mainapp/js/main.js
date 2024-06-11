@@ -328,6 +328,49 @@ document.addEventListener('DOMContentLoaded', function () {
         const allele = nodeData.label;
         const encodedAllele = encodeURIComponent(allele);
         const url = `/api/get-info/?allele=${encodedAllele}`;
+
+        function getTopOddsTable(top_odds) {
+            // Create a heading for the table
+            const heading = document.createElement('h4');
+            heading.textContent = 'Top Odds Ratios for Allele';
+            // Append the heading to the info container
+            const infoContainer = document.getElementsByClassName('info-container')[0];
+            infoContainer.appendChild(heading);
+
+            // Create the table element
+            const table = document.createElement('table');
+            table.className = 'top-odds-table table table-striped table-bordered table-hover table-sm';
+
+            // Create the header row
+            const headerRow = document.createElement('tr');
+            const header1 = document.createElement('th');
+            header1.textContent = 'Disease';
+            headerRow.appendChild(header1);
+            const header2 = document.createElement('th');
+            header2.textContent = 'Odds Ratio';
+            headerRow.appendChild(header2);
+            table.appendChild(headerRow);
+
+            // Unpack the top_odds object and add each key-value pair as a row in the table
+            top_odds.forEach(odds => {
+                // Create a row element
+                const row = document.createElement('tr');
+                const diseaseCell = document.createElement('td');
+                // Get the disease name from the odds object
+                diseaseCell.textContent = odds.phewas_string;
+                row.appendChild(diseaseCell);
+                // Get the odds ratio from the odds object
+                const oddsCell = document.createElement('td');
+                oddsCell.textContent = odds.odds_ratio.toString();
+                row.appendChild(oddsCell);
+                // Append the row to the table
+                table.appendChild(row);
+            });
+
+            // Append the table to the info container
+            infoContainer.appendChild(table);
+        }
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -341,26 +384,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     header2.textContent = 'Value';
                     headerRow.appendChild(header2);
                     table.appendChild(headerRow);
-                    Object.entries(data).forEach(([key, value]) => {
-                        // Unpack the top_odds object and add each key-value pair as a row in the table
-                        if (key === 'top_odds') {
-                            Object.entries(value).forEach(([index, top_odds]) => {
-                                console.log(top_odds); // Debugging log
-                                Object.entries(top_odds).forEach(([field, value]) => {
-                                    console.log('Field:', field);
-                                    console.log('Value:', value);
-                                    const row = document.createElement('tr');
-                                    const cell1 = document.createElement('td');
-                                    cell1.textContent = field;
-                                    row.appendChild(cell1);
-                                    const cell2 = document.createElement('td');
-                                    cell2.textContent = value.toString();
-                                    row.appendChild(cell2);
-                                    table.appendChild(row);
-                                });
-                            });
-                            return;
-                        }
+                    // Separate top_odds object from the rest of the data
+                    const {top_odds, ...otherData} = data;
+                    // Loop through the otherData object and add each key-value pair as a row in the table
+                    Object.entries(otherData).forEach(([key, value]) => {
                         const row = document.createElement('tr');
                         const cell1 = document.createElement('td');
                         cell1.textContent = key;
@@ -372,6 +399,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     infoContainer.style.overflowY = 'auto';
                     infoContainer.appendChild(table);
+                    getTopOddsTable(top_odds)
                 }
             )
             .catch(error => console.error('Error loading allele info:', error));
@@ -436,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
         sigmaInstance.refresh();
     });
 
-    // Function to sanitize the filters
+    // Function to sanitize the filters for the export query
     function sanitizeFilter(filter) {
         return filter.replace(/&/g, 'and').replace(/</g, 'lt').replace(/>/g, 'gt')
     }
