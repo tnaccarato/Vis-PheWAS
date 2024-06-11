@@ -131,7 +131,7 @@ def get_allele_data(disease_id, filters) -> tuple:
     ).distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
-    # Order by maf and then slice
+    # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     nodes = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for
@@ -163,36 +163,35 @@ def get_info(request) -> JsonResponse:
 
 def export_query(request):
     """
-    Export the filtered data to a CSV file.
+    Export the query results to a CSV file.
     :param request:
     :return:
     """
     # Get the filters from the request
     filters = request.GET.get('filters', '')
-    print(filters)
-
-    # Get the queryset
+    # Get the queryset and apply the filters
     queryset = HlaPheWasCatalog.objects.all()
-
-    # Apply the filters
     filtered_queryset = apply_filters(queryset, filters)
-
-    # Convert the queryset to a pandas DataFrame
+    # Convert the queryset to a DataFrame
     df = pd.DataFrame(list(filtered_queryset.values()))
 
     # Drop the 'id' column if it exists
     if 'id' in df.columns:
         df.drop(columns=['id'], inplace=True)
 
-    # Create the CSV file
+    # Create the HTTP response
     response = HttpResponse(content_type='text/csv')
-    # Set filename annotated with filters selected
-    response['Content-Disposition'] = f'attachment; filename="exported_data_{filters if filters else "full"}.csv"'
-    response['Content-Length'] = filtered_queryset.count()
+    # Set the headers for the response
+    response['Content-Disposition'] = 'attachment; filename="exported_data.csv"'
+    response['Dataset-Length'] = str(filtered_queryset.count())
+
+    # Write the DataFrame to the response
     df.to_csv(path_or_buf=response, index=False)
 
+    # Return the response
     return response
 
-from django.http import JsonResponse
+
+
 
 
