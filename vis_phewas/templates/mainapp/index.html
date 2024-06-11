@@ -10,6 +10,12 @@
             <!-- Sigma container box and toolbar -->
             <div class="col-md-6 left-column">
                 <div id="sigma-container"></div>
+                <div id="toolbar-buttons">
+                    <button class="button btn btn-primary" onclick="addFilter()">Add Filter</button>
+                    <button class="button btn btn-primary" onclick="clearFilters()">Clear Filters</button>
+                    <button class="button btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                    <button class="button btn btn-primary" onclick="exportQuery()">Export Query</button>
+                </div>
                 <div class="toolbar-wrapper">
                     {% include 'mainapp/toolbar.html' %}
                 </div>
