@@ -188,6 +188,11 @@ def export_query(request):
     response = HttpResponse(content_type='text/csv')
     # Set filename annotated with filters selected
     response['Content-Disposition'] = f'attachment; filename="exported_data_{filters if filters else "full"}.csv"'
+    response['Content-Length'] = filtered_queryset.count()
     df.to_csv(path_or_buf=response, index=False)
 
     return response
+
+from django.http import JsonResponse
+
+
