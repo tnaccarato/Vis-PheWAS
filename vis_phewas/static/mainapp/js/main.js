@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
             filterGroup.appendChild(filterInputContainer);
 
             const minusButton = document.createElement('button');
+            minusButton.className = 'btn btn-danger';
             minusButton.textContent = '-';
             minusButton.onclick = function () {
                 removeFilter(minusButton);
@@ -212,6 +213,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clear the info container
         const infoContainer = document.getElementsByClassName('info-container')[0];
         infoContainer.innerHTML = 'Click on an allele to display information';
+        // Hide the toolbar
+        const toolbar = document.getElementsByClassName('toolbar')[0];
+        toolbar.style.display = 'none';
         fetchGraphData();
     };
 
