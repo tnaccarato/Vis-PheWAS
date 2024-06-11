@@ -206,6 +206,9 @@ document.addEventListener('DOMContentLoaded', function () {
             group.remove();
         });
         filterCount = 0;
+        // Clear the info container
+        const infoContainer = document.getElementsByClassName('info-container')[0];
+        infoContainer.innerHTML = 'Click on an allele to display information';
         fetchGraphData();
     };
 
