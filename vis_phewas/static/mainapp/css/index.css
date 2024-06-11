@@ -56,7 +56,7 @@ body {
 }
 
 .toolbar {
-    padding: 10px;
+    padding-top: 10px;
     border-top: 1px solid #ccc;
     background-color: #f9f9f9;
 }
@@ -150,6 +150,9 @@ body {
 #toolbar-buttons {
     display: flex;
     justify-content: center;
+    background-color: aliceblue;
+    padding-top: 1%;
+    padding-bottom: 1%;
 }
 
 #toolbar-buttons button {
