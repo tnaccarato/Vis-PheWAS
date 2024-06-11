@@ -1,10 +1,11 @@
 import urllib.parse
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from .models import HlaPheWasCatalog
+import pandas as pd
 
 
 def index(request) -> render:
@@ -54,7 +55,7 @@ def apply_filters(queryset, filters):
     print("Filters:", filters)
 
     # If no filters are provided, return the queryset as is
-    if not filters:
+    if not filters or filters == 'undefined':
         return queryset
 
     # Split the filters string into a list of filter strings
@@ -139,6 +140,7 @@ def get_allele_data(disease_id, filters) -> tuple:
              filtered_queryset]
     return nodes, edges
 
+
 def get_info(request) -> JsonResponse:
     """
     Get the allele data for the selected allele.
@@ -152,7 +154,40 @@ def get_info(request) -> JsonResponse:
         'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
     ).distinct()[0]
     # Gets the 5 highest maf values for the allele annotated with the disease
-    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by('-odds_ratio')[:5]
+    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by(
+        '-odds_ratio')[:5]
     allele_data['top_odds'] = list(top_odds)
     # Return the allele data in json format
     return JsonResponse(allele_data)
+
+
+def export_query(request):
+    """
+    Export the filtered data to a CSV file.
+    :param request:
+    :return:
+    """
+    # Get the filters from the request
+    filters = request.GET.get('filters', '')
+    print(filters)
+
+    # Get the queryset
+    queryset = HlaPheWasCatalog.objects.all()
+
+    # Apply the filters
+    filtered_queryset = apply_filters(queryset, filters)
+
+    # Convert the queryset to a pandas DataFrame
+    df = pd.DataFrame(list(filtered_queryset.values()))
+
+    # Drop the 'id' column if it exists
+    if 'id' in df.columns:
+        df.drop(columns=['id'], inplace=True)
+
+    # Create the CSV file
+    response = HttpResponse(content_type='text/csv')
+    # Set filename annotated with filters selected
+    response['Content-Disposition'] = f'attachment; filename="exported_data_{filters if filters else "full"}.csv"'
+    df.to_csv(path_or_buf=response, index=False)
+
+    return response
