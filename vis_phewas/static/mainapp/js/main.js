@@ -114,10 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const filterGroup = document.createElement('div');
             filterGroup.className = 'filter-group';
 
-            const label = document.createElement('label');
-            label.textContent = 'Field:';
-            filterGroup.appendChild(label);
-
             const select = document.createElement('select');
             select.className = 'field-select';
             select.onchange = function () {

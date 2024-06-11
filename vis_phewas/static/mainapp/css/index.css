@@ -132,3 +132,12 @@ body {
         padding: 5px; /* Reduce padding for toolbar */
     }
 }
+
+#toolbar-buttons{
+    display: flex;
+    justify-content: center;
+}
+
+#toolbar-buttons button {
+    margin: 0 5px;
+}
