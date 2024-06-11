@@ -55,7 +55,7 @@ def apply_filters(queryset, filters):
     print("Filters:", filters)
 
     # If no filters are provided, return the queryset as is
-    if not filters or filters == 'undefined':
+    if not filters:
         return queryset
 
     # Split the filters string into a list of filter strings
