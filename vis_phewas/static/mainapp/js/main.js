@@ -186,12 +186,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.applyFilters = function () {
         push_filters();
+        const message = filters.length > 0 ? `Applying filters: ${filters.join(', ')}` : 'No filters applied';
+        showAlert(message);
 
         console.log('Filters:', filters); // Debugging log
 
         fetchGraphData({type: 'initial', filters});
         updateGraph();
         sigmaInstance.refresh();
+
     };
 
 
@@ -432,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const length = response.headers.get('Dataset-Length');
                 // Construct the alert message
                 const filtersDisplay = filters.length > 0 ? filters.join(', ') : 'None';
-                const alertMessage = `Exporting Data...<br>Filters selected: ${filtersDisplay}<br>Dataset length: ${length}`;
+                const alertMessage = `Exporting Data...<br><b>Filters selected:</b> ${filtersDisplay}<br><b>Dataset length:</b> ${length}`;
                 showAlert(alertMessage);
                 // Return the response as a blob object
                 return response.blob();
@@ -459,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alertContainer.innerHTML = `
         <div class="alert alert-info alert-dismissible fade show" role="alert" style="margin: 0">
             ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close align-center" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `;
     }
