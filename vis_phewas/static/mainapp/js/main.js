@@ -108,6 +108,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.addFilter = function () {
         console.log('Filter count:', filterCount); // Debugging log
+        // Show the toolbar if it is hidden
+        const toolbar = document.getElementsByClassName('toolbar')[0];
+        toolbar.style.display = 'block';
         if (filterCount >= 8) {
             alert('Maximum of 8 filters allowed');
         } else {
