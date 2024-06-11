@@ -57,7 +57,6 @@ body {
 
 .toolbar {
     padding-top: 10px;
-    border-top: 1px solid #ccc;
     background-color: #f9f9f9;
 }
 
@@ -88,6 +87,10 @@ body {
 
 .toolbar-wrapper {
     width: 100%;
+    max-height: 50%;
+    overflow-y: auto;
+    overflow-x: hidden;
+
 }
 
 #filters-container {
@@ -149,10 +152,13 @@ body {
 
 #toolbar-buttons {
     display: flex;
+    width: 100%;
     justify-content: center;
     background-color: aliceblue;
     padding-top: 1%;
     padding-bottom: 1%;
+    border-bottom: 1px solid #ccc;
+
 }
 
 #toolbar-buttons button {
