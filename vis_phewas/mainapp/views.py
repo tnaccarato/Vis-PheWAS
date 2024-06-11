@@ -29,7 +29,6 @@ def graph_data(request) -> JsonResponse:
     if filters == ['']:
         filters = []
 
-    print(filters)
     if data_type == 'initial':
         nodes, edges = get_initial_data(filters)
     elif data_type == 'diseases':
@@ -91,7 +90,6 @@ def get_initial_data(filters) -> tuple:
     :param filters:
     :return:
     """
-    categories = HlaPheWasCatalog.objects.values('category_string').distinct()
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
     nodes = [{'id': f"cat-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
