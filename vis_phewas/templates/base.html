@@ -1,13 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title> Vis-PheWAS - {% block title %}{% endblock %} </title>
     {% block head %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'base.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 </head>
 <body>
-<div id="alert-container" style="margin: "></div>
+<div id="alert-container" style="margin: 0"></div>
     {% block content %}{% endblock %}
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

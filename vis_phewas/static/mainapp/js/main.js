@@ -186,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.applyFilters = function () {
         push_filters();
+        // Display a dismissible alert message for confirmation of filters applied
         const message = filters.length > 0 ? `Applying filters: ${filters.join(', ')}` : 'No filters applied';
         showAlert(message);
 
