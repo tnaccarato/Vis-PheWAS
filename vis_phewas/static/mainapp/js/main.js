@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyLayout() {
-        const settings = {iterations: 100, settings: {gravity: 0.5, scalingRatio: 2.0}};
+        const settings = {iterations: 100, settings: {gravity: 0.5, scalingRatio: 1.0}};
         forceAtlas2.assign(graph, settings);
         sigmaInstance.refresh();
     }
@@ -507,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const a = document.createElement('a');
                 a.href = downloadUrl;
                 console.log(filters.join('&'))
-                a.download = 'exported_data_' + (filters.length > 0 ? filters.map(sanitizeFilter).join('_') : 'full') + '.csv';
+                a.download = 'exported_data.csv';
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
