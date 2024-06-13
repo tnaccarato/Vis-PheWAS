@@ -494,6 +494,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(url)
                 // Get the dataset length from the response headers
                 const length = response.headers.get('Dataset-Length');
+                if (length === '0'){
+                    showAlert('No data to export');
+                    return;
+                }
                 // Construct the alert message
                 const filtersDisplay = filters.length > 0 ? filters.join(', ') : 'None';
                 const alertMessage = `Exporting Data...<br><b>Filters selected:</b> ${filtersDisplay}<br><b>Dataset length:</b> ${length}`;
@@ -506,7 +510,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                console.log(filters.join('&'))
                 a.download = 'exported_data.csv';
                 document.body.appendChild(a);
                 a.click();
