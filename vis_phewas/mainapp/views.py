@@ -1,4 +1,5 @@
 import urllib.parse
+from io import StringIO
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -167,9 +168,11 @@ def export_query(request):
     """
     # Get the filters from the request
     filters = request.GET.get('filters', '')
+
     # Get the queryset and apply the filters
     queryset = HlaPheWasCatalog.objects.all()
     filtered_queryset = apply_filters(queryset, filters)
+
     # Convert the queryset to a DataFrame
     df = pd.DataFrame(list(filtered_queryset.values()))
 
@@ -183,11 +186,18 @@ def export_query(request):
     response['Content-Disposition'] = 'attachment; filename="exported_data.csv"'
     response['Dataset-Length'] = str(filtered_queryset.count())
 
-    # Write the DataFrame to the response
-    df.to_csv(path_or_buf=response, index=False)
+    # Use StringIO to write the filters at the top of the file
+    buffer = StringIO()
+    buffer.write(f"Filters: {filters}\n\n")
+    df.to_csv(buffer, index=False)
+    csv_content = buffer.getvalue()
+
+    # Write the CSV content to the response
+    response.write(csv_content)
 
     # Return the response
     return response
+
 
 
 
