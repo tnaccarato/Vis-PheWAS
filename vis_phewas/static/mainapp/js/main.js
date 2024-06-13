@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
-                    label: node.label,
+                    label: node.label.replace('HLA_', ''),
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function () {
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
-                    label: node.label,
+                    label: node.label.replace('HLA_', ''),
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
