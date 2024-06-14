@@ -148,6 +148,7 @@ def get_info(request) -> JsonResponse:
     """
     # Get allele from request
     allele = request.GET.get('allele')
+    allele = 'HLA_' + allele
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele).values(
         'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
