@@ -150,7 +150,7 @@ def get_info(request) -> JsonResponse:
     allele = request.GET.get('allele')
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele).values(
-        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
+        'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
     ).distinct()[0]
     # Gets the 5 highest maf values for the allele annotated with the disease
     top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by(
