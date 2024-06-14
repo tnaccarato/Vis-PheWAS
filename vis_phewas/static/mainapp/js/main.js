@@ -250,12 +250,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label.replace('HLA_', ''),
+                    full_label: node.label,
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 10,
                     hidden: false, // Initially set to false
-                    color: getNodeColor(node)
+                    color: getNodeColor(node),
+                    parent_node: node.parent
                 });
             }
         });
@@ -276,11 +278,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label.replace('HLA_', ''),
+                    full_label: node.label,
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     size: 8,
-                    color: getNodeColor(node)
+                    color: getNodeColor(node),
+                    parent_node: node.parent
                 });
             }
         });
@@ -318,16 +322,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getInfoTable(nodeData) {
         const infoContainer = document.getElementsByClassName('info-container')[0];
+        console.log('Node data:', nodeData.full_label); // Debugging log
         // Clear the container
         infoContainer.innerHTML = '';
         const title = document.createElement('h3');
         // Gets title from nodeData
-        title.textContent = nodeData.label + ' Information';
+        title.textContent = nodeData.full_label + ' Information';
         // Aligns the title to the center
         title.style.textAlign = 'center';
         infoContainer.appendChild(title);
         // Fetch data from the API for the allele
-        const allele = nodeData.label;
+        const allele = nodeData.full_label;
         const encodedAllele = encodeURIComponent(allele);
         const url = `/api/get-info/?allele=${encodedAllele}`;
 
