@@ -93,6 +93,8 @@ def get_initial_data(filters) -> tuple:
     """
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
+    # Sort the queryset by category_string
+    filtered_queryset = filtered_queryset.order_by('category_string')
     nodes = [{'id': f"cat-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
               'node_type': 'category'} for category in filtered_queryset]
     edges = []
@@ -110,6 +112,8 @@ def get_disease_data(category_id, filters) -> tuple:
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
+    # Sort the queryset by phewas_string
+    filtered_queryset = filtered_queryset.order_by('phewas_string')
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
               'node_type': 'disease'} for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
@@ -150,9 +154,8 @@ def get_info(request) -> JsonResponse:
     allele = request.GET.get('allele')
     # Get the disease from the request
     disease = request.GET.get('disease')
-    category = request.GET.get('category')
     # Get the allele data
-    allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease, category_string=category).values(
+    allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
         'gene_class', 'gene_name', 'serotype','subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
         'controls', 'p', 'l95', 'u95', 'maf'
     ).distinct()[0]
