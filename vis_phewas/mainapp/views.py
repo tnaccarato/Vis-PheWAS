@@ -148,9 +148,13 @@ def get_info(request) -> JsonResponse:
     """
     # Get allele from request
     allele = request.GET.get('allele')
+    # Get the disease from the request
+    disease = request.GET.get('disease')
+    category = request.GET.get('category')
     # Get the allele data
-    allele_data = HlaPheWasCatalog.objects.filter(snp=allele).values(
-        'gene_class', 'gene_name', 'serotype','subtype', 'a1', 'a2', 'cases', 'controls', 'p', 'l95', 'u95', 'maf'
+    allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease, category_string=category).values(
+        'gene_class', 'gene_name', 'serotype','subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
+        'controls', 'p', 'l95', 'u95', 'maf'
     ).distinct()[0]
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')

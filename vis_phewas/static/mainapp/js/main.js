@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+
         edges.forEach(edge => {
             if (!graph.hasEdge(edge.id)) {
                 graph.addEdge(edge.source, edge.target);
@@ -322,7 +323,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getInfoTable(nodeData) {
         const infoContainer = document.getElementsByClassName('info-container')[0];
-        console.log('Node data:', nodeData.full_label); // Debugging log
+        console.log('Node data:', nodeData); // Debugging log
+        const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`
+        console.log('Selected node:', selectedNode); // Debugging log
+        // Get edges connected to the node
+        const edges = graph.edges().filter(edge => {
+            const source = graph.source(edge);
+            const target = graph.target(edge);
+            console.log(`Edge: ${edge}, Source: ${source}, Target: ${target}`);
+            return source === selectedNode || target === selectedNode;
+        });
+        console.log('Edges:', edges); // Debugging log
+        // Gets the disease node connected to the allele node
+        const diseaseNode = edges.map(edge => {
+                return graph.source(edge) === selectedNode ? graph.target(edge) : graph.source(edge);
+            }
+        )[0];
+        console.log(diseaseNode)
+        // Gets the edges connected to the disease node
+        const diseaseEdges = graph.edges().filter(edge => {
+            const source = graph.source(edge);
+            const target = graph.target(edge);
+            return source === diseaseNode || target === diseaseNode;
+        }
+        );
+        console.log(diseaseEdges)
+        // Gets the category node connected to the disease node
+        const categoryNode = diseaseEdges.map(edge => {
+                return graph.source(edge) === diseaseNode ? graph.target(edge) : graph.source(edge);
+            }
+        )[0];
+        console.log(categoryNode)
         // Clear the container
         infoContainer.innerHTML = '';
         const title = document.createElement('h3');
@@ -333,8 +364,12 @@ document.addEventListener('DOMContentLoaded', function () {
         infoContainer.appendChild(title);
         // Fetch data from the API for the allele
         const allele = nodeData.full_label;
+        const disease = graph.getNodeAttributes(diseaseNode).full_label;
+        const category = graph.getNodeAttributes(categoryNode).full_label;
         const encodedAllele = encodeURIComponent(allele);
-        const url = `/api/get-info/?allele=${encodedAllele}`;
+        const encodedDisease = encodeURIComponent(disease);
+        const encodedCategory = encodeURIComponent(category);
+        const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}&category=${encodedCategory}`;
 
         function getTopOddsTable(top_odds) {
             // Create a heading for the table
@@ -499,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(url)
                 // Get the dataset length from the response headers
                 const length = response.headers.get('Dataset-Length');
-                if (length === '0'){
+                if (length === '0') {
                     showAlert('No data to export');
                     return;
                 }
