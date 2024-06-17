@@ -245,43 +245,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initializeGraph(nodes, edges) {
-    // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
-    const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
+        // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
+        const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
 
-    // Calculate center and radius based on container dimensions
-    const centerX = container.offsetWidth / 2;
-    const centerY = container.offsetHeight / 2;
-    const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
+        // Calculate center and radius based on container dimensions
+        const centerX = container.offsetWidth / 2;
+        const centerY = container.offsetHeight / 2;
+        const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
 
-    // Clear any existing graph data
-    graph.clear();
+        // Clear any existing graph data
+        graph.clear();
 
-    // Loop through nodes to position them in a circle starting at 12 o'clock
-    nodes.forEach((node, nodeNumber) => {
-        if (!graph.hasNode(node.id)) {
-            // Calculate the angle with an offset to start at 12 o'clock
-            const angle = (2 * Math.PI * nodeNumber / nodes.length) - Math.PI / 2;
-            // Calculate x and y coordinates based on the angle
-            const x = centerX + radius * Math.cos(angle);
-            const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
+        // Loop through nodes to position them in a circle starting at 12 o'clock
+        nodes.forEach((node, nodeNumber) => {
+            if (!graph.hasNode(node.id)) {
+                // Calculate the angle with an offset to start at 12 o'clock
+                const angle = (2 * Math.PI * nodeNumber / nodes.length) - Math.PI / 2;
+                // Calculate x and y coordinates based on the angle
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
 
-            // Debugging log to check angles and positions
-            console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
+                // Debugging log to check angles and positions
+                console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
 
-            // Add node to the graph with calculated positions
-            graph.addNode(node.id, {
-                label: node.label.replace('HLA_', ''), // Assuming label cleanup
-                full_label: node.label,
-                node_type: node.node_type,
-                x: x,
-                y: y,
-                size: 10,
-                hidden: false,
-                color: getNodeColor(node),
-            });
-        }
-    });
-
+                // Add node to the graph with calculated positions
+                graph.addNode(node.id, {
+                    label: node.label.replace('HLA_', ''), // Assuming label cleanup
+                    full_label: node.label,
+                    node_type: node.node_type,
+                    x: x,
+                    y: y,
+                    size: 10,
+                    hidden: false,
+                    color: getNodeColor(node),
+                });
+            }
+        });
 
 
         edges.forEach(edge => {
@@ -336,7 +335,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyLayout() {
-        const settings = {iterations: 100, settings: {gravity: 0.5, scalingRatio: 1.0}};
+        const settings = {
+            iterations: 100,
+            settings: {
+                gravity: 0.5,
+                scalingRatio: 2.0,
+                barnesHutOptimize: true,
+                barnesHutTheta: 0.5
+            }
+        };
         forceAtlas2.assign(graph, settings);
         sigmaInstance.refresh();
     }
@@ -466,6 +473,16 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (nodeData.node_type === 'disease') {
                 fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters});
             } else if (nodeData.node_type === 'allele') {
+                const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
+                leftColumn.style.width = '50%';
+                adjustSigmaContainerHeight();
+                const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+                rightColumn.style.width = '50%';
+                rightColumn.style.display = 'inline-block';
+                const infoPanel = document.getElementsByClassName('info-container')[0];
+                infoPanel.style.display = 'inline-block';
+                infoPanel.style.width = '50%';
+                // Resize the Sigma container
                 getInfoTable(nodeData);
             }
         }

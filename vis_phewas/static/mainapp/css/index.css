@@ -17,6 +17,8 @@ html, body, .container-fluid {
 
 .col-md-6.left-column {
     padding: 0;
+    width: 100%; /* Full width initially */
+    transition: width 0.5s ease; /* Smooth transition for width change */
 }
 
 #sigma-container {
@@ -28,15 +30,17 @@ html, body, .container-fluid {
     display: flex;
     flex-direction: column;
     background-color: lightgray;
-    height: 100vh;
+    height: 100%;
     padding: 0;
+    overflow-y: auto;
 }
 
 #info-container {
-    width: 100%;
     max-width: 100%;
     height: 100%;
-    overflow-x: auto;
+    display: none; /* Hide the right panel initially */
+    width: 50%;
+    transition: width 0.5s ease; /* Smooth transition for width change */
     overflow-y: auto;
 }
 
