@@ -377,12 +377,28 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(diseaseEdges)
         // Clear the container
         infoContainer.innerHTML = '';
+        const closeButton = document.createElement('button');
+        closeButton.className = 'btn btn-danger';
+        closeButton.textContent = 'X';
+        closeButton.onclick = function () {
+            const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
+            leftColumn.style.width = '100%';
+            // Resize the Sigma container
+            adjustSigmaContainerHeight();
+            const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+            rightColumn.style.display = 'none';
+            const infoPanel = document.getElementsByClassName('info-container')[0];
+            infoPanel.style.display = 'none';
+        }
+        infoContainer.appendChild(closeButton);
         const title = document.createElement('h3');
         // Gets title from nodeData
         title.textContent = nodeData.full_label + ' Information';
         // Aligns the title to the center
         title.style.textAlign = 'center';
         infoContainer.appendChild(title);
+        // Add a close button to the info container
+
         // Fetch data from the API for the allele
         const allele = nodeData.full_label;
         const disease = graph.getNodeAttributes(diseaseNode).full_label;
@@ -474,15 +490,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters});
             } else if (nodeData.node_type === 'allele') {
                 const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
-                leftColumn.style.width = '50%';
+                leftColumn.style.width = '70%';
+                // Resize the Sigma container
                 adjustSigmaContainerHeight();
                 const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
-                rightColumn.style.width = '50%';
+                rightColumn.style.width = '30%';
                 rightColumn.style.display = 'inline-block';
                 const infoPanel = document.getElementsByClassName('info-container')[0];
                 infoPanel.style.display = 'inline-block';
-                infoPanel.style.width = '50%';
-                // Resize the Sigma container
                 getInfoTable(nodeData);
             }
         }
