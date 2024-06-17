@@ -245,22 +245,43 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initializeGraph(nodes, edges) {
-        graph.clear();
-        nodes.forEach(node => {
-            if (!graph.hasNode(node.id)) {
-                graph.addNode(node.id, {
-                    label: node.label.replace('HLA_', ''),
-                    full_label: node.label,
-                    node_type: node.node_type,
-                    x: Math.random() * 100,
-                    y: Math.random() * 100,
-                    size: 10,
-                    hidden: false, // Initially set to false
-                    color: getNodeColor(node),
-                    parent_node: node.parent
-                });
-            }
-        });
+    // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
+    const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
+
+    // Calculate center and radius based on container dimensions
+    const centerX = container.offsetWidth / 2;
+    const centerY = container.offsetHeight / 2;
+    const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
+
+    // Clear any existing graph data
+    graph.clear();
+
+    // Loop through nodes to position them in a circle starting at 12 o'clock
+    nodes.forEach((node, nodeNumber) => {
+        if (!graph.hasNode(node.id)) {
+            // Calculate the angle with an offset to start at 12 o'clock
+            const angle = (2 * Math.PI * nodeNumber / nodes.length) - Math.PI / 2;
+            // Calculate x and y coordinates based on the angle
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
+
+            // Debugging log to check angles and positions
+            console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
+
+            // Add node to the graph with calculated positions
+            graph.addNode(node.id, {
+                label: node.label.replace('HLA_', ''), // Assuming label cleanup
+                full_label: node.label,
+                node_type: node.node_type,
+                x: x,
+                y: y,
+                size: 10,
+                hidden: false,
+                color: getNodeColor(node),
+            });
+        }
+    });
+
 
 
         edges.forEach(edge => {
@@ -285,7 +306,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: Math.random() * 100,
                     size: 8,
                     color: getNodeColor(node),
-                    parent_node: node.parent
                 });
             }
         });
@@ -342,18 +362,12 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(diseaseNode)
         // Gets the edges connected to the disease node
         const diseaseEdges = graph.edges().filter(edge => {
-            const source = graph.source(edge);
-            const target = graph.target(edge);
-            return source === diseaseNode || target === diseaseNode;
-        }
+                const source = graph.source(edge);
+                const target = graph.target(edge);
+                return source === diseaseNode || target === diseaseNode;
+            }
         );
         console.log(diseaseEdges)
-        // Gets the category node connected to the disease node
-        const categoryNode = diseaseEdges.map(edge => {
-                return graph.source(edge) === diseaseNode ? graph.target(edge) : graph.source(edge);
-            }
-        )[0];
-        console.log(categoryNode)
         // Clear the container
         infoContainer.innerHTML = '';
         const title = document.createElement('h3');
@@ -365,11 +379,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Fetch data from the API for the allele
         const allele = nodeData.full_label;
         const disease = graph.getNodeAttributes(diseaseNode).full_label;
-        const category = graph.getNodeAttributes(categoryNode).full_label;
         const encodedAllele = encodeURIComponent(allele);
         const encodedDisease = encodeURIComponent(disease);
-        const encodedCategory = encodeURIComponent(category);
-        const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}&category=${encodedCategory}`;
+        const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
         function getTopOddsTable(top_odds) {
             // Create a heading for the table
