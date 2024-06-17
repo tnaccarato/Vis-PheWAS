@@ -56,7 +56,7 @@ def apply_filters(queryset, filters):
 
     # If no filters are provided, return the queryset as is
     if not filters:
-        return queryset
+        return queryset.filter(**{'p__lte': '0.05'})
 
     # Split the filters string into a list of filter strings
     filters = filters.split(',')
@@ -82,7 +82,7 @@ def apply_filters(queryset, filters):
 
     print("Filtered queryset length:", len(queryset))
     # Return the filtered queryset
-    return queryset
+    return queryset.filter(**{'p__lte': '0.05'})
 
 
 def get_initial_data(filters) -> tuple:
