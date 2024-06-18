@@ -31,7 +31,7 @@ def graph_data(request) -> JsonResponse:
         filters = []
 
     if data_type == 'initial':
-        nodes, edges = get_initial_data(filters)
+        nodes, edges = get_category_data(filters)
     elif data_type == 'diseases':
         category_id = request.GET.get('category_id')
         nodes, edges = get_disease_data(category_id, filters)
@@ -85,9 +85,9 @@ def apply_filters(queryset, filters):
     return queryset.filter(**{'p__lte': '0.05'})
 
 
-def get_initial_data(filters) -> tuple:
+def get_category_data(filters) -> tuple:
     """
-    Get the initial data for the graph.
+    Get the category data for the graph.
     :param filters:
     :return:
     """
