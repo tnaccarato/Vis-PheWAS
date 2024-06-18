@@ -31,6 +31,19 @@ function push_filters() {
     });
 }
 
+function closeInfoContainer(adjustSigmaContainerHeight) {
+    return function () {
+        const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
+        leftColumn.style.width = '100%';
+        // Resize the Sigma container
+        adjustSigmaContainerHeight();
+        const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+        rightColumn.style.display = 'none';
+        const infoPanel = document.getElementsByClassName('info-container')[0];
+        infoPanel.style.display = 'none';
+    };
+}
+
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Define the filter logic functions
@@ -211,8 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         filterCount = 0;
         // Clear the info container
-        const infoContainer = document.getElementsByClassName('info-container')[0];
-        infoContainer.innerHTML = 'Click on an allele to display information';
+        closeInfoContainer(adjustSigmaContainerHeight)();
         // Hide the toolbar
         const toolbar = document.getElementsByClassName('toolbar')[0];
         toolbar.style.display = 'none';
@@ -380,16 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const closeButton = document.createElement('button');
         closeButton.className = 'btn btn-danger';
         closeButton.textContent = 'X';
-        closeButton.onclick = function () {
-            const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
-            leftColumn.style.width = '100%';
-            // Resize the Sigma container
-            adjustSigmaContainerHeight();
-            const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
-            rightColumn.style.display = 'none';
-            const infoPanel = document.getElementsByClassName('info-container')[0];
-            infoPanel.style.display = 'none';
-        }
+        closeButton.onclick = closeInfoContainer(adjustSigmaContainerHeight)
         infoContainer.appendChild(closeButton);
         const title = document.createElement('h3');
         // Gets title from nodeData
