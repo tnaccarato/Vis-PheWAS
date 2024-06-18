@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (params.type) {
-                    updateGraph(data.nodes, data.edges, data.visible);
+                    updateGraph(data.nodes, data.edges, data.visible, params.clicked);
                 } else {
                     initializeGraph(data.nodes, data.edges, data.visible);
                 }
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Loop through nodes to position them in a circle starting at 12 o'clock
         nodes.forEach((node, nodeNumber) => {
-            if (!node in visible){
+            if (!node in visible) {
                 return;
             }
             if (!graph.hasNode(node.id)) {
@@ -310,23 +310,25 @@ document.addEventListener('DOMContentLoaded', function () {
         applyLayout();
     }
 
-    function updateGraph(nodes, edges, visible) {
+    function updateGraph(nodes, edges, visible, clicked) {
         console.log(visible)
         // Get all nodes and edges in the graph
         const graphNodes = graph.nodes();
         const graphEdges = graph.edges();
 
-        // Hide all nodes and edges
-        graphNodes.forEach(node => {
-            graph.setNodeAttribute(node, 'hidden', true);
-        }
-        );
-        graphEdges.forEach(edge => {
-            graph.setEdgeAttribute(edge, 'hidden', true);
-        }
-        );
+        if (!clicked) {
+            // Hide all nodes and edges
+            graphNodes.forEach(node => {
+                    graph.setNodeAttribute(node, 'hidden', true);
+                }
+            );
+            graphEdges.forEach(edge => {
+                    graph.setEdgeAttribute(edge, 'hidden', true);
+                }
+            );
 
         sigmaInstance.refresh()
+            }
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
@@ -509,9 +511,9 @@ document.addEventListener('DOMContentLoaded', function () {
     sigmaInstance.on('clickNode', ({node}) => {
             const nodeData = graph.getNodeAttributes(node);
             if (nodeData.node_type === 'category') {
-                fetchGraphData({type: 'diseases', category_id: node, filters: filters});
+                fetchGraphData({type: 'diseases', category_id: node, filters: filters, clicked: true});
             } else if (nodeData.node_type === 'disease') {
-                fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters});
+                fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters, clicked: true});
             } else if (nodeData.node_type === 'allele') {
                 const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
                 leftColumn.style.width = '70%';
