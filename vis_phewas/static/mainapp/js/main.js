@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Filters:', filters); // Debugging log
 
         fetchGraphData({type: 'initial', filters});
-        updateGraph();
+
         sigmaInstance.refresh();
 
     };
@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchGraphData()
 
     function fetchGraphData(params = {}) {
+        console.log('Params:', params); // Debugging log
         const query = new URLSearchParams(params).toString();
         const url = '/api/graph-data/' + (query ? '?' + query : '');
 
@@ -248,15 +249,15 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (params.type) {
-                    updateGraph(data.nodes, data.edges);
+                    updateGraph(data.nodes, data.edges, data.visible);
                 } else {
-                    initializeGraph(data.nodes, data.edges);
+                    initializeGraph(data.nodes, data.edges, data.visible);
                 }
             })
             .catch(error => console.error('Error loading graph data:', error));
     }
 
-    function initializeGraph(nodes, edges) {
+    function initializeGraph(nodes, edges, visible) {
         // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
         const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
 
@@ -270,6 +271,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Loop through nodes to position them in a circle starting at 12 o'clock
         nodes.forEach((node, nodeNumber) => {
+            if (!node in visible){
+                return;
+            }
             if (!graph.hasNode(node.id)) {
                 // Calculate the angle with an offset to start at 12 o'clock
                 const angle = (2 * Math.PI * nodeNumber / nodes.length) - Math.PI / 2;
@@ -306,7 +310,23 @@ document.addEventListener('DOMContentLoaded', function () {
         applyLayout();
     }
 
-    function updateGraph(nodes, edges) {
+    function updateGraph(nodes, edges, visible) {
+        console.log(visible)
+        // Get all nodes and edges in the graph
+        const graphNodes = graph.nodes();
+        const graphEdges = graph.edges();
+
+        // Hide all nodes and edges
+        graphNodes.forEach(node => {
+            graph.setNodeAttribute(node, 'hidden', true);
+        }
+        );
+        graphEdges.forEach(edge => {
+            graph.setEdgeAttribute(edge, 'hidden', true);
+        }
+        );
+
+        sigmaInstance.refresh()
         nodes.forEach(node => {
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
@@ -319,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     color: getNodeColor(node),
                 });
             }
+            graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
         });
 
         edges.forEach(edge => {

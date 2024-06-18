@@ -31,17 +31,17 @@ def graph_data(request) -> JsonResponse:
         filters = []
 
     if data_type == 'initial':
-        nodes, edges = get_category_data(filters)
+        nodes, edges, visible = get_category_data(filters)
     elif data_type == 'diseases':
         category_id = request.GET.get('category_id')
-        nodes, edges = get_disease_data(category_id, filters)
+        nodes, edges, visible = get_disease_data(category_id, filters)
     elif data_type == 'alleles':
         disease_id = urllib.parse.unquote(request.GET.get('disease_id'))
-        nodes, edges = get_allele_data(disease_id, filters)
+        nodes, edges, visible = get_allele_data(disease_id, filters)
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)
 
-    return JsonResponse({'nodes': nodes, 'edges': edges})
+    return JsonResponse({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
 def apply_filters(queryset, filters):
@@ -93,12 +93,14 @@ def get_category_data(filters) -> tuple:
     """
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
+    visible_nodes = list(filtered_queryset.values('category_string').distinct())
+
     # Sort the queryset by category_string
     filtered_queryset = filtered_queryset.order_by('category_string')
     nodes = [{'id': f"cat-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
               'node_type': 'category'} for category in filtered_queryset]
     edges = []
-    return nodes, edges
+    return nodes, edges, visible_nodes
 
 
 def get_disease_data(category_id, filters) -> tuple:
@@ -112,13 +114,14 @@ def get_disease_data(category_id, filters) -> tuple:
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
+    visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
               'node_type': 'disease'} for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
              filtered_queryset]
-    return nodes, edges
+    return nodes, edges, visible_nodes
 
 
 def get_allele_data(disease_id, filters) -> tuple:
@@ -134,6 +137,7 @@ def get_allele_data(disease_id, filters) -> tuple:
     ).distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
+    visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     nodes = [
@@ -141,7 +145,7 @@ def get_allele_data(disease_id, filters) -> tuple:
         allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
-    return nodes, edges
+    return nodes, edges, visible_nodes
 
 
 def get_info(request) -> JsonResponse:
