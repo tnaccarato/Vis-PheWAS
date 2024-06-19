@@ -167,10 +167,10 @@ def get_info(request) -> JsonResponse:
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
     # Gets the 5 highest maf values for the allele annotated with the disease
-    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by(
+    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio', 'p').order_by(
         '-odds_ratio')[:5]
-    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio').order_by(
-        'odds_ratio')[:5]
+    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio', 'p').order_by(
+        'odds_ratio', 'p')[:5]
     allele_data['top_odds'] = list(top_odds)
     allele_data['lowest_odds'] = list(lowest_odds)
     # Return the allele data in json format
