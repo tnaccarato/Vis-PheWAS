@@ -24,7 +24,7 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
             infoPanel.style.display = 'inline-block';
             getInfoTable(nodeData);
         }
-        , 500);
+        , 50);
     }
 }
 
