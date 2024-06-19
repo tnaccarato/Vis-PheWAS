@@ -1,14 +1,8 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
 import {getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpdateFilterInput} from "./filter";
-import {closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert} from "./utils";
+import {closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale, clamp} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
-import {scaleLog} from "d3-scale";
-
-// Create a scale for the size of the nodes
-const sizeScale = scaleLog()
-    .domain([0.00001, 0.05])
-    .range([8, 1]);
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -81,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     node_type: node.node_type,
                     x: x,
                     y: y,
-                    size: 10,
+                    size: 8,
                     hidden: false,
                     color: getNodeColor(node),
                 });
@@ -122,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
         nodes.forEach(node => {
             console.log('Node:', node); // Debugging log
             console.log('Node P:', node.p); // Debugging log
-            console.log('Node Size:', sizeScale(node.p)); // Debugging log
+            console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
             if (!graph.hasNode(node.id)) {
                 graph.addNode(node.id, {
                     label: node.label.replace('HLA_', ''),
@@ -130,10 +124,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
-                    size: node.node_type === 'allele' ? sizeScale(node.p) : 8,
-                    color: getNodeColor(node),
+                    // Clamp the node size to avoid outlying values
+                    size: node.node_type === 'allele' ? sizeScale(clamp(node.p, sizeScale.domain())) : 8,
                     // If there is an odds_ratio attribute in the node data, add it here
                     odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
+                    color: getNodeColor(node),
                 });
             }
             graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
@@ -196,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Aligns the title to the center
         title.style.textAlign = 'center';
         infoContainer.appendChild(title);
-        // Add a close button to the info container
 
         // Fetch data from the API for the allele
         const allele = nodeData.full_label;
