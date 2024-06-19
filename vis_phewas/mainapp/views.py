@@ -140,9 +140,10 @@ def get_allele_data(disease_id, filters) -> tuple:
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
+    # Annotate node with odds_ratio for dynamic node colouring
     nodes = [
-        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele} for
-        allele in filtered_queryset]
+        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele,
+         'odds_ratio': allele['odds_ratio'], 'p_value': allele['p']} for allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
     return nodes, edges, visible_nodes
@@ -160,8 +161,8 @@ def get_info(request) -> JsonResponse:
     disease = request.GET.get('disease')
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
-        'gene_class', 'gene_name', 'serotype','subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
-        'controls', 'p', 'l95', 'u95', 'maf'
+        'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
+        'controls', 'p', 'l95', 'u95', 'maf', 'odds_ratio'
     ).distinct()[0]
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
