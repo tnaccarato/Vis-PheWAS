@@ -1,4 +1,5 @@
 import {filters, push_filters} from "./filter";
+import {scaleLog} from "d3-scale";
 
 export function closeInfoContainer(adjustSigmaContainerHeight) {
     return function () {
@@ -78,4 +79,20 @@ export function getAdjustSigmaContainer(container, sigmaInstance) {
 
     container.style.height = `calc(100% - ${filtersHeight}px)`;
     sigmaInstance.refresh();
+}
+
+// Create a scale for the size of the nodes
+export const sizeScale = scaleLog()
+    .domain([0.00001, 0.05])
+    .range([8, 1]);
+
+// Create a scale for the color of the nodes
+export const colorScale = scaleLog()
+    .domain([0.1, 1, 8])
+    .range(["blue", "purple", "red"]);
+
+
+// Function to clamp values within the domain range for the scale to avoid outlying values
+export function clamp(value, domain) {
+    return Math.max(domain[0], Math.min(domain[domain.length - 1], value));
 }

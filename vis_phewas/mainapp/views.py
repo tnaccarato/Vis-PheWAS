@@ -162,7 +162,7 @@ def get_info(request) -> JsonResponse:
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
         'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
-        'controls', 'p', 'l95', 'u95', 'maf', 'odds_ratio'
+        'controls', 'odds_ratio', 'p', 'l95', 'u95', 'maf',
     ).distinct()[0]
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')

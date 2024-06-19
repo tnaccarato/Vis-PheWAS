@@ -2,6 +2,7 @@ import {filters} from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import {rgbaToFloat} from "sigma/utils";
 import { scaleLog } from 'd3-scale';
+import {clamp, colorScale} from "./utils";
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
@@ -14,12 +15,16 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
         leftColumn.style.width = '70%';
         // Resize the Sigma container
         adjustSigmaContainerHeight();
-        const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
-        rightColumn.style.width = '30%';
-        rightColumn.style.display = 'inline-block';
-        const infoPanel = document.getElementsByClassName('info-container')[0];
-        infoPanel.style.display = 'inline-block';
-        getInfoTable(nodeData);
+        // Wait for the Sigma container to resize before displaying the right column
+        setTimeout(() => {
+            const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+            rightColumn.style.width = '30%';
+            rightColumn.style.display = 'inline-block';
+            const infoPanel = document.getElementsByClassName('info-container')[0];
+            infoPanel.style.display = 'inline-block';
+            getInfoTable(nodeData);
+        }
+        , 500);
     }
 }
 
@@ -87,10 +92,6 @@ export function calculateNodeColor(node) {
         return rgbaToFloat(0, 0, 0, 0);
     }
 
-    const colorScale = scaleLog()
-            .domain([0.1, 1, 35.7])
-            .range(["blue", "purple", "red"]);
-
     switch (node.node_type) {
         case 'category':
             return '#94f800';
@@ -99,7 +100,7 @@ export function calculateNodeColor(node) {
 
         case 'allele':
             // Color the node based on allele's odds ratio on a gradient from red (higher than 1 to blue (lower than 1)
-            const oddsRatio = node.odds_ratio + 1; // Add 1 to avoid log(0)
+            const oddsRatio = clamp(node.odds_ratio, colorScale.domain())
             return colorScale(oddsRatio);
 
         default:
