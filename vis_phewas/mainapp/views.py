@@ -1,12 +1,12 @@
 import urllib.parse
 from io import StringIO
 
+import pandas as pd
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from .models import HlaPheWasCatalog
-import pandas as pd
 
 
 def index(request) -> render:
@@ -51,24 +51,40 @@ def apply_filters(queryset, filters):
     :param filters:
     :return:
     """
-    print("Initial queryset length:", len(queryset))
+    print("Initial queryset length:", queryset.count())
     print("Filters:", filters)
 
     # If no filters are provided, return the queryset as is
     if not filters:
-        return queryset.filter(**{'p__lte': '0.05'})
+        return queryset.filter(p__lte=0.05)
 
     # Split the filters string into a list of filter strings
     filters = filters.split(',')
+
+    # Define an epsilon value for floating point comparison
+    epsilon = 1e-7
 
     # Apply each filter to the queryset
     for filter_str in filters:
         print(filter_str)
         field, operator, value = filter_str.split(':')
 
+        # Cast value to the correct type based on the field
+        if field in ['cases', 'controls']:
+            value = int(value)
+        elif field in ['p', 'odds_ratio', 'l95', 'u95', 'maf']:
+            print("Cast value to float")
+            value = float(value)
+        else:
+            value = str(value)
+
         # Apply the filter based on the operator
         if operator == '==':
-            queryset = queryset.filter(**{f'{field}__iexact': value})
+            print("Value:", value, "Type:", type(value))
+            if isinstance(value, float):
+                queryset = queryset.filter(**{f'{field}__gte': value - epsilon, f'{field}__lte': value + epsilon})
+            else:
+                queryset = queryset.filter(**{f'{field}__exact': value})
         elif operator == 'contains':
             queryset = queryset.filter(**{f'{field}__icontains': value})
         elif operator == '>':
@@ -80,9 +96,15 @@ def apply_filters(queryset, filters):
         elif operator == '<=':
             queryset = queryset.filter(**{f'{field}__lte': value})
 
-    print("Filtered queryset length:", len(queryset))
+    # Ensure to apply the final filter condition after all filters
+    filtered_queryset = queryset.filter(p__lte=0.05)
+    print("Filtered queryset length:", filtered_queryset.count())
+
+    # Debug: print the SQL query being executed
+    print("SQL Query:", str(filtered_queryset.query))
+
     # Return the filtered queryset
-    return queryset.filter(**{'p__lte': '0.05'})
+    return filtered_queryset
 
 
 def get_category_data(filters) -> tuple:
