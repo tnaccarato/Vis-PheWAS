@@ -35,6 +35,16 @@ html, body, .container-fluid {
     height: 100%;
     padding: 0;
     overflow-y: auto;
+    animation: slideIn 0.5s forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
 }
 
 #info-container {
@@ -45,6 +55,7 @@ html, body, .container-fluid {
     transition: width 0.5s ease; /* Smooth transition for width change */
     overflow-y: auto;
 }
+
 
 table {
     width: 100%;
