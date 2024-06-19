@@ -122,8 +122,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     node_type: node.node_type,
                     x: Math.random() * 100,
                     y: Math.random() * 100,
-                    size: 8,
+                    size: node.node_type === 'allele' ? node.p * 1000 : 8,
                     color: getNodeColor(node),
+                    // If there is an odds_ratio attribute in the node data, add it here
+                    odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
                 });
             }
             graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
