@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     x: Math.random() * 100,
                     y: Math.random() * 100,
                     // Clamp the node size to avoid outlying values
-                    size: node.node_type === 'allele' ? sizeScale(clamp(node.p, sizeScale.domain())) : 8,
+                    size: node.node_type === 'allele' ? sizeScale(clamp(node.p, sizeScale.domain())) : 6,
                     // If there is an odds_ratio attribute in the node data, add it here
                     odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
                     color: getNodeColor(node),
