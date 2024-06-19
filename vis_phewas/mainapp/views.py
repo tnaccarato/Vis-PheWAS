@@ -143,7 +143,7 @@ def get_allele_data(disease_id, filters) -> tuple:
     # Annotate node with odds_ratio for dynamic node colouring
     nodes = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele,
-         'odds_ratio': allele['odds_ratio'], 'p_value': allele['p']} for allele in filtered_queryset]
+         } for allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
     return nodes, edges, visible_nodes

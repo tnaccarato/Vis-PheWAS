@@ -1,6 +1,7 @@
 import {filters} from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import {rgbaToFloat} from "sigma/utils";
+import { scaleLog } from 'd3-scale';
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
@@ -85,13 +86,22 @@ export function calculateNodeColor(node) {
     if (node.hidden) {
         return rgbaToFloat(0, 0, 0, 0);
     }
+
+    const colorScale = scaleLog()
+            .domain([0.1, 1, 35.7])
+            .range(["blue", "purple", "red"]);
+
     switch (node.node_type) {
         case 'category':
             return '#94f800';
         case 'disease':
             return '#eafa05';
+
         case 'allele':
-            return '#ff0000';
+            // Color the node based on allele's odds ratio on a gradient from red (higher than 1 to blue (lower than 1)
+            const oddsRatio = node.odds_ratio + 1; // Add 1 to avoid log(0)
+            return colorScale(oddsRatio);
+
         default:
             return '#000000';
     }
