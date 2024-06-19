@@ -87,11 +87,11 @@ export function calculateNodeColor(node) {
     }
     switch (node.node_type) {
         case 'category':
-            return '#FF5733';
+            return '#94f800';
         case 'disease':
-            return '#33C1FF';
+            return '#eafa05';
         case 'allele':
-            return '#FFFF33';
+            return '#ff0000';
         default:
             return '#000000';
     }
