@@ -1,7 +1,6 @@
 import {filters} from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import {rgbaToFloat} from "sigma/utils";
-import { scaleLog } from 'd3-scale';
 import {clamp, colorScale} from "./utils";
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
@@ -15,16 +14,13 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
         leftColumn.style.width = '70%';
         // Resize the Sigma container
         adjustSigmaContainerHeight();
-        // Wait for the Sigma container to resize before displaying the right column
-        setTimeout(() => {
-            const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
-            rightColumn.style.width = '30%';
-            rightColumn.style.display = 'inline-block';
-            const infoPanel = document.getElementsByClassName('info-container')[0];
-            infoPanel.style.display = 'inline-block';
-            getInfoTable(nodeData);
-        }
-        , 50);
+        const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+        rightColumn.style.width = '30%';
+        rightColumn.style.display = 'inline-block';
+        const infoPanel = document.getElementsByClassName('info-container')[0];
+        infoPanel.style.display = 'inline-block';
+        getInfoTable(nodeData);
+
     }
 }
 
