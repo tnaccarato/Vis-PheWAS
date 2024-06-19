@@ -214,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const header2 = document.createElement('th');
             header2.textContent = 'Odds Ratio';
             headerRow.appendChild(header2);
+            const header3 = document.createElement('th');
+            header3.textContent = 'P-Value';
+            headerRow.appendChild(header3);
             table.appendChild(headerRow);
 
             // Unpack the top_odds object and add each key-value pair as a row in the table
@@ -228,6 +231,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const oddsCell = document.createElement('td');
                 oddsCell.textContent = odds.odds_ratio.toString();
                 row.appendChild(oddsCell);
+                // Get the p-value from the odds object
+                const pValueCell = document.createElement('td');
+                pValueCell.textContent = odds.p.toString();
+                row.appendChild(pValueCell);
                 // Append the row to the table
                 table.appendChild(row);
             });
