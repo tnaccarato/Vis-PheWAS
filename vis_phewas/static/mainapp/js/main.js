@@ -1,7 +1,7 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
 import {getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpdateFilterInput} from "./filter";
-import {closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale, clamp} from "./utils";
+import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 
 // Ensure the DOM is loaded
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.applyFilters = getApplyFilters(showAlert, fetchGraphData, sigmaInstance);
     window.clearFilters = getClearFilters(adjustSigmaContainerHeight, showAlert, fetchGraphData);
-
 
 
     fetchGraphData()
@@ -111,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             );
 
-        sigmaInstance.refresh()
-            }
+            sigmaInstance.refresh()
+        }
         nodes.forEach(node => {
             console.log('Node:', node); // Debugging log
             console.log('Node P:', node.p); // Debugging log
@@ -199,13 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const encodedDisease = encodeURIComponent(disease);
         const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
-        function getTopOddsTable(top_odds) {
-            // Create a heading for the table
-            const heading = document.createElement('h4');
-            heading.textContent = 'Top Odds Ratios for Allele';
+        function getOddsTable(top_odds) {
             // Append the heading to the info container
             const infoContainer = document.getElementsByClassName('info-container')[0];
-            infoContainer.appendChild(heading);
 
             // Create the table element
             const table = document.createElement('table');
@@ -255,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     headerRow.appendChild(header2);
                     table.appendChild(headerRow);
                     // Separate top_odds object from the rest of the data
-                    const {top_odds, ...otherData} = data;
+                    const {top_odds, lowest_odds, ...otherData} = data;
                     // Loop through the otherData object and add each key-value pair as a row in the table
                     Object.entries(otherData).forEach(([key, value]) => {
                         const row = document.createElement('tr');
@@ -269,7 +264,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     infoContainer.style.overflowY = 'auto';
                     infoContainer.appendChild(table);
-                    getTopOddsTable(top_odds)
+                    const top_affective_head = document.createElement('h4');
+                    top_affective_head.textContent = 'Most Affected Diseases';
+                    top_affective_head.style.textAlign = 'center';
+                    infoContainer.appendChild(top_affective_head);
+                    getOddsTable(top_odds)
+                    const top_protective_head = document.createElement('h4');
+                    top_protective_head.textContent = 'Most Protective Diseases';
+                    top_protective_head.style.textAlign = 'center';
+                    infoContainer.appendChild(top_protective_head);
+                    getOddsTable(lowest_odds)
                 }
             )
             .catch(error => console.error('Error loading allele info:', error));
