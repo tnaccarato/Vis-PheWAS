@@ -2,6 +2,8 @@ html, body, .container-fluid {
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 .row {
