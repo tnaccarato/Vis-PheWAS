@@ -70,6 +70,27 @@ export function hoverOffNode(node, graph, getNodeColor, sigmaInstance) {
 }
 
 export function getApplyLayout(graph, sigmaInstance) {
+    // Retrieve nodes and sort them alphabetically by label
+    const nodes = graph.nodes();
+    const sortedNodes = nodes.sort((a, b) => {
+        return graph.getNodeAttribute(a, 'label').localeCompare(graph.getNodeAttribute(b, 'label'));
+    });
+
+    // Apply a circular layout to the graph, ordering nodes by label clockwise alphabetically
+    let angleStep = -(2 * Math.PI) / sortedNodes.length; // Negative for clockwise
+    sortedNodes.forEach((node, index) => {
+        // Check if node type is 'category'
+        if (graph.getNodeAttribute(node, 'node_type') === 'category') {
+            // Skip this node and move to the next iteration
+            return;
+        } else {
+            // Set the position for non-category nodes in a circular layout starting from 12 o'clock
+            graph.setNodeAttribute(node, 'x', 100 * Math.cos(Math.PI / 2 + angleStep * index));
+            graph.setNodeAttribute(node, 'y', 100 * Math.sin(Math.PI / 2 + angleStep * index));
+        }
+    });
+
+    // Apply the ForceAtlas2 layout to the graph
     const settings = {
         iterations: 100,
         settings: {
@@ -82,6 +103,8 @@ export function getApplyLayout(graph, sigmaInstance) {
     forceAtlas2.assign(graph, settings);
     sigmaInstance.refresh();
 }
+
+
 
 export function calculateNodeColor(node) {
     if (node.hidden) {
@@ -97,14 +120,13 @@ export function calculateNodeColor(node) {
         case 'allele':
             // Color the node based on allele's odds ratio
             const oddsRatio = node.odds_ratio;
-            if(oddsRatio === 1){
+            if (oddsRatio === 1) {
                 return '#a100f8'; // Green for neutral odds ratio (1)
             }
             // Otherwise, color the node based on the odds ratio, with red for risk and blue for protective
-            else if(oddsRatio < 1){
+            else if (oddsRatio < 1) {
                 return protectiveColorScale(clamp(oddsRatio, protectiveColorScale.domain()));
-            }
-            else{
+            } else {
                 return riskColorScale(clamp(oddsRatio, riskColorScale.domain()));
             }
 
