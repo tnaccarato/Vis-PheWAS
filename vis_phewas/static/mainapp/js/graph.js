@@ -1,7 +1,7 @@
 import {filters} from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import {rgbaToFloat} from "sigma/utils";
-import {clamp, colorScale} from "./utils";
+import {clamp, protectiveColorScale, riskColorScale} from "./utils";
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
@@ -90,14 +90,24 @@ export function calculateNodeColor(node) {
 
     switch (node.node_type) {
         case 'category':
-            return '#94f800';
+            return '#fa6011';
         case 'disease':
             return '#eafa05';
 
         case 'allele':
-            // Color the node based on allele's odds ratio on a gradient from red (higher than 1 to blue (lower than 1)
-            const oddsRatio = clamp(node.odds_ratio, colorScale.domain())
-            return colorScale(oddsRatio);
+            // Color the node based on allele's odds ratio
+            const oddsRatio = node.odds_ratio;
+            if(oddsRatio === 1){
+                return '#a100f8'; // Green for neutral odds ratio (1)
+            }
+            // Otherwise, color the node based on the odds ratio, with red for risk and blue for protective
+            else if(oddsRatio < 1){
+                return protectiveColorScale(clamp(oddsRatio, protectiveColorScale.domain()));
+            }
+            else{
+                return riskColorScale(clamp(oddsRatio, riskColorScale.domain()));
+            }
+
 
         default:
             return '#000000';
