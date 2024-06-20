@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        applyLayout();
+
     }
 
     function updateGraph(nodes, edges, visible, clicked) {
