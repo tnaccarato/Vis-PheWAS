@@ -1,7 +1,6 @@
 import {filters, push_filters} from "./filter";
 import {scaleLog} from "d3-scale";
 import * as d3 from "d3";
-import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 
 export function closeInfoContainer(adjustSigmaContainerHeight) {
     return function () {

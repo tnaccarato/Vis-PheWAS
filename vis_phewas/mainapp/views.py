@@ -69,22 +69,9 @@ def apply_filters(queryset, filters):
         print(filter_str)
         field, operator, value = filter_str.split(':')
 
-        # Cast value to the correct type based on the field
-        if field in ['cases', 'controls']:
-            value = int(value)
-        elif field in ['p', 'odds_ratio', 'l95', 'u95', 'maf']:
-            print("Cast value to float")
-            value = float(value)
-        else:
-            value = str(value)
-
         # Apply the filter based on the operator
         if operator == '==':
-            print("Value:", value, "Type:", type(value))
-            if isinstance(value, float):
-                queryset = queryset.filter(**{f'{field}__gte': value - epsilon, f'{field}__lte': value + epsilon})
-            else:
-                queryset = queryset.filter(**{f'{field}__exact': value})
+            queryset = queryset.filter(**{f'{field}__iexact': value})
         elif operator == 'contains':
             queryset = queryset.filter(**{f'{field}__icontains': value})
         elif operator == '>':
