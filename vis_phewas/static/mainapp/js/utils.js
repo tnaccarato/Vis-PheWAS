@@ -1,5 +1,7 @@
 import {filters, push_filters} from "./filter";
 import {scaleLog} from "d3-scale";
+import * as d3 from "d3";
+import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 
 export function closeInfoContainer(adjustSigmaContainerHeight) {
     return function () {
@@ -87,9 +89,13 @@ export const sizeScale = scaleLog()
     .range([8, 1]);
 
 // Create a scale for the color of the nodes
-export const colorScale = scaleLog()
-    .domain([0.1, 1, 8])
-    .range(["blue", "purple", "red"]);
+export const protectiveColorScale = scaleLog()
+    .domain([0.01, 0.99])
+    .range([d3.rgb('#08306b'), d3.rgb('#01c6ff')]) // Range from dark blue to light blue
+
+export const riskColorScale = scaleLog()
+    .domain([1, 5])
+    .range([d3.rgb('#ff7d7d'), d3.rgb('#8a040a')]);  // Range from light red to dark red
 
 
 // Function to clamp values within the domain range for the scale to avoid outlying values
