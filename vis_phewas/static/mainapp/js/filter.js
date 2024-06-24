@@ -140,7 +140,7 @@ export function getAddFilter(adjustSigmaContainerHeight) {
             select.innerHTML = `
             <option value="snp">SNP</option>
             <option value="gene_class">Gene Class</option>
-            <option value="gene_name">HLA Type</option>
+            <option value="gene_name">Gene Name</option>
             <option value="serotype">Serotype</option>
             <option value="subtype">Subtype</option>
             <option value="phewas_code">Phecode</option>
