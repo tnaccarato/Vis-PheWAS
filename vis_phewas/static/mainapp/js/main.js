@@ -6,6 +6,7 @@ import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNo
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
+    // Get DOM elements
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
     const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true});
@@ -20,9 +21,10 @@ document.addEventListener('DOMContentLoaded', function () {
     window.applyFilters = getApplyFilters(showAlert, fetchGraphData, sigmaInstance);
     window.clearFilters = getClearFilters(adjustSigmaContainerHeight, showAlert, fetchGraphData);
 
-
+    // Fetch the graph data on page load
     fetchGraphData()
 
+    // Function to fetch graph data from the API
     function fetchGraphData(params = {}) {
         console.log('Params:', params); // Debugging log
         const query = new URLSearchParams(params).toString();
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => console.error('Error loading graph data:', error));
     }
 
+    // Function to initialize the graph
     function initializeGraph(nodes, edges, visible) {
         // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
         const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
@@ -93,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
+    // Function to update the graph with new nodes and edges
     function updateGraph(nodes, edges, visible, clicked) {
         console.log(visible)
         // Get all nodes and edges in the graph
@@ -142,14 +146,17 @@ document.addEventListener('DOMContentLoaded', function () {
         applyLayout();
     }
 
+    // Function to calculate the color of a node based on its node type
     function getNodeColor(node) {
         return calculateNodeColor(node);
     }
 
+    // Function to apply the layout to the graph
     function applyLayout() {
         getApplyLayout(graph, sigmaInstance);
     }
 
+    // Function to get the allele information table for a selected node
     function getInfoTable(nodeData) {
         const infoContainer = document.getElementsByClassName('info-container')[0];
         console.log('Node data:', nodeData); // Debugging log
