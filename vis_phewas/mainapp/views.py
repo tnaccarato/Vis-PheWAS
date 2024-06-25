@@ -61,9 +61,6 @@ def apply_filters(queryset, filters):
     # Split the filters string into a list of filter strings
     filters = filters.split(',')
 
-    # Define an epsilon value for floating point comparison
-    epsilon = 1e-7
-
     # Apply each filter to the queryset
     for filter_str in filters:
         print(filter_str)
@@ -176,9 +173,10 @@ def get_info(request) -> JsonResponse:
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
     # Gets the 5 highest maf values for the allele annotated with the disease
-    top_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio', 'p').order_by(
+    top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio', 'p').order_by(
         '-odds_ratio')[:5]
-    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele).values('phewas_string', 'odds_ratio', 'p').order_by(
+    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string', 'odds_ratio',
+                                                                                       'p').order_by(
         'odds_ratio', 'p')[:5]
     allele_data['top_odds'] = list(top_odds)
     allele_data['lowest_odds'] = list(lowest_odds)

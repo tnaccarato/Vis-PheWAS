@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
-    const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true});
+    const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true, labelRenderedSizeThreshold: 500});
     window.updateFilterInput = getUpdateFilterInput(adjustSigmaContainerHeight);
     window.addFilter = getAddFilter(adjustSigmaContainerHeight);
     window.removeFilter = getRemoveFilter(adjustSigmaContainerHeight)
