@@ -4,9 +4,8 @@ import {getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpda
 import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 
-// Declare a global variable to store the graph data
+// Declare a global variable to store the show_subtypes value
 let show_subtypes = true;
-
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -28,8 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to update global variable show_subtypes
     function updateShowSubtypes() {
         show_subtypes = !show_subtypes;
-        showAlert(`Show subtypes: ${show_subtypes}`); // Show an alert message with the updated value
-        fetchGraphData(); // Fetch the updated graph data with the new show_subtypes value
+        // Toggle the button state
+        const showSubtypesButton = document.getElementById('show-subtypes-button');
+        console.log('Show subtypes:', show_subtypes); // Debugging log
+        // Grey out the button if show_subtypes is false
+        showSubtypesButton.classList.toggle('btn-secondary', !show_subtypes);
     }
 
     window.updateShowSubtypes = updateShowSubtypes;
