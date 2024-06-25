@@ -172,9 +172,10 @@ def get_info(request) -> JsonResponse:
     ).distinct()[0]
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
-    # Gets the 5 highest maf values for the allele annotated with the disease
+    # Gets the 5 highest odds_ratio values for the allele annotated with the disease
     top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio', 'p').order_by(
         '-odds_ratio')[:5]
+    # Gets the lowest non-zero odds_ratio values for the allele annotated with the disease
     lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string', 'odds_ratio',
                                                                                        'p').order_by(
         'odds_ratio', 'p')[:5]
