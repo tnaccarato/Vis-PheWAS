@@ -27,6 +27,8 @@ def graph_data(request) -> JsonResponse:
     """
     data_type = request.GET.get('type', 'initial')
     filters = request.GET.get('filters')
+    show_subtypes = request.GET.get('show_subtypes') == 'true'
+    print("Show subtypes:", show_subtypes)
     if filters == ['']:
         filters = []
 
@@ -37,7 +39,7 @@ def graph_data(request) -> JsonResponse:
         nodes, edges, visible = get_disease_data(category_id, filters)
     elif data_type == 'alleles':
         disease_id = urllib.parse.unquote(request.GET.get('disease_id'))
-        nodes, edges, visible = get_allele_data(disease_id, filters)
+        nodes, edges, visible = get_allele_data(disease_id, filters, show_subtypes)
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -130,17 +132,25 @@ def get_disease_data(category_id, filters) -> tuple:
     return nodes, edges, visible_nodes
 
 
-def get_allele_data(disease_id, filters) -> tuple:
+def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     """
     Get the allele data for the selected disease.
     :param disease_id:
     :param filters:
+    :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return:
     """
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
-    queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
-        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
-    ).distinct()
+    if show_subtypes:
+        print("Showing subtypes")
+        queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
+            'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+        ).exclude(subtype='00').distinct()
+    else:
+        print("Showing only main groups")
+        queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string, subtype='00').values(
+            'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+        ).distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
@@ -173,11 +183,13 @@ def get_info(request) -> JsonResponse:
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
     # Gets the 5 highest odds_ratio values for the allele annotated with the disease
-    top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio', 'p').order_by(
+    top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio',
+                                                                               'p').order_by(
         '-odds_ratio')[:5]
     # Gets the lowest non-zero odds_ratio values for the allele annotated with the disease
-    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string', 'odds_ratio',
-                                                                                       'p').order_by(
+    lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string',
+                                                                                                    'odds_ratio',
+                                                                                                    'p').order_by(
         'odds_ratio', 'p')[:5]
     allele_data['top_odds'] = list(top_odds)
     allele_data['lowest_odds'] = list(lowest_odds)

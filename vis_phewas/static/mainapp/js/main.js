@@ -4,6 +4,10 @@ import {getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpda
 import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 
+// Declare a global variable to store the graph data
+let show_subtypes = true;
+
+
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
@@ -21,11 +25,23 @@ document.addEventListener('DOMContentLoaded', function () {
     window.applyFilters = getApplyFilters(showAlert, fetchGraphData, sigmaInstance);
     window.clearFilters = getClearFilters(adjustSigmaContainerHeight, showAlert, fetchGraphData);
 
+    // Function to update global variable show_subtypes
+    function updateShowSubtypes() {
+        show_subtypes = !show_subtypes;
+        showAlert(`Show subtypes: ${show_subtypes}`); // Show an alert message with the updated value
+        fetchGraphData(); // Fetch the updated graph data with the new show_subtypes value
+    }
+
+    window.updateShowSubtypes = updateShowSubtypes;
+
     // Fetch the graph data on page load
     fetchGraphData()
 
+
     // Function to fetch graph data from the API
     function fetchGraphData(params = {}) {
+        // Add the show_subtypes parameter to the params object
+        params.show_subtypes = show_subtypes;
         console.log('Params:', params); // Debugging log
         const query = new URLSearchParams(params).toString();
         const url = '/api/graph-data/' + (query ? '?' + query : '');
@@ -318,4 +334,6 @@ document.addEventListener('DOMContentLoaded', function () {
         getShowAlert(message);
     }
 });
+
+
 
