@@ -3,6 +3,7 @@ import {closeInfoContainer} from "./utils";
 export let filterCount = 0;
 export let filters = [];
 
+
 export function push_filters() {
     filters = [];
     const filterGroups = document.querySelectorAll('.filter-group');
