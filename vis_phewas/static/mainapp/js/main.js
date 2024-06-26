@@ -222,25 +222,27 @@ document.addEventListener('DOMContentLoaded', function () {
         navContainer.style.justifyContent = 'space-between';
         navContainer.style.marginBottom = '10px';
 
-        // Add a button to navigate to the previous disease node
-        const prevButton = document.createElement('button');
-        prevButton.className = 'btn btn-secondary';
-        prevButton.textContent = '<';
-        prevButton.onclick = () => {
-            currentIndex = (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
-            displayNodeInfo(diseaseNodes[currentIndex]);
-        };
-        navContainer.appendChild(prevButton);
+        if (diseaseNodes.length > 1) {
+            // Add a button to navigate to the previous disease node
+            const prevButton = document.createElement('button');
+            prevButton.className = 'btn btn-secondary';
+            prevButton.textContent = '<';
+            prevButton.onclick = () => {
+                currentIndex = (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
+                displayNodeInfo(diseaseNodes[currentIndex]);
+            };
+            navContainer.appendChild(prevButton);
 
-        // Add a button to navigate to the next disease node
-        const nextButton = document.createElement('button');
-        nextButton.className = 'btn btn-secondary';
-        nextButton.textContent = '>';
-        nextButton.onclick = () => {
-            currentIndex = (currentIndex + 1) % diseaseNodes.length;
-            displayNodeInfo(diseaseNodes[currentIndex], nodeData.full_label);
-        };
-        navContainer.appendChild(nextButton);
+            // Add a button to navigate to the next disease node
+            const nextButton = document.createElement('button');
+            nextButton.className = 'btn btn-secondary';
+            nextButton.textContent = '>';
+            nextButton.onclick = () => {
+                currentIndex = (currentIndex + 1) % diseaseNodes.length;
+                displayNodeInfo(diseaseNodes[currentIndex], nodeData.full_label);
+            };
+            navContainer.appendChild(nextButton);
+        }
 
         infoContainer.appendChild(navContainer);
 
@@ -319,10 +321,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
                 // Change colour of non-selected disease nodes back to default
                 diseaseNodes.forEach(node => {
-                    if (node !== diseaseNode) {
-                        graph.setNodeAttribute(node, 'color', '#fff833');
+                        if (node !== diseaseNode) {
+                            graph.setNodeAttribute(node, 'color', '#fff833');
+                        }
                     }
-                }
                 );
                 // Change colour of selected disease node to a darker yellow
                 graph.setNodeAttribute(diseaseNode, 'color', '#f0d000');
