@@ -28,7 +28,7 @@ def graph_data(request) -> JsonResponse:
     data_type = request.GET.get('type', 'initial')
     filters = request.GET.get('filters')
     show_subtypes = request.GET.get('show_subtypes') == 'true'
-    print("Show subtypes:", show_subtypes)
+    # print("Show subtypes:", show_subtypes)
     if filters == ['']:
         filters = []
 
@@ -53,8 +53,8 @@ def apply_filters(queryset, filters):
     :param filters:
     :return:
     """
-    print("Initial queryset length:", queryset.count())
-    print("Filters:", filters)
+    # print("Initial queryset length:", queryset.count())
+    # print("Filters:", filters)
 
     # If no filters are provided, return the queryset as is
     if not filters:
@@ -65,7 +65,7 @@ def apply_filters(queryset, filters):
 
     # Apply each filter to the queryset
     for filter_str in filters:
-        print(filter_str)
+        # print(filter_str)
         field, operator, value = filter_str.split(':')
 
         # Apply the filter based on the operator
@@ -84,10 +84,10 @@ def apply_filters(queryset, filters):
 
     # Ensure to apply the final filter condition after all filters
     filtered_queryset = queryset.filter(p__lte=0.05)
-    print("Filtered queryset length:", filtered_queryset.count())
+    # print("Filtered queryset length:", filtered_queryset.count())
 
     # Debug: print the SQL query being executed
-    print("SQL Query:", str(filtered_queryset.query))
+    # print("SQL Query:", str(filtered_queryset.query))
 
     # Return the filtered queryset
     return filtered_queryset
@@ -118,7 +118,7 @@ def get_disease_data(category_id, filters) -> tuple:
     :param filters:
     :return:
     """
-    print(filters)
+    # print(filters)
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
@@ -142,12 +142,12 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     """
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
     if show_subtypes:
-        print("Showing subtypes")
+        # print("Showing subtypes")
         queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
             'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
         ).exclude(subtype='00').distinct()
     else:
-        print("Showing only main groups")
+        # print("Showing only main groups")
         queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string, subtype='00').values(
             'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
         ).distinct()
@@ -175,22 +175,28 @@ def get_info(request) -> JsonResponse:
     allele = request.GET.get('allele')
     # Get the disease from the request
     disease = request.GET.get('disease')
+    # Debug: print the allele and disease
+    print("Allele:", allele)
+    print("Disease:", disease)
     # Get the allele data
     allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
         'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
         'controls', 'odds_ratio', 'p', 'l95', 'u95', 'maf',
     ).distinct()[0]
+    print(allele_data)
     if allele_data['subtype'] == '00':
         allele_data.pop('subtype')
     # Gets the 5 highest odds_ratio values for the allele annotated with the disease
     top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio',
                                                                                'p').order_by(
         '-odds_ratio')[:5]
+    print(top_odds)
     # Gets the lowest non-zero odds_ratio values for the allele annotated with the disease
     lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string',
                                                                                                     'odds_ratio',
                                                                                                     'p').order_by(
         'odds_ratio', 'p')[:5]
+    print(lowest_odds)
     allele_data['top_odds'] = list(top_odds)
     allele_data['lowest_odds'] = list(lowest_odds)
     # Return the allele data in json format
