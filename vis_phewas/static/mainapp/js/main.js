@@ -296,9 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function displayNodeInfo(diseaseNode) {
             // Clear previous data related to disease info
             const existingDiseaseInfo = infoContainer.querySelector('.disease-info');
-            if (existingDiseaseInfo) {
-                existingDiseaseInfo.remove();
-            }
+            console.log('Existing disease info:', existingDiseaseInfo); // Debugging log
 
             // Fetch data from the API for the disease
             const disease = graph.getNodeAttributes(diseaseNode).full_label;
@@ -350,7 +348,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
 
                     infoContainer.style.overflowY = 'auto';
-                    infoContainer.appendChild(table);
+                    // If there is existing disease info, replace it with the new table, otherwise append the new table
+                    if (existingDiseaseInfo) {
+                        existingDiseaseInfo.replaceWith(table);
+                    }
+                    else {
+                        infoContainer.appendChild(table);
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading disease info:', error);
