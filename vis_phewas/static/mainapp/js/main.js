@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
         nextButton.textContent = '>';
         nextButton.onclick = () => {
             currentIndex = (currentIndex + 1) % diseaseNodes.length;
-            displayNodeInfo(diseaseNodes[currentIndex]);
+            displayNodeInfo(diseaseNodes[currentIndex], nodeData.full_label);
         };
         navContainer.appendChild(nextButton);
 
@@ -309,6 +309,26 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query parameters
             const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
+            function updateNodeStyle(data) {
+                // Update the allele node with the data from the API
+                const alleleNode = `${nodeData.node_type}-${nodeData.full_label}`;
+                graph.setNodeAttribute(alleleNode, 'odds_ratio', data.odds_ratio);
+                graph.setNodeAttribute(alleleNode, 'p', data.p);
+                graph.setNodeAttribute(alleleNode, 'color', getNodeColor(nodeData));
+                graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
+                console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
+                // Change colour of non-selected disease nodes back to default
+                diseaseNodes.forEach(node => {
+                    if (node !== diseaseNode) {
+                        graph.setNodeAttribute(node, 'color', '#fff833');
+                    }
+                }
+                );
+                // Change colour of selected disease node to a darker yellow
+                graph.setNodeAttribute(diseaseNode, 'color', '#f0d000');
+                sigmaInstance.refresh();
+            }
+
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
@@ -348,13 +368,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
 
                     infoContainer.style.overflowY = 'auto';
-                    // If there is existing disease info, replace it with the new table, otherwise append the new table
+                    // If there is existing disease info, replace it with the new table and update the allele with new color and size from the data
                     if (existingDiseaseInfo) {
                         existingDiseaseInfo.replaceWith(table);
                     }
+                    // Otherwise, append the new table to the container
                     else {
                         infoContainer.appendChild(table);
                     }
+                    // Update the allele node attributes with the data from the API
+                    updateNodeStyle(data);
                 })
                 .catch(error => {
                     console.error('Error loading disease info:', error);
