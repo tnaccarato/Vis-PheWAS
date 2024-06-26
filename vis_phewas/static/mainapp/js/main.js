@@ -174,12 +174,13 @@ document.addEventListener('DOMContentLoaded', function () {
         getApplyLayout(graph, sigmaInstance);
     }
 
-    // Function to get the allele information table for a selected node
+
     function getInfoTable(nodeData) {
         const infoContainer = document.getElementsByClassName('info-container')[0];
         console.log('Node data:', nodeData); // Debugging log
-        const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`
+        const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`;
         console.log('Selected node:', selectedNode); // Debugging log
+
         // Get edges connected to the node
         const edges = graph.edges().filter(edge => {
             const source = graph.source(edge);
@@ -188,91 +189,143 @@ document.addEventListener('DOMContentLoaded', function () {
             return source === selectedNode || target === selectedNode;
         });
         console.log('Edges:', edges); // Debugging log
-        // Gets the disease node connected to the allele node
-        const diseaseNode = edges.map(edge => {
-                return graph.source(edge) === selectedNode ? graph.target(edge) : graph.source(edge);
-            }
-        )[0];
-        console.log(diseaseNode)
-        // Gets the edges connected to the disease node
-        const diseaseEdges = graph.edges().filter(edge => {
-                const source = graph.source(edge);
-                const target = graph.target(edge);
-                return source === diseaseNode || target === diseaseNode;
-            }
-        );
-        console.log(diseaseEdges)
+
+        // Gets the disease nodes connected to the allele node
+        const diseaseNodes = edges.map(edge => {
+            return graph.source(edge) === selectedNode ? graph.target(edge) : graph.source(edge);
+        });
+        console.log(diseaseNodes);
+
+        if (diseaseNodes.length === 0) {
+            console.error('No disease nodes found.');
+            return;
+        }
+
+        let currentIndex = 0;
+
         // Clear the container
         infoContainer.innerHTML = '';
+
         const closeButton = document.createElement('button');
         closeButton.className = 'btn btn-danger';
         closeButton.textContent = 'X';
-        closeButton.onclick = closeInfoContainer(adjustSigmaContainerHeight)
+        closeButton.onclick = closeInfoContainer(adjustSigmaContainerHeight);
         infoContainer.appendChild(closeButton);
+
         const title = document.createElement('h3');
-        // Gets title from nodeData
         title.textContent = nodeData.full_label + ' Information';
-        // Aligns the title to the center
         title.style.textAlign = 'center';
         infoContainer.appendChild(title);
 
-        // Fetch data from the API for the allele
-        const allele = nodeData.full_label;
-        const disease = graph.getNodeAttributes(diseaseNode).full_label;
-        const encodedAllele = encodeURIComponent(allele);
-        const encodedDisease = encodeURIComponent(disease);
-        const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
+        const navContainer = document.createElement('div');
+        navContainer.style.display = 'flex';
+        navContainer.style.justifyContent = 'space-between';
+        navContainer.style.marginBottom = '10px';
 
-        function getOddsTable(top_odds) {
-            // Append the heading to the info container
-            const infoContainer = document.getElementsByClassName('info-container')[0];
+        // Add a button to navigate to the previous disease node
+        const prevButton = document.createElement('button');
+        prevButton.className = 'btn btn-secondary';
+        prevButton.textContent = '<';
+        prevButton.onclick = () => {
+            currentIndex = (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
+            displayNodeInfo(diseaseNodes[currentIndex]);
+        };
+        navContainer.appendChild(prevButton);
 
-            // Create the table element
-            const table = document.createElement('table');
-            table.className = 'top-odds-table table table-striped table-bordered table-hover table-sm';
+        // Add a button to navigate to the next disease node
+        const nextButton = document.createElement('button');
+        nextButton.className = 'btn btn-secondary';
+        nextButton.textContent = '>';
+        nextButton.onclick = () => {
+            currentIndex = (currentIndex + 1) % diseaseNodes.length;
+            displayNodeInfo(diseaseNodes[currentIndex]);
+        };
+        navContainer.appendChild(nextButton);
 
-            // Create the header row
-            const headerRow = document.createElement('tr');
-            const header1 = document.createElement('th');
-            header1.textContent = 'Disease';
-            headerRow.appendChild(header1);
-            const header2 = document.createElement('th');
-            header2.textContent = 'Odds Ratio';
-            headerRow.appendChild(header2);
-            const header3 = document.createElement('th');
-            header3.textContent = 'P-Value';
-            headerRow.appendChild(header3);
-            table.appendChild(headerRow);
+        infoContainer.appendChild(navContainer);
 
-            // Unpack the top_odds object and add each key-value pair as a row in the table
-            top_odds.forEach(odds => {
-                // Create a row element
-                const row = document.createElement('tr');
-                const diseaseCell = document.createElement('td');
-                // Get the disease name from the odds object
-                diseaseCell.textContent = odds.phewas_string;
-                row.appendChild(diseaseCell);
-                // Get the odds ratio from the odds object
-                const oddsCell = document.createElement('td');
-                oddsCell.textContent = odds.odds_ratio.toString();
-                row.appendChild(oddsCell);
-                // Get the p-value from the odds object
-                const pValueCell = document.createElement('td');
-                pValueCell.textContent = odds.p.toString();
-                row.appendChild(pValueCell);
-                // Append the row to the table
-                table.appendChild(row);
-            });
+        function displayOddsTables(data) {
+            const {top_odds, lowest_odds} = data;
 
-            // Append the table to the info container
-            infoContainer.appendChild(table);
+            function createOddsTable(oddsData, heading) {
+                // Create and append heading
+                const oddsHead = document.createElement('h4');
+                oddsHead.textContent = heading;
+                oddsHead.style.textAlign = 'center';
+                infoContainer.appendChild(oddsHead);
+
+                // Create the table element
+                const table = document.createElement('table');
+                table.className = 'odds-table table table-striped table-bordered table-hover table-sm';
+
+                // Create the header row
+                const headerRow = document.createElement('tr');
+                const header1 = document.createElement('th');
+                header1.textContent = 'Disease';
+                headerRow.appendChild(header1);
+                const header2 = document.createElement('th');
+                header2.textContent = 'Odds Ratio';
+                headerRow.appendChild(header2);
+                const header3 = document.createElement('th');
+                header3.textContent = 'P-Value';
+                headerRow.appendChild(header3);
+                table.appendChild(headerRow);
+
+                // Unpack the odds object and add each key-value pair as a row in the table
+                oddsData.forEach(odds => {
+                    const row = document.createElement('tr');
+                    const diseaseCell = document.createElement('td');
+                    diseaseCell.textContent = odds.phewas_string;
+                    row.appendChild(diseaseCell);
+                    const oddsCell = document.createElement('td');
+                    oddsCell.textContent = odds.odds_ratio.toString();
+                    row.appendChild(oddsCell);
+                    const pValueCell = document.createElement('td');
+                    pValueCell.textContent = odds.p.toString();
+                    row.appendChild(pValueCell);
+                    table.appendChild(row);
+                });
+
+                infoContainer.appendChild(table);
+            }
+
+            createOddsTable(top_odds, 'Most Affected Diseases');
+            createOddsTable(lowest_odds, 'Most Protective Diseases');
         }
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
+        function displayNodeInfo(diseaseNode) {
+            // Clear previous data related to disease info
+            const existingDiseaseInfo = infoContainer.querySelector('.disease-info');
+            if (existingDiseaseInfo) {
+                existingDiseaseInfo.remove();
+            }
+
+            // Fetch data from the API for the disease
+            const disease = graph.getNodeAttributes(diseaseNode).full_label;
+            if (!disease) {
+                console.error('Disease is null or undefined');
+                return;
+            }
+            const encodedAllele = encodeURIComponent(nodeData.full_label);
+            const encodedDisease = encodeURIComponent(disease);
+            console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query parameters
+            const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // Create a table for the disease-specific info
                     const table = document.createElement('table');
-                    table.className = 'allele-info-table table table-striped table-bordered table-hover table-sm';
+                    table.className = 'disease-info allele-info-table table table-striped table-bordered table-hover table-sm';
                     const headerRow = document.createElement('tr');
                     const header1 = document.createElement('th');
                     header1.textContent = 'Field';
@@ -281,35 +334,64 @@ document.addEventListener('DOMContentLoaded', function () {
                     header2.textContent = 'Value';
                     headerRow.appendChild(header2);
                     table.appendChild(headerRow);
-                    // Separate top_odds object from the rest of the data
-                    const {top_odds, lowest_odds, ...otherData} = data;
+
                     // Loop through the otherData object and add each key-value pair as a row in the table
-                    Object.entries(otherData).forEach(([key, value]) => {
-                        const row = document.createElement('tr');
-                        const cell1 = document.createElement('td');
-                        cell1.textContent = key;
-                        row.appendChild(cell1);
-                        const cell2 = document.createElement('td');
-                        cell2.textContent = value;
-                        row.appendChild(cell2);
-                        table.appendChild(row);
+                    Object.entries(data).forEach(([key, value]) => {
+                        if (key !== 'top_odds' && key !== 'lowest_odds') {
+                            const row = document.createElement('tr');
+                            const cell1 = document.createElement('td');
+                            cell1.textContent = key;
+                            row.appendChild(cell1);
+                            const cell2 = document.createElement('td');
+                            cell2.textContent = value;
+                            row.appendChild(cell2);
+                            table.appendChild(row);
+                        }
                     });
+
                     infoContainer.style.overflowY = 'auto';
                     infoContainer.appendChild(table);
-                    const top_affective_head = document.createElement('h4');
-                    top_affective_head.textContent = 'Most Affected Diseases';
-                    top_affective_head.style.textAlign = 'center';
-                    infoContainer.appendChild(top_affective_head);
-                    getOddsTable(top_odds)
-                    const top_protective_head = document.createElement('h4');
-                    top_protective_head.textContent = 'Most Protective Diseases';
-                    top_protective_head.style.textAlign = 'center';
-                    infoContainer.appendChild(top_protective_head);
-                    getOddsTable(lowest_odds)
+                })
+                .catch(error => {
+                    console.error('Error loading disease info:', error);
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'disease-info alert alert-danger';
+                    errorMessage.textContent = `Error loading disease info: ${error.message}`;
+                    infoContainer.appendChild(errorMessage);
+                });
+        }
+
+        // Display the initial node info
+        displayNodeInfo(diseaseNodes[currentIndex]);
+
+        // Fetch and display the odds data (common for all disease nodes)
+        const encodedAllele = encodeURIComponent(nodeData.full_label);
+        const encodedDisease = encodeURIComponent(graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label);
+        const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            )
-            .catch(error => console.error('Error loading allele info:', error));
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                displayOddsTables(data);
+            })
+            .catch(error => {
+                console.error('Error loading allele info:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'alert alert-danger';
+                errorMessage.textContent = `Error loading allele info: ${error.message}`;
+                infoContainer.appendChild(errorMessage);
+            });
     }
+
 
     sigmaInstance.on('clickNode', ({node}) => {
             clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable);
