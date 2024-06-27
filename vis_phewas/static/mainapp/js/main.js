@@ -228,7 +228,9 @@ document.addEventListener('DOMContentLoaded', function () {
             prevButton.className = 'btn btn-secondary';
             prevButton.textContent = '<';
             prevButton.onclick = () => {
+                console.log('Current index:', currentIndex); // Debugging log
                 currentIndex = (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
+                console.log('Previous index:', currentIndex); // Debugging log
                 displayNodeInfo(diseaseNodes[currentIndex]);
             };
             navContainer.appendChild(prevButton);
@@ -238,7 +240,9 @@ document.addEventListener('DOMContentLoaded', function () {
             nextButton.className = 'btn btn-secondary';
             nextButton.textContent = '>';
             nextButton.onclick = () => {
+                console.log('Current index:', currentIndex); // Debugging log
                 currentIndex = (currentIndex + 1) % diseaseNodes.length;
+                console.log('Next index:', currentIndex); // Debugging log
                 displayNodeInfo(diseaseNodes[currentIndex], nodeData.full_label);
             };
             navContainer.appendChild(nextButton);
@@ -427,14 +431,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     );
 
-    // Event listener for when a node hover event is triggered
     sigmaInstance.on('enterNode', ({node}) => {
         hoverOnNode(node, graph, sigmaInstance);
     });
 
 // Event listener for when a node hover ends
     sigmaInstance.on('leaveNode', ({node}) => {
-        hoverOffNode(node, graph, getNodeColor, sigmaInstance);
+        hoverOffNode(node, graph, sigmaInstance);
     });
 
     // Exports the current query to a CSV file
