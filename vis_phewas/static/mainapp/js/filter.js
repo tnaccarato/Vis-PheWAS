@@ -3,7 +3,6 @@ import {closeInfoContainer} from "./utils";
 export let filterCount = 0;
 export let filters = [];
 
-
 export function push_filters() {
     filters = [];
     const filterGroups = document.querySelectorAll('.filter-group');
@@ -210,3 +209,15 @@ export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
 
     };
 }
+
+// Function to push the table selection filter to the filters array and apply the filter
+    export function tableSelectFilter(table_selection, fetchGraphData, sigmaInstance, showAlert) {
+    console.log('Table selection:', table_selection)
+        filters = [];
+        clearFilters();
+        filters.push(`${table_selection.field}:==:${table_selection.value.toLowerCase()}`);
+        showAlert(`Selecting from table: ${filters.join(', ')}`);
+        fetchGraphData({type: 'initial', filters});
+        sigmaInstance.refresh();
+
+    }

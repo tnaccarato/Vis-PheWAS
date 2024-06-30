@@ -1,6 +1,6 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
-import {getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpdateFilterInput} from "./filter";
+import {tableSelectFilter, getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpdateFilterInput} from "./filter";
 import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 
@@ -217,6 +217,16 @@ document.addEventListener('DOMContentLoaded', function () {
         title.style.textAlign = 'center';
         infoContainer.appendChild(title);
 
+        // Add a button to filter all diseases with the allele
+        const filterButton = document.createElement('button');
+        filterButton.className = 'btn btn-primary';
+        filterButton.textContent = 'Show All Diseases with Allele';
+        filterButton.style.justifyContent = 'center';
+        filterButton.onclick = () => {
+            tableSelectFilter({field: 'snp', value: nodeData.full_label}, fetchGraphData, sigmaInstance, showAlert)
+        }
+        infoContainer.appendChild(filterButton);
+
         const navContainer = document.createElement('div');
         navContainer.style.display = 'flex';
         navContainer.style.justifyContent = 'space-between';
@@ -289,6 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const pValueCell = document.createElement('td');
                     pValueCell.textContent = odds.p.toString();
                     row.appendChild(pValueCell);
+                    row.onclick = () => {
+                        tableSelectFilter({field: 'phewas_string', value: odds.phewas_string}, fetchGraphData, sigmaInstance, showAlert)
+                    }
                     table.appendChild(row);
                 });
 
