@@ -1,3 +1,4 @@
+import re
 import urllib.parse
 from io import StringIO
 
@@ -60,13 +61,18 @@ def apply_filters(queryset, filters):
     if not filters:
         return queryset.filter(p__lte=0.05)
 
-    # Split the filters string into a list of filter strings
-    filters = filters.split(',')
+    print(filters)
 
-    # Apply each filter to the queryset
-    for filter_str in filters:
-        # print(filter_str)
-        field, operator, value = filter_str.split(':')
+    filter_list = parse_filters(filters)
+
+    # Process each filter
+    for filter_str in filter_list:
+        print(f"Original filter string: {filter_str.strip()}")
+
+        # Split the filter string by the first two colons
+        field, operator, value = filter_str.split(':', 2)
+
+        print(f"Field: {field}, Operator: {operator}, Value: {value}")
 
         # Apply the filter based on the operator
         if operator == '==':
@@ -84,13 +90,45 @@ def apply_filters(queryset, filters):
 
     # Ensure to apply the final filter condition after all filters
     filtered_queryset = queryset.filter(p__lte=0.05)
-    # print("Filtered queryset length:", filtered_queryset.count())
+    print("Filtered queryset length:", filtered_queryset.count())
 
     # Debug: print the SQL query being executed
     # print("SQL Query:", str(filtered_queryset.query))
 
     # Return the filtered queryset
     return filtered_queryset
+
+
+def parse_filters(filters):
+    """
+    Parse the filters string into a list of filter strings. Each filter string is separated by a comma.
+
+    :param filters: The filters string to parse.
+    :return:
+    """
+    # Initialize an empty list to hold the filters
+    filter_list = []
+    buffer = []
+    colon_count = 0
+
+    # Parse the string manually
+    for char in filters:
+        if char == ':':
+            colon_count += 1
+        if char == ',' and colon_count < 2:
+            # End of one filter segment
+            filter_list.append(''.join(buffer).strip())
+            buffer = []
+            colon_count = 0
+        else:
+            buffer.append(char)
+
+    # Append the last filter in the buffer
+    if buffer:
+        filter_list.append(''.join(buffer).strip())
+
+    # Return the list of filter strings
+    return filter_list
 
 
 def get_category_data(filters) -> tuple:
@@ -152,6 +190,9 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
             'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
         ).distinct()
     # Apply filters before slicing
+    # Remove snp from filters list so other snps are still shown
+    filters = ",".join([f for f in filters.split(',') if not f.startswith('snp')])
+    #
     filtered_queryset = apply_filters(queryset, filters)
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
     # Order by odds_ratio and then slice
