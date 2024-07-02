@@ -149,6 +149,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     size: node.node_type === 'allele' ? sizeScale(clamp(node.p, sizeScale.domain())) : 6,
                     // If there is an odds_ratio attribute in the node data, add it here
                     odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
+                    // If disease node, get the number of alleles associated with the disease
+                    allele_count: node.node_type === 'disease' ? node.allele_count : null,
                     color: getNodeColor(node),
                 });
             }

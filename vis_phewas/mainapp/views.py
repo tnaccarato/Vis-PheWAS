@@ -3,6 +3,7 @@ import urllib.parse
 from io import StringIO
 
 import pandas as pd
+from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -160,11 +161,13 @@ def get_disease_data(category_id, filters) -> tuple:
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
     filtered_queryset = apply_filters(queryset, filters)
+    # Get the number of alleles associated with each disease and annotate the queryset
+    filtered_queryset = filtered_queryset.annotate(allele_count=models.Count('snp'))
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
-              'node_type': 'disease'} for disease in filtered_queryset]
+              'node_type': 'disease', 'allele_count': disease['allele_count']} for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
              filtered_queryset]
     return nodes, edges, visible_nodes

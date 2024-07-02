@@ -1,7 +1,7 @@
 import {filters} from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import {rgbaToFloat} from "sigma/utils";
-import {clamp, protectiveColorScale, riskColorScale} from "./utils";
+import {clamp, diseaseColor, protectiveColorScale, riskColorScale} from "./utils";
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
@@ -144,8 +144,8 @@ export function getApplyLayout(graph, sigmaInstance) {
 
     // Apply the ForceAtlas2 layout to the graph
     const settings = {
-        iterations: 100, settings: {
-            gravity: 0.5, scalingRatio: 2.0, barnesHutOptimize: true, barnesHutTheta: 0.5
+        iterations: 1000, settings: {
+            gravity: 0.5, scalingRatio: 2.0, barnesHutOptimize: true, barnesHutTheta: 0.5, adjustSizes: false
         }
     };
     forceAtlas2.assign(graph, settings);
@@ -160,9 +160,9 @@ export function calculateNodeColor(node) {
 
     switch (node.node_type) {
         case 'category':
-            return '#fa6011';
+            return '#0fc405';
         case 'disease':
-            return '#eafa05';
+            return diseaseColor(clamp(node.allele_count, diseaseColor.domain()));
 
         case 'allele':
             // Color the node based on allele's odds ratio
