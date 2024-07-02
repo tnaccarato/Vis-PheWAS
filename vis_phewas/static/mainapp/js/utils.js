@@ -85,7 +85,7 @@ export function getAdjustSigmaContainer(container, sigmaInstance) {
 // Create a scale for the size of the nodes
 export const sizeScale = scaleLog()
     .domain([0.00001, 0.05])
-    .range([8, 1]);
+    .range([7, 1]);
 
 // Create a scale for the color of the nodes
 export const protectiveColorScale = scaleLog()
@@ -96,6 +96,10 @@ export const riskColorScale = scaleLog()
     .domain([1, 5])
     .range([d3.rgb('#ff7d7d'), d3.rgb('#8a040a')]);  // Range from light red to dark red
 
+// Sets the color of the disease nodes based on how many alleles are associated with the disease
+export const diseaseColor = scaleLog()
+    .domain([1, 38])
+    .range([d3.rgb('#eafa05'), d3.rgb('#fa6011')]); // Range from yellow to orange
 
 // Function to clamp values within the domain range for the scale to avoid outlying values
 export function clamp(value, domain) {
