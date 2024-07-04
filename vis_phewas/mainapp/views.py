@@ -1,4 +1,3 @@
-import re
 import urllib.parse
 from io import StringIO
 
@@ -247,7 +246,7 @@ def get_info(request) -> JsonResponse:
     return JsonResponse(allele_data)
 
 
-def export_query(request):
+def export_data(request):
     """
     Export the query results to a CSV file.
     :param request:
