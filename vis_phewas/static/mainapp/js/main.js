@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Show subtypes:', show_subtypes); // Debugging log
         // Grey out the button if show_subtypes is false
         showSubtypesButton.classList.toggle('btn-secondary', !show_subtypes);
+        // Update the graph data with the new show_subtypes value
+        fetchGraphData();
+        sigmaInstance.refresh()
     }
 
     window.updateShowSubtypes = updateShowSubtypes;
