@@ -222,7 +222,45 @@ export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
         clearFilters();
         filters.push(`${table_selection.field}:==:${table_selection.value.toLowerCase()}`);
         showAlert(`Selecting from table: ${filters.join(', ')}`);
+        // Add a filter group to the filters container locked with the table selection filter
+        const filterGroup = document.createElement('div');
+        filterGroup.className = 'filter-group';
+        const select = document.createElement('select');
+        select.className = 'field-select';
+        select.innerHTML = `
+            <option value="${table_selection.field}" selected>${table_selection.field}</option>
+        `;
+        select.disabled = true;
+        const operatorSelect = document.createElement('select');
+        operatorSelect.className = 'operator-select';
+        operatorSelect.innerHTML = `
+            <option value="==">Exactly</option>
+        `;
+        operatorSelect.disabled = true;
+        filterGroup.appendChild(operatorSelect);
+        filterGroup.appendChild(select);
+        const filterInputContainer = document.createElement('div');
+        filterInputContainer.id = 'filter-input-container';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = table_selection.value;
+        input.className = 'field-input';
+        input.disabled = true;
+        filterInputContainer.appendChild(input);
+        filterGroup.appendChild(filterInputContainer);
+        const minusButton = document.createElement('button');
+        minusButton.className = 'btn btn-danger';
+        minusButton.textContent = '-';
+        minusButton.onclick = function () {
+            removeFilter(minusButton);
+        };
+        filterGroup.appendChild(minusButton);
+        // Unhide the toolbar if it is hidden
+        const toolbar = document.getElementsByClassName('toolbar')[0];
+        toolbar.style.display = 'block';
+        document.getElementById('filters-container').appendChild(filterGroup);
+        // Increment the filter count
+        filterCount++;
         fetchGraphData({type: 'initial', filters});
         sigmaInstance.refresh();
-
     }
