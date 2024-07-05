@@ -1,6 +1,13 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
-import {tableSelectFilter, getAddFilter, getApplyFilters, getClearFilters, getRemoveFilter, getUpdateFilterInput} from "./filter";
+import {
+    getAddFilter,
+    getApplyFilters,
+    getClearFilters,
+    getRemoveFilter,
+    getUpdateFilterInput,
+    tableSelectFilter
+} from "./filter";
 import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 
@@ -260,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Current index:', currentIndex); // Debugging log
                 currentIndex = (currentIndex + 1) % diseaseNodes.length;
                 console.log('Next index:', currentIndex); // Debugging log
-                displayNodeInfo(diseaseNodes[currentIndex], nodeData.full_label);
+                displayNodeInfo(diseaseNodes[currentIndex]);
             };
             navContainer.appendChild(nextButton);
         }
@@ -307,7 +314,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     pValueCell.textContent = odds.p.toString();
                     row.appendChild(pValueCell);
                     row.onclick = () => {
-                        tableSelectFilter({field: 'phewas_string', value: odds.phewas_string}, fetchGraphData, sigmaInstance, showAlert)
+                        tableSelectFilter({
+                            field: 'phewas_string',
+                            value: odds.phewas_string
+                        }, fetchGraphData, sigmaInstance, showAlert)
                     }
                     table.appendChild(row);
                 });
