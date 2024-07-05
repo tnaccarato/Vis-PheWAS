@@ -24,10 +24,6 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
     }
 }
 
-// Object to store the original node color before highlighting
-const originalNodeColor = {};
-const clickedNodeColor = {}; // Store colors set by click events
-
 export function hoverOnNode(node, graph, sigmaInstance) {
     const nodeId = node;
     const edges = graph.edges().filter(edge => {
@@ -36,20 +32,6 @@ export function hoverOnNode(node, graph, sigmaInstance) {
 
     edges.forEach(edge => {
         graph.setEdgeAttribute(edge, 'color', 'black');
-
-        // Sets the color of the source node to green
-        const sourceNode = graph.source(edge);
-        if (!originalNodeColor[sourceNode] && !clickedNodeColor[sourceNode]) {
-            originalNodeColor[sourceNode] = graph.getNodeAttribute(sourceNode, 'color'); // Store the original color if not already stored and not clicked
-        }
-        graph.setNodeAttribute(sourceNode, 'color', '#69fb00');
-
-        // Sets the color of the target node to a darker green
-        const targetNode = graph.target(edge);
-        if (!originalNodeColor[targetNode] && !clickedNodeColor[targetNode]) {
-            originalNodeColor[targetNode] = graph.getNodeAttribute(targetNode, 'color'); // Store the original color if not already stored and not clicked
-        }
-        graph.setNodeAttribute(targetNode, 'color', '#46af01');
     });
 
     if (sigmaInstance && typeof sigmaInstance.refresh === 'function') {
@@ -73,53 +55,10 @@ export function hoverOffNode(node, graph, sigmaInstance) {
 
     edges.forEach(edge => {
         graph.setEdgeAttribute(edge, 'color', 'darkgrey');
-
-        // Restore the color of the source and target nodes if not set by a click event
-        const sourceNode = graph.source(edge);
-        if (originalNodeColor[sourceNode] && !clickedNodeColor[sourceNode]) {
-            graph.setNodeAttribute(sourceNode, 'color', originalNodeColor[sourceNode]);
-            delete originalNodeColor[sourceNode]; // Remove the stored original color
-        }
-
-        const targetNode = graph.target(edge);
-        if (originalNodeColor[targetNode] && !clickedNodeColor[targetNode]) {
-            graph.setNodeAttribute(targetNode, 'color', originalNodeColor[targetNode]);
-            delete originalNodeColor[targetNode]; // Remove the stored original color
-        }
     });
 
     sigmaInstance.refresh();
 }
-
-// Function to handle node click
-export function clickOnNode(node, graph, sigmaInstance) {
-    const nodeId = node;
-    clickedNodeColor[nodeId] = graph.getNodeAttribute(nodeId, 'color');
-    graph.setNodeAttribute(nodeId, 'color', 'desiredColor'); // Replace 'desiredColor' with the color you want on click
-
-    if (sigmaInstance && typeof sigmaInstance.refresh === 'function') {
-        sigmaInstance.refresh();
-    } else {
-        console.error('Sigma instance or refresh method not available in clickOnNode');
-    }
-}
-
-// Function to handle node unclick (if necessary)
-export function unclickOnNode(node, graph, sigmaInstance) {
-    const nodeId = node;
-    if (clickedNodeColor[nodeId]) {
-        graph.setNodeAttribute(nodeId, 'color', clickedNodeColor[nodeId]);
-        delete clickedNodeColor[nodeId]; // Remove the stored clicked color
-    }
-
-    if (sigmaInstance && typeof sigmaInstance.refresh === 'function') {
-        sigmaInstance.refresh();
-    } else {
-        console.error('Sigma instance or refresh method not available in unclickOnNode');
-    }
-}
-
-
 
 export function getApplyLayout(graph, sigmaInstance) {
     // Retrieve nodes and sort them alphabetically by label
