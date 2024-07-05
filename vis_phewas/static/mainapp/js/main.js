@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     size: 8,
                     hidden: false,
                     color: getNodeColor(node),
+                    originalColor: getNodeColor(node),
                 });
             }
         });
@@ -155,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // If disease node, get the number of alleles associated with the disease
                     allele_count: node.node_type === 'disease' ? node.allele_count : null,
                     color: getNodeColor(node),
+                    originalColor: getNodeColor(node),
                 });
             }
             graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
@@ -344,12 +346,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Change colour of non-selected disease nodes back to default
                 diseaseNodes.forEach(node => {
                         if (node !== diseaseNode) {
-                            graph.setNodeAttribute(node, 'color', '#fff833');
+                            graph.setNodeAttribute(node, 'color', graph.getNodeAttributes(node).originalColor);
                         }
                     }
                 );
-                // Change colour of selected disease node to a darker yellow
-                graph.setNodeAttribute(diseaseNode, 'color', '#f0d000');
+                // Change colour of selected disease node to purple to make it stand out
+                graph.setNodeAttribute(diseaseNode, 'color', '#b302f9');
                 sigmaInstance.refresh();
             }
 
