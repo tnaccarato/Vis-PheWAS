@@ -197,8 +197,13 @@ export function getRemoveFilter(adjustSigmaContainerHeight) {
 export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
     return function () {
         push_filters();
+        // If there are no filters, show an alter message and return early
+        if( filters.length === 0) {
+            showAlert('No filters selected. Showing all data.');
+            return;
+        }
         // Display a dismissible alert message for confirmation of filters applied
-        const message = filters.length > 0 ? `Applying filters: ${filters.join(', ')}` : 'No filters applied';
+        const message = `Applying filters: ${filters.join(', ')}`;
         showAlert(message);
 
         console.log('Filters:', filters); // Debugging log
