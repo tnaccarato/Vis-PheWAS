@@ -297,10 +297,10 @@ def get_combined_associations(request):
     # Get the disease from the request
     disease = request.GET.get('disease')
 
-    # Get the allele data for the disease
+    # Get the allele data for the disease where subtype is not 00
     allele_data = HlaPheWasCatalog.objects.filter(phewas_string=disease).values(
-        'snp', 'odds_ratio', 'p'
-    ).distinct()
+        'snp', 'gene_name', 'serotype', 'subtype', 'odds_ratio', 'p'
+    ).exclude(subtype='00')
 
     # Generate pairwise combinations of alleles
     allele_combinations = list(itertools.combinations(allele_data, 2))
@@ -314,9 +314,20 @@ def get_combined_associations(request):
         # Combine p-values using Fisher's method
         _, combined_p_value = combine_pvalues([allele1['p'], allele2['p']])
 
+        # Only keep combined associations with p-value less than 0.05
+        if combined_p_value >= 0.01:
+            continue
+
+
         result.append({
-            'gene1': allele1['snp'],
-            'gene2': allele2['snp'],
+            'gene1': allele1['snp'].replace('HLA_', ''),
+            'gene1_name': allele1['gene_name'],
+            'gene1_serotype': allele1['serotype'],
+            'gene1_subtype': allele1['subtype'],
+            'gene2': allele2['snp'].replace('HLA_', ''),
+            'gene2_name': allele2['gene_name'],
+            'gene2_serotype': allele2['serotype'],
+            'gene2_subtype': allele2['subtype'],
             'combined_odds_ratio': combined_odds_ratio,
             'combined_p_value': combined_p_value
         })

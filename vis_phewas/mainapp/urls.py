@@ -6,4 +6,5 @@ urlpatterns = [
     path('api/graph-data/', views.graph_data, name='graph-data'),
     path('api/get-info/', views.get_info, name='get-info'),
     path('api/export-query/', views.export_data, name='export-query'),
+    path('api/get_combined_associations/', views.get_combined_associations, name='get-combined-associations'),
 ]
