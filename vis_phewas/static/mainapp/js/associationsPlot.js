@@ -1,75 +1,76 @@
 import {getShowAlert} from "./utils";
 
 export function fetchAndShowAssociations(disease) {
-  fetch(`/api/get_combined_associations?disease=${disease}`)
-    .then(response => response.json())
-    .then(data => {
-      const circosData = {
-        ideograms: [],
-        links: []
-      };
+    fetch(`/api/get_combined_associations?disease=${disease}`)
+        .then(response => response.json())
+        .then(data => {
+            const circosData = {
+                ideograms: [],
+                links: []
+            };
 
-      const genes = new Set();
-      const geneInfo = {};
+            const genes = new Set();
+            const geneInfo = {};
 
-      data.forEach(assoc => {
-        genes.add(assoc.gene1);
-        genes.add(assoc.gene2);
+            data.forEach(assoc => {
+                genes.add(assoc.gene1);
+                genes.add(assoc.gene2);
 
-        geneInfo[assoc.gene1] = {
-          name: assoc.gene1_name,
-          serotype: assoc.gene1_serotype,
-          subtype: assoc.gene1_subtype
-        };
-        geneInfo[assoc.gene2] = {
-          name: assoc.gene2_name,
-          serotype: assoc.gene2_serotype,
-          subtype: assoc.gene2_subtype
-        };
+                geneInfo[assoc.gene1] = {
+                    name: assoc.gene1_name,
+                    serotype: assoc.gene1_serotype,
+                    subtype: assoc.gene1_subtype
+                };
+                geneInfo[assoc.gene2] = {
+                    name: assoc.gene2_name,
+                    serotype: assoc.gene2_serotype,
+                    subtype: assoc.gene2_subtype
+                };
 
-        const color = assoc.combined_odds_ratio === 1
-          ? '#800080' // Purple for OR = 1
-          : assoc.combined_odds_ratio < 1
-          ? `rgba(255, 0, 0, ${1 - assoc.combined_odds_ratio})` // Red gradient for OR < 1
-          : `rgba(0, 0, 255, ${assoc.combined_odds_ratio - 1})`; // Blue gradient for OR > 1
+                const color = assoc.combined_odds_ratio === 1
+                    ? '#800080' // Purple for OR = 1
+                    : assoc.combined_odds_ratio < 1
+                        ? `rgba(255, 0, 0, ${1 - assoc.combined_odds_ratio})` // Red gradient for OR < 1
+                        : `rgba(0, 0, 255, ${assoc.combined_odds_ratio - 1})`; // Blue gradient for OR > 1
 
-        circosData.links.push({
-          source: { id: assoc.gene1, start: 0, end: 500000 },
-          target: { id: assoc.gene2, start: 500000, end: 1000000 },
-          color: color,
-          value: assoc.combined_odds_ratio,
-          tooltip: `${assoc.gene1} - ${assoc.gene2}: OR = ${assoc.combined_odds_ratio.toFixed(2)}, p-value = ${assoc.combined_p_value.toExponential(2)}`
-        });
-      });
+                circosData.links.push({
+                    source: {id: assoc.gene1, start: 0, end: 500000},
+                    target: {id: assoc.gene2, start: 500000, end: 1000000},
+                    color: color,
+                    value: assoc.combined_odds_ratio,
+                    tooltip: `${assoc.gene1} - ${assoc.gene2}: OR = ${assoc.combined_odds_ratio.toFixed(2)}, p-value = ${assoc.combined_p_value.toExponential(2)}`
+                });
+            });
 
-      const sortedGenes = Array.from(genes).sort((a, b) => {
-        if (geneInfo[a].name < geneInfo[b].name) return -1;
-        if (geneInfo[a].name > geneInfo[b].name) return 1;
-        if (geneInfo[a].serotype < geneInfo[b].serotype) return -1;
-        if (geneInfo[a].serotype > geneInfo[b].serotype) return 1;
-        if (geneInfo[a].subtype < geneInfo[b].subtype) return -1;
-        if (geneInfo[a].subtype > geneInfo[b].subtype) return 1;
-        return 0;
-      });
+            const sortedGenes = Array.from(genes).sort((a, b) => {
+                if (geneInfo[a].name < geneInfo[b].name) return -1;
+                if (geneInfo[a].name > geneInfo[b].name) return 1;
+                if (geneInfo[a].serotype < geneInfo[b].serotype) return -1;
+                if (geneInfo[a].serotype > geneInfo[b].serotype) return 1;
+                if (geneInfo[a].subtype < geneInfo[b].subtype) return -1;
+                if (geneInfo[a].subtype > geneInfo[b].subtype) return 1;
+                return 0;
+            });
 
-      sortedGenes.forEach((gene, index) => {
-        circosData.ideograms.push({
-          id: gene,
-          name: gene,
-          len: 1000000,
-          color: `hsl(${(index * 360) / sortedGenes.length}, 100%, 50%)`
-        });
-      });
+            sortedGenes.forEach((gene, index) => {
+                circosData.ideograms.push({
+                    id: gene,
+                    name: gene,
+                    label: gene,
+                    len: 1000000,
+                    color: `hsl(${(index * 360) / sortedGenes.length}, 100%, 50%)`
+                });
+            });
 
-      if(circosData.ideograms.length === 0){
-        getShowAlert('No significant associations found for this disease.');
-        return;
-      }
+            if (circosData.ideograms.length === 0) {
+                getShowAlert('No significant associations found for this disease.');
+                return;
+            }
 
-      console.log('circosData:', circosData);
+            console.log('circosData:', circosData);
 
-      const newWindow = window.open("", "_blank", "width=900,height=900");
-      newWindow.document.write(`
+            const newWindow = window.open("", "_blank", "width=900,height=900");
+            newWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -151,9 +152,9 @@ export function fetchAndShowAssociations(disease) {
         </body>
         </html>
       `);
-      newWindow.document.close();
-    })
-    .catch(error => {
-      console.error('Error fetching or processing data:', error);
-    });
+            newWindow.document.close();
+        })
+        .catch(error => {
+            console.error('Error fetching or processing data:', error);
+        });
 }
