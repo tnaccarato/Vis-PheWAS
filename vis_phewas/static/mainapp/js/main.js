@@ -10,6 +10,7 @@ import {
 } from "./filter";
 import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getShowAlert, sizeScale} from "./utils";
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
+import {fetchAndShowAssociations} from "./associationsPlot";
 
 // Declare a global variable to store the show_subtypes value
 let show_subtypes = true;
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.updateFilterInput = getUpdateFilterInput(adjustSigmaContainerHeight);
     window.addFilter = getAddFilter(adjustSigmaContainerHeight);
     window.removeFilter = getRemoveFilter(adjustSigmaContainerHeight)
+    window.fetchAndShowAssociations = fetchAndShowAssociations;
 
     function adjustSigmaContainerHeight() {
         getAdjustSigmaContainer(container, sigmaInstance);
@@ -241,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         infoContainer.appendChild(filterButton);
 
+
         const navContainer = document.createElement('div');
         navContainer.style.display = 'flex';
         navContainer.style.justifyContent = 'space-between';
@@ -399,6 +402,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             const cell2 = document.createElement('td');
                             cell2.textContent = value;
                             row.appendChild(cell2);
+                            // If the key is disease, add a button to show associations for the disease in the Circos plot
+                            if (key === 'phewas_string') {
+                                cell2.onclick = () => {
+                                    fetchAndShowAssociations(value);
+                                }
+                            }
                             table.appendChild(row);
                         }
                     });
