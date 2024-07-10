@@ -237,8 +237,8 @@ export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
             <option value="==">Exactly</option>
         `;
         operatorSelect.disabled = true;
-        filterGroup.appendChild(operatorSelect);
         filterGroup.appendChild(select);
+        filterGroup.appendChild(operatorSelect);
         const filterInputContainer = document.createElement('div');
         filterInputContainer.id = 'filter-input-container';
         const input = document.createElement('input');
