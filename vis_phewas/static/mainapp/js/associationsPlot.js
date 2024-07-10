@@ -1,3 +1,5 @@
+import {getShowAlert} from "./utils";
+
 export function fetchAndShowAssociations(disease) {
   fetch(`/api/get_combined_associations?disease=${disease}`)
     .then(response => response.json())
@@ -59,6 +61,11 @@ export function fetchAndShowAssociations(disease) {
         });
       });
 
+      if(circosData.ideograms.length === 0){
+        getShowAlert('No significant associations found for this disease.');
+        return;
+      }
+
       console.log('circosData:', circosData);
 
       const newWindow = window.open("", "_blank", "width=900,height=900");
@@ -66,7 +73,7 @@ export function fetchAndShowAssociations(disease) {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Circos Plot</title>
+          <title>Circos Plot for ${disease}</title>
           <script src="https://d3js.org/d3.v6.min.js"></script>
           <script src="https://cdn.rawgit.com/nicgirault/circosJS/v2/dist/circos.js"></script>
           <style>
