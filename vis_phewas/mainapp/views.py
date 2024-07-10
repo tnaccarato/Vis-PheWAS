@@ -1,3 +1,4 @@
+import itertools
 import urllib.parse
 from io import StringIO
 
@@ -6,6 +7,7 @@ from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+from scipy.stats import combine_pvalues
 
 from .models import HlaPheWasCatalog
 
@@ -283,3 +285,40 @@ def export_data(request):
 
     # Return the response
     return response
+
+
+def get_combined_associations(request):
+    """
+    Get the pairwise combined associations for all alleles for a particular disease.
+    :param request:
+    :return: JsonResponse
+    """
+
+    # Get the disease from the request
+    disease = request.GET.get('disease')
+
+    # Get the allele data for the disease
+    allele_data = HlaPheWasCatalog.objects.filter(phewas_string=disease).values(
+        'snp', 'odds_ratio', 'p'
+    ).distinct()
+
+    # Generate pairwise combinations of alleles
+    allele_combinations = list(itertools.combinations(allele_data, 2))
+
+    result = []
+
+    # For each pair of alleles, calculate the combined odds ratio and p-value
+    for allele1, allele2 in allele_combinations:
+        combined_odds_ratio = allele1['odds_ratio'] * allele2['odds_ratio']
+
+        # Combine p-values using Fisher's method
+        _, combined_p_value = combine_pvalues([allele1['p'], allele2['p']])
+
+        result.append({
+            'gene1': allele1['snp'],
+            'gene2': allele2['snp'],
+            'combined_odds_ratio': combined_odds_ratio,
+            'combined_p_value': combined_p_value
+        })
+
+    return JsonResponse(result, safe=False)
