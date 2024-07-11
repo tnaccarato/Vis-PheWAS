@@ -315,7 +315,7 @@ def get_combined_associations(request):
         _, combined_p_value = combine_pvalues([allele1['p'], allele2['p']])
 
         # Only keep combined associations with p-value less than 0.05
-        if combined_p_value >= 0.01:
+        if combined_p_value >= 0.005:
             continue
 
 
