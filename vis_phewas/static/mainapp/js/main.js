@@ -1,5 +1,6 @@
 import Graph from 'graphology';
 import {Sigma} from 'sigma';
+import {createNodeBorderProgram} from "@sigma/node-border";
 import {
     getAddFilter,
     getApplyFilters,
@@ -20,7 +21,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
-    const sigmaInstance = new Sigma(graph, container, {allowInvalidContainer: true, labelRenderedSizeThreshold: 500});
+    const sigmaInstance = new Sigma(graph, container, {
+            allowInvalidContainer: true, labelRenderedSizeThreshold: 500, defaultNodeType: "bordered",
+            nodeProgramClasses: {
+                bordered: createNodeBorderProgram({
+                    borders: [
+                        {size: {attribute: "borderSize", defaultValue: 0.5}, color: {attribute: "borderColor"}},
+                        {size: {fill: true}, color: {attribute: "color"}},
+                    ],
+                }),
+            }
+        })
+    ;
     window.updateFilterInput = getUpdateFilterInput(adjustSigmaContainerHeight);
     window.addFilter = getAddFilter(adjustSigmaContainerHeight);
     window.removeFilter = getRemoveFilter(adjustSigmaContainerHeight)
@@ -97,20 +109,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 const x = centerX + radius * Math.cos(angle);
                 const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
 
+                // Get the color of the node based on its node type
+                const color = getNodeColor(node);
+
                 // Debugging log to check angles and positions
                 console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
 
                 // Add node to the graph with calculated positions
                 graph.addNode(node.id, {
+
                     label: node.label.replace('HLA_', ''), // Assuming label cleanup
                     full_label: node.label,
                     node_type: node.node_type,
                     x: x,
                     y: y,
                     size: 8,
+                    borderColor: color,
+                    borderSize: 0,
                     hidden: false,
-                    color: getNodeColor(node),
-                    originalColor: getNodeColor(node),
+                    color: color,
                 });
             }
         });
@@ -152,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Node P:', node.p); // Debugging log
             console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
             if (!graph.hasNode(node.id)) {
+                const color = getNodeColor(node);
                 graph.addNode(node.id, {
                     label: node.label.replace('HLA_', ''),
                     full_label: node.label,
@@ -164,8 +182,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
                     // If disease node, get the number of alleles associated with the disease
                     allele_count: node.node_type === 'disease' ? node.allele_count : null,
-                    color: getNodeColor(node),
-                    originalColor: getNodeColor(node),
+                    borderColor: color,
+                    color: color,
                     expanded: false, // Default expanded state
                 });
             }
@@ -357,13 +375,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(alleleNode, 'color', getNodeColor(nodeData));
                 graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
                 console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
-                // Change colour of non-selected disease nodes back to default
+
+                // Change border of disease nodes back to default
                 graph.nodes().forEach(node => {
-                    graph.setNodeAttribute(node, 'color', graph.getNodeAttributes(node).originalColor);
-                }
-            );
-                // Change colour of selected disease node to purple to make it stand out
-                graph.setNodeAttribute(diseaseNode, 'color', '#b302f9');
+                        graph.setNodeAttribute(node, 'borderSize', 0);
+                        graph.setNodeAttribute(node, 'borderColor', getNodeColor(graph.getNodeAttributes(node)));
+                    }
+                );
+                // Change border of selected disease node to black to highlight it
+                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.25);
+                graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
                 sigmaInstance.refresh();
             }
 
