@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 );
                 // Change border of selected disease node to black to highlight it
-                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.25);
+                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.05);
                 graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
                 sigmaInstance.refresh();
             }
