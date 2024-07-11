@@ -125,7 +125,7 @@ export function fetchAndShowAssociations(disease) {
 
               circos.chords('links', circosData.links, {
                 color: d => d.color,
-                radius: 200,
+                radius: 300,
                 direction: 'out',
                 thickness: d => d.value * 2,
                 opacity: 0.7,
