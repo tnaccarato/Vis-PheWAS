@@ -115,11 +115,16 @@ export function fetchAndShowAssociations(disease) {
                 </head>
                 <body>
                     <button id="saveButton">Save as PNG</button>
+<button id="showProtective">Hide Protective</button>
+<button id="showRisk">Hide Risk</button>
                     <h1>Circos Plot for ${disease}</h1>
                     <div id="circosContainer"></div>
                     <div id="tooltip" class="tooltip"></div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
+                            // Set protective and risk flags to show/hide associations
+                            let protective = true;
+                            let risk = true;
                             const circosData = ${JSON.stringify(circosData)};
                             console.log('Loaded circosData:', circosData);
 
@@ -201,6 +206,25 @@ export function fetchAndShowAssociations(disease) {
                                 };
                                 // Load the SVG data as an image
                                 img.src = url;
+                            });
+                            
+                            // Add buttons to toggle protective or risk associations
+                            document.getElementById("showProtective").addEventListener("click", function() {
+                                protective = !protective;
+                                d3.selectAll('.chord')
+                                    .style('display', d => d.value > 1 ? (protective ? 'block' : 'none') : (risk ? 'block' : 'none'));
+                                // Update the button text based on the protective flag
+                                document.getElementById("showProtective").innerText = protective ? "Hide Protective" : "Show Protective";
+                            });
+                            
+                            document.getElementById("showRisk").addEventListener("click", function() {
+                                risk = !risk;
+                                d3.selectAll('.chord')
+                                    .style('display', d => d.value < 1 ? (risk ? 'block' : 'none') : (protective ? 'block' : 'none'));
+                                // Update the button text based on the risk flag
+                                document.getElementById("showRisk").innerText = risk ? "Hide Risk" : "Show Risk";
+                             
+                                
                             });
                         });
                     </script>
