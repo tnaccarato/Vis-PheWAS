@@ -47,6 +47,8 @@ export function fetchAndShowAssociations(disease) {
                     target: { id: assoc.gene2, start: 500000, end: 1000000 },
                     color: color,
                     value: assoc.combined_odds_ratio,
+                    oddsRatio: assoc.combined_odds_ratio,
+                    pValue: assoc.combined_p_value,
                     tooltip: `${assoc.gene1} - ${assoc.gene2}: OR = ${assoc.combined_odds_ratio.toFixed(2)}, p-value = ${assoc.combined_p_value.toExponential(2)}`
                 });
             });
@@ -117,6 +119,8 @@ export function fetchAndShowAssociations(disease) {
                     <button id="saveButton">Save as PNG</button>
 <button id="showProtective">Hide Protective</button>
 <button id="showRisk">Hide Risk</button>
+<input id="ORfilter" type="range" min="0" max="10" value="1" step="0.1" />
+<input id=pvaluefilter type="range" min="0.0001" max="0.005" value="0.005" step="0.005" />
                     <h1>Circos Plot for ${disease}</h1>
                     <div id="circosContainer"></div>
                     <div id="tooltip" class="tooltip"></div>
@@ -125,6 +129,8 @@ export function fetchAndShowAssociations(disease) {
                             // Set protective and risk flags to show/hide associations
                             let protective = true;
                             let risk = true;
+                            let oddsRatioThreshold = 1;
+                            let pValueThreshold = 0.005;
                             const circosData = ${JSON.stringify(circosData)};
                             console.log('Loaded circosData:', circosData);
 
@@ -224,8 +230,37 @@ export function fetchAndShowAssociations(disease) {
                                 // Update the button text based on the risk flag
                                 document.getElementById("showRisk").innerText = risk ? "Hide Risk" : "Show Risk";
                              
-                                
+   
                             });
+                            
+                            // Add sliders to filter by odds ratio and p-value
+                            document.getElementById("ORfilter").addEventListener("input", function() {
+                                // Update the odds ratio threshold
+                                oddsRatioThreshold = parseFloat(this.value);
+                                d3.selectAll('.chord')
+                                // Filter based on risk and protective flags first
+                                    .style('display', d => d.value >= 1 ? (risk ? 'block' : 'none') : (protective ? 'block' : 'none'))
+                                // Filter by p-value threshold
+                                    .style('display', d => d.pValue <= pValueThreshold ? 'block' : 'none')
+                                // Then filter based on odds ratio threshold
+                                    .style('display', d => d.oddsRatio >= oddsRatioThreshold ? 'block' : 'none');
+                            });
+                            
+                            document.getElementById("pvaluefilter").addEventListener("input", function() {
+                                // Update the p-value threshold
+                                pValueThreshold = parseFloat(this.value);
+                                d3.selectAll('.chord')
+                                // Filter based on risk and protective flags first
+                                    .style('display', d => d.value >= 1 ? (risk ? 'block' : 'none') : (protective ? 'block' : 'none'))
+                                // Filter by odds threshold
+                                    .style('display', d => d.oddsRatio >= oddsRatioThreshold ? 'block' : 'none')
+                                // Then filter based on odds ratio threshold
+                                    .style('display', d => d.pValue <= pValueThreshold ? 'block' : 'none');
+                            });
+                            
+                                
+                                
+                              
                         });
                     </script>
                 </body>
