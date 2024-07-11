@@ -10,6 +10,14 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
     const removeChildrenNodes = (nodeId) => {
         const children = graph.outNeighbors(nodeId);
         children.forEach(child => {
+            // If the child node has siblings, do not remove it, only remove the edge connecting it to the parent
+            if (graph.inNeighbors(child).length > 1) {
+                const edge = graph.edges().find(edge => {
+                    return graph.source(edge) === nodeId && graph.target(edge) === child;
+                });
+                graph.dropEdge(edge); // Remove the edge connecting the child to the parent
+                return;
+            }
             removeChildrenNodes(child); // Recursively remove children of the child node
             graph.dropNode(child); // Remove the child node itself
         });
