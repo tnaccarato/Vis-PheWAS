@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     allele_count: node.node_type === 'disease' ? node.allele_count : null,
                     color: getNodeColor(node),
                     originalColor: getNodeColor(node),
+                    expanded: false, // Default expanded state
                 });
             }
             graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
