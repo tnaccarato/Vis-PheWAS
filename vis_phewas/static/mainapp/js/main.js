@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 );
                 // Change border of selected disease node to black to highlight it
-                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.05);
+                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.1);
                 graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
                 graph.setNodeAttribute(diseaseNode, 'forceLabel', true); // Force label display for selected disease node
                 sigmaInstance.refresh();
