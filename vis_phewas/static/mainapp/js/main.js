@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: node.label.replace('HLA_', ''), // Assuming label cleanup
                     full_label: node.label,
                     node_type: node.node_type,
+                    forceLabel: true, // Force label display for category nodes
                     x: x,
                     y: y,
                     size: 8,
@@ -380,11 +381,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.nodes().forEach(node => {
                         graph.setNodeAttribute(node, 'borderSize', 0);
                         graph.setNodeAttribute(node, 'borderColor', getNodeColor(graph.getNodeAttributes(node)));
+                        graph.setNodeAttribute(node, 'forceLabel', false); // Disable force label for all disease nodes
                     }
                 );
                 // Change border of selected disease node to black to highlight it
                 graph.setNodeAttribute(diseaseNode, 'borderSize', 0.05);
                 graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
+                graph.setNodeAttribute(diseaseNode, 'forceLabel', true); // Force label display for selected disease node
                 sigmaInstance.refresh();
             }
 
