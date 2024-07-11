@@ -357,12 +357,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
                 console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
                 // Change colour of non-selected disease nodes back to default
-                diseaseNodes.forEach(node => {
-                        if (node !== diseaseNode) {
-                            graph.setNodeAttribute(node, 'color', graph.getNodeAttributes(node).originalColor);
-                        }
-                    }
-                );
+                graph.nodes().forEach(node => {
+                    graph.setNodeAttribute(node, 'color', graph.getNodeAttributes(node).originalColor);
+                }
+            );
                 // Change colour of selected disease node to purple to make it stand out
                 graph.setNodeAttribute(diseaseNode, 'color', '#b302f9');
                 sigmaInstance.refresh();
