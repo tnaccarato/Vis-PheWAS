@@ -310,6 +310,9 @@ def get_combined_associations(request):
     # For each pair of alleles, calculate the combined odds ratio and p-value
     for allele1, allele2 in allele_combinations:
         combined_odds_ratio = allele1['odds_ratio'] * allele2['odds_ratio']
+        # Filter out OR = 0
+        if combined_odds_ratio == 0:
+            continue
 
         # Combine p-values using Fisher's method
         _, combined_p_value = combine_pvalues([allele1['p'], allele2['p']])
