@@ -37,9 +37,9 @@ export function fetchAndShowAssociations(disease) {
                 // Set color based on odds ratio
                 const color = assoc.combined_odds_ratio === 1
                     ? '#800080' // Purple for OR = 1
-                    : assoc.combined_odds_ratio < 1
-                        ? `rgba(255, 0, 0, ${1 - assoc.combined_odds_ratio})` // Red gradient for OR < 1
-                        : `rgba(0, 0, 255, ${assoc.combined_odds_ratio - 1})`; // Blue gradient for OR > 1
+                    : assoc.combined_odds_ratio > 1
+                        ? `rgba(255, 0, 0, ${assoc.combined_odds_ratio -1})` // Red gradient for OR > 1
+                        : `rgba(0, 0, 255, ${1 - assoc.combined_odds_ratio })`; // Blue gradient for OR < 1
 
                 // Add link to Circos data
                 circosData.links.push({
@@ -212,7 +212,7 @@ export function fetchAndShowAssociations(disease) {
                             document.getElementById("showProtective").addEventListener("click", function() {
                                 protective = !protective;
                                 d3.selectAll('.chord')
-                                    .style('display', d => d.value > 1 ? (protective ? 'block' : 'none') : (risk ? 'block' : 'none'));
+                                    .style('display', d => d.value < 1 ? (protective ? 'block' : 'none') : (risk ? 'block' : 'none'));
                                 // Update the button text based on the protective flag
                                 document.getElementById("showProtective").innerText = protective ? "Hide Protective" : "Show Protective";
                             });
@@ -220,7 +220,7 @@ export function fetchAndShowAssociations(disease) {
                             document.getElementById("showRisk").addEventListener("click", function() {
                                 risk = !risk;
                                 d3.selectAll('.chord')
-                                    .style('display', d => d.value < 1 ? (risk ? 'block' : 'none') : (protective ? 'block' : 'none'));
+                                    .style('display', d => d.value > 1 ? (risk ? 'block' : 'none') : (protective ? 'block' : 'none'));
                                 // Update the button text based on the risk flag
                                 document.getElementById("showRisk").innerText = risk ? "Hide Risk" : "Show Risk";
                              
