@@ -81,6 +81,11 @@ export function fetchAndShowAssociations(disease) {
                 return;
             }
 
+            // Function to capitalize the first letter of each word
+            function capitalizeWords(str) {
+                return str.replace(/\b\w/g, char => char.toUpperCase());
+            }
+
             // Debug output
             console.log('circosData:', circosData);
 
@@ -123,7 +128,7 @@ export function fetchAndShowAssociations(disease) {
 <input id="ORfilter" type="range" min="0" max="10" value="1" step="0.1" />
 <label for="pvaluefilter">P-Value Filter</label>
 <input id="pvaluefilter" type="range" min="0" max="0.005" value="0.005" step="0.0001" />
-                    <h1>Circos Plot for ${disease}</h1>
+                    <h1>Circos Plot of Significant Pairwise Allele Associations for ${capitalizeWords(disease)}</h1>
                     <h2 id="filterDetails">Filtered to OR>=0, p<=0.005</h2>
                     <div id="circosContainer"></div>
                     <div id="tooltip" class="tooltip"></div>
