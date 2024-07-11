@@ -5,24 +5,54 @@ import {clamp, diseaseColor, protectiveColorScale, riskColorScale} from "./utils
 
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
+
+    // Recursive helper function to remove children nodes
+    const removeChildrenNodes = (nodeId) => {
+        const children = graph.outNeighbors(nodeId);
+        children.forEach(child => {
+            removeChildrenNodes(child); // Recursively remove children of the child node
+            graph.dropNode(child); // Remove the child node itself
+        });
+    };
+
     if (nodeData.node_type === 'category') {
-        fetchGraphData({type: 'diseases', category_id: node, filters: filters, clicked: true});
+        if (nodeData.expanded) {
+            // Collapse node by recursively removing children
+            removeChildrenNodes(node);
+            nodeData.expanded = false;
+        } else {
+            // Expand node by fetching and displaying children
+            fetchGraphData({ type: 'diseases', category_id: node, filters: filters, clicked: true });
+            nodeData.expanded = true;
+        }
     } else if (nodeData.node_type === 'disease') {
-        fetchGraphData({type: 'alleles', disease_id: encodeURIComponent(node), filters: filters, clicked: true});
+        if (nodeData.expanded) {
+            // Collapse node by recursively removing children
+            removeChildrenNodes(node);
+            nodeData.expanded = false;
+        } else {
+            // Expand node by fetching and displaying children
+            fetchGraphData({ type: 'alleles', disease_id: encodeURIComponent(node), filters: filters, clicked: true });
+            nodeData.expanded = true;
+        }
     } else if (nodeData.node_type === 'allele') {
-        const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0]
+        const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0];
         leftColumn.style.width = '70%';
         // Resize the Sigma container
         adjustSigmaContainerHeight();
-        const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0]
+        const rightColumn = document.getElementsByClassName('col-md-6 right-column')[0];
         rightColumn.style.width = '30%';
         rightColumn.style.display = 'inline-block';
         const infoPanel = document.getElementsByClassName('info-container')[0];
         infoPanel.style.display = 'inline-block';
         getInfoTable(nodeData);
-
     }
+
+    // Update the node with new attributes
+    graph.setNodeAttributes(node, nodeData);
 }
+
+
 
 export function hoverOnNode(node, graph, sigmaInstance) {
     const nodeId = node;
