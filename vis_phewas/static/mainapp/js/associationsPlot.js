@@ -125,9 +125,9 @@ export function fetchAndShowAssociations(disease) {
 <button id="showProtective">Hide Protective</button>
 <button id="showRisk">Hide Risk</button>
 <label for="ORfilter">Odds Ratio Filter</label>
-<input id="ORfilter" type="range" min="0" max="10" value="1" step="0.1" />
+<input id="ORfilter" type="range" min=0 max=10 value=1 step=0.1 />
 <label for="pvaluefilter">P-Value Filter</label>
-<input id="pvaluefilter" type="range" min="0" max="0.005" value="0.005" step="0.0001" />
+<input id="pvaluefilter" type="range" min=0 max=0.05 value=0.05 step=0.005 />
                     <h1>Circos Plot of Significant Pairwise Allele Associations for ${capitalizeWords(disease)}</h1>
                     <h2 id="filterDetails">Filtered to OR>=0, p<=0.005</h2>
                     <div id="circosContainer"></div>
@@ -137,8 +137,8 @@ export function fetchAndShowAssociations(disease) {
                             // Set protective and risk flags to show/hide associations
                             let protective = true;
                             let risk = true;
-                            let oddsRatioThreshold = 1;
-                            let pValueThreshold = 0.005;
+                            let oddsRatioThreshold = 0;
+                            let pValueThreshold = 0.05;
                             const circosData = ${JSON.stringify(circosData)};
                             console.log('Loaded circosData:', circosData);
 
@@ -172,7 +172,14 @@ export function fetchAndShowAssociations(disease) {
                             }).render();
 
                             const tooltip = document.getElementById('tooltip');
-
+                            
+                            // Sets the range of sliders based on min and max values
+                            document.getElementById('ORfilter').setAttribute('min', 0);
+                            // document.getElementById('pvaluefilter').setAttribute('min', 0.05);
+                            document.getElementById('ORfilter').setAttribute('max', Math.max(...circosData.links.map(d => d.oddsRatio)));
+                            // document.getElementById('pvaluefilter').setAttribute('max', Math.min(...circosData.links.map(d => d.pValue)));
+                            
+                            
                             d3.selectAll('.chord')
                                 .on('mouseover', function(event, datum) {
                                     tooltip.style.display = 'block';
