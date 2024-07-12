@@ -5,13 +5,13 @@
     <link rel="stylesheet" href="{% static 'mainapp/css/index.css' %}">
 {% endblock %}
 {% block content %}
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sigma container box and toolbar -->
             <div class="col-md-6 left-column">
                 <div id="sigma-container"></div>
                 <div id="toolbar-buttons">
-                    <button id="show-subtypes-button" class="button btn btn-primary" onclick="updateShowSubtypes()">Show Subtypes</button>
                     <button class="button btn btn-primary" onclick="addFilter()">Add Filter</button>
                     <button class="button btn btn-primary" onclick="clearFilters()">Clear Filters</button>
                     <button class="button btn btn-primary" onclick="applyFilters()">Apply Filters</button>
@@ -22,18 +22,32 @@
                 </div>
             </div>
 
-
             <!-- Blank box for text and other content -->
             <div class="col-md-6 right-column" style="background-color: lightgray; height: 100vh; display: none">
                 <div class="info-container">Click on an allele to display information</div>
             </div>
-
         </div>
-
     </div>
+
+    <!-- Side Panel -->
+    <div id="side-panel" class="side-panel">
+        <div class="side-panel-content">
+            {% include "mainapp/options.html" %}
+        </div>
+    </div>
+
+    <!-- Options Tab -->
+    <div id="options-tab" class="options-tab" onclick="toggleSidePanel()">Options</div>
+
     <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
-
-
-
+    <!-- Script to toggle the side panel -->
+    <script>
+        function toggleSidePanel() {
+            const sidePanel = document.getElementById('side-panel');
+            const optionsTab = document.getElementById('options-tab');
+            sidePanel.classList.toggle('open');
+            optionsTab.classList.toggle('open');
+        }
+    </script>
 
 {% endblock %}

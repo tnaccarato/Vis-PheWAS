@@ -26,6 +26,8 @@ html, body, .container-fluid {
 #sigma-container {
     width: 100%;
     height: 100%;
+    z-index: 1; /* Set a lower z-index to ensure it's below the options tab */
+    position: relative; /* Ensure it follows the stacking context */
 }
 
 .right-column {
@@ -55,7 +57,6 @@ html, body, .container-fluid {
     transition: width 0.5s ease; /* Smooth transition for width change */
     overflow-y: auto;
 }
-
 
 table {
     width: 100%;
@@ -107,7 +108,6 @@ body {
     max-height: 50%;
     overflow-y: auto;
     overflow-x: hidden;
-
 }
 
 #filters-container {
@@ -175,9 +175,115 @@ body {
     padding-top: 1%;
     padding-bottom: 1%;
     border-bottom: 1px solid #ccc;
-
 }
 
 #toolbar-buttons button {
     margin: 0 5px;
+}
+
+.switch-container {
+    display: flex;
+    align-items: center;
+}
+
+.switch-label-left,
+.switch-label-right {
+    margin: 0 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.side-panel {
+    position: fixed;
+    left: -300px;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    transition: left 0.3s;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    z-index: 1000; /* Ensure it overlays other content */
+    overflow-y: auto; /* Add this if you expect content to overflow */
+}
+
+.side-panel.open {
+    left: 0;
+}
+
+.side-panel-content {
+    color: #fff;
+    position: relative;
+}
+
+.options-tab {
+    position: fixed;
+    top: 5%;
+    left: 44px;
+    transform: translateY(-50%) rotate(90deg); /* Rotate text 90 degrees */
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    z-index: 1001; /* Ensure it overlays other content */
+    transition: left 0.3s, background 0.3s;
+    transform-origin: left top; /* Ensure proper rotation point */
+}
+
+.side-panel.open + .options-tab {
+    left: 344px; /* Adjust position to right side of panel */
+}
+
+.options-tab:hover {
+    background: #0056b3;
 }

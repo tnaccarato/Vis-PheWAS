@@ -48,11 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to update global variable show_subtypes
     function updateShowSubtypes() {
         showSubtypes = !showSubtypes;
-        // Toggle the button state
-        const showSubtypesButton = document.getElementById('show-subtypes-button');
         console.log('Show subtypes:', showSubtypes); // Debugging log
-        // Grey out the button if show_subtypes is false
-        showSubtypesButton.classList.toggle('btn-secondary', !showSubtypes);
         // Update the graph data with the new show_subtypes value
         fetchGraphData();
         sigmaInstance.refresh()
