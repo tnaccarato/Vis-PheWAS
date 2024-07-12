@@ -14,7 +14,7 @@ import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNo
 import {fetchAndShowAssociations} from "./associationsPlot";
 
 // Declare a global variable to store the show_subtypes value
-let showSubtypes = true;
+let showSubtypes = false;
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
