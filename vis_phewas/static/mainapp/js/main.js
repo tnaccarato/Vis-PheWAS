@@ -427,9 +427,15 @@ document.addEventListener('DOMContentLoaded', function () {
                             row.appendChild(cell2);
                             // If the key is disease, add a button to show associations for the disease in the Circos plot
                             if (key === 'phewas_string') {
-                                cell2.onclick = () => {
+                                const cell3 = document.createElement('td');
+                                const button = document.createElement('button');
+                                button.className = 'btn btn-primary';
+                                button.textContent = 'Show Combinational Associations';
+                                button.onclick = () => {
                                     fetchAndShowAssociations(value);
                                 }
+                                cell3.appendChild(button);
+                                row.appendChild(cell3);
                             }
                             table.appendChild(row);
                         }
