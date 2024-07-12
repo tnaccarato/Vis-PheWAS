@@ -247,14 +247,14 @@ input:checked + .slider:before {
     position: fixed;
     left: -300px;
     top: 0;
-    width: 300px;
+    width: 250px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    background: rgb(111, 111, 111); /* Semi-transparent background */
     transition: left 0.3s;
     padding: 20px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
     z-index: 1000; /* Ensure it overlays other content */
-    overflow-y: auto; /* Add this if you expect content to overflow */
+    overflow-y: auto;
 }
 
 .side-panel.open {
@@ -266,7 +266,7 @@ input:checked + .slider:before {
     position: relative;
 }
 
-.options-tab {
+.tab {
     position: fixed;
     top: 5%;
     left: 44px;
@@ -274,16 +274,21 @@ input:checked + .slider:before {
     background: #007bff;
     color: white;
     padding: 10px 20px;
+    border: #2196F3 1px solid;
     cursor: pointer;
     z-index: 1001; /* Ensure it overlays other content */
     transition: left 0.3s, background 0.3s;
     transform-origin: left top; /* Ensure proper rotation point */
 }
 
-.side-panel.open + .options-tab {
-    left: 344px; /* Adjust position to right side of panel */
+.side-panel.open ~ .tab {
+    left: 294px; /* Adjust position to right side of panel */
 }
 
-.options-tab:hover {
+#help-tab {
+    top: 16%;
+}
+
+.tab:hover {
     background: #0056b3;
 }

@@ -32,22 +32,27 @@
     <!-- Side Panel -->
     <div id="side-panel" class="side-panel">
         <div class="side-panel-content">
-            {% include "mainapp/options.html" %}
+            <!-- Initial content (optional) -->
         </div>
     </div>
 
     <!-- Options Tab -->
-    <div id="options-tab" class="options-tab" onclick="toggleSidePanel()">Options</div>
+    <div id="options-tab" class="tab options" onclick="toggleSidePanel('options')">Options</div>
+    <div id="help-tab" class="tab help" onclick="toggleSidePanel('help')">Help</div>
+
+    <!-- Hidden content panels -->
+    <div id="options-panel" style="display: none;">
+        {% include "mainapp/options.html" %}
+    </div>
+
+    <div id="help-panel" style="display: none;">
+        {% include "mainapp/help.html" %}
+    </div>
 
     <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
-    <!-- Script to toggle the side panel -->
-    <script>
-        function toggleSidePanel() {
-            const sidePanel = document.getElementById('side-panel');
-            const optionsTab = document.getElementById('options-tab');
-            sidePanel.classList.toggle('open');
-            optionsTab.classList.toggle('open');
-        }
-    </script>
+
+    <!-- Script to toggle the side panel and control contents-->
+    <script src="{% static 'mainapp/js/side_panel.js' %}"></script>
+
 
 {% endblock %}
