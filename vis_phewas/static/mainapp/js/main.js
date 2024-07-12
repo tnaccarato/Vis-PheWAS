@@ -14,7 +14,7 @@ import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNo
 import {fetchAndShowAssociations} from "./associationsPlot";
 
 // Declare a global variable to store the show_subtypes value
-let show_subtypes = true;
+let showSubtypes = true;
 
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -47,12 +47,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to update global variable show_subtypes
     function updateShowSubtypes() {
-        show_subtypes = !show_subtypes;
+        showSubtypes = !showSubtypes;
         // Toggle the button state
         const showSubtypesButton = document.getElementById('show-subtypes-button');
-        console.log('Show subtypes:', show_subtypes); // Debugging log
+        console.log('Show subtypes:', showSubtypes); // Debugging log
         // Grey out the button if show_subtypes is false
-        showSubtypesButton.classList.toggle('btn-secondary', !show_subtypes);
+        showSubtypesButton.classList.toggle('btn-secondary', !showSubtypes);
         // Update the graph data with the new show_subtypes value
         fetchGraphData();
         sigmaInstance.refresh()
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to fetch graph data from the API
     function fetchGraphData(params = {}) {
         // Add the show_subtypes parameter to the params object
-        params.show_subtypes = show_subtypes;
+        params.show_subtypes = showSubtypes;
         console.log('Params:', params); // Debugging log
         const query = new URLSearchParams(params).toString();
         const url = '/api/graph-data/' + (query ? '?' + query : '');
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 button.className = 'btn btn-primary';
                                 button.textContent = 'Show Combinational Associations';
                                 button.onclick = () => {
-                                    fetchAndShowAssociations(value);
+                                    fetchAndShowAssociations(value, showSubtypes);
                                 }
                                 cell3.appendChild(button);
                                 row.appendChild(cell3);

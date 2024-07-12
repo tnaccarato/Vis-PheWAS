@@ -1,9 +1,9 @@
 import { getShowAlert } from "./utils";
 
 // Function to fetch and show associations for a given disease
-export function fetchAndShowAssociations(disease) {
+export function fetchAndShowAssociations(disease, showSubtypes) {
     // Fetch the associations for the given disease
-    fetch(`/api/get_combined_associations?disease=${disease}`)
+    fetch(`/api/get_combined_associations?disease=${disease}&show_subtypes=${showSubtypes}`)
         .then(response => response.json())
         .then(data => {
             // Process the data to create a Circos plot
