@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     borderSize: 0,
                     hidden: false,
                     color: color,
+                    userForceLabel: false // Variable to store user preference for label display
                 });
             }
         });
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     borderColor: color,
                     color: color,
                     expanded: false, // Default expanded state
+                    userForceLabel: false
                 });
             }
             graph.setNodeAttribute(node.id, 'hidden', visible.includes(node.id));
@@ -375,7 +377,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.nodes().forEach(node => {
                         graph.setNodeAttribute(node, 'borderSize', 0);
                         graph.setNodeAttribute(node, 'borderColor', getNodeColor(graph.getNodeAttributes(node)));
-                        graph.setNodeAttribute(node, 'forceLabel', false); // Disable force label for all disease nodes
+                        if(graph.getNodeAttribute(node, 'userForceLabel') === false) {
+                            graph.setNodeAttribute(node, 'forceLabel', false); // Disable force label for all disease nodes
+                        }
                     }
                 );
                 // Change border of selected disease node to black to highlight it
@@ -507,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const nodeAttributes = graph.getNodeAttributes(node);
         const forceLabel = nodeAttributes.forceLabel;
         graph.setNodeAttribute(node, 'forceLabel', !forceLabel);
+        graph.setNodeAttribute(node, 'userForceLabel', !forceLabel);
         sigmaInstance.refresh();
     });
 
