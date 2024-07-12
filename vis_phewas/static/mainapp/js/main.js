@@ -502,6 +502,18 @@ document.addEventListener('DOMContentLoaded', function () {
         hoverOffNode(node, graph, sigmaInstance);
     });
 
+    // Show/Hide labels when right-clicking a node
+    sigmaInstance.on('rightClickNode', ({node}) => {
+        const nodeAttributes = graph.getNodeAttributes(node);
+        const forceLabel = nodeAttributes.forceLabel;
+        graph.setNodeAttribute(node, 'forceLabel', !forceLabel);
+        sigmaInstance.refresh();
+    });
+
+    document.getElementById('sigma-container').addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+    });
+
     // Exports the current query to a CSV file
     window.exportQuery = function () {
         getExportData(showAlert);
