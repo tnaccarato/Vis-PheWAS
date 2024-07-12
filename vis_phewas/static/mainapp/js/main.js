@@ -13,9 +13,6 @@ import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getSh
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 import {fetchAndShowAssociations} from "./associationsPlot";
 
-// Declare a global variable to store the show_subtypes value
-let showSubtypes = false;
-
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
@@ -45,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.applyFilters = getApplyFilters(showAlert, fetchGraphData, sigmaInstance);
     window.clearFilters = getClearFilters(adjustSigmaContainerHeight, showAlert, fetchGraphData);
 
+
     // Function to update global variable show_subtypes
     function updateShowSubtypes() {
         showSubtypes = !showSubtypes;
@@ -64,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function fetchGraphData(params = {}) {
         // Add the show_subtypes parameter to the params object
         params.show_subtypes = showSubtypes;
-        console.log('Params:', params); // Debugging log
+        // console.log('Params:', params); // Debugging log
         const query = new URLSearchParams(params).toString();
         const url = '/api/graph-data/' + (query ? '?' + query : '');
 
@@ -109,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const color = getNodeColor(node);
 
                 // Debugging log to check angles and positions
-                console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
+                // console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
 
                 // Add node to the graph with calculated positions
                 graph.addNode(node.id, {
@@ -134,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!graph.hasEdge(edge.id)) {
                 graph.addEdge(edge.source, edge.target);
                 graph.setEdgeAttribute(edge.source, edge.target, 'hidden', false);
-                console.log('Edge:', edge); // Debugging log
+                // console.log('Edge:', edge); // Debugging log
             }
         });
 
@@ -143,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to update the graph with new nodes and edges
     function updateGraph(nodes, edges, visible, clicked) {
-        console.log(visible)
+        // console.log(visible)
         // Get all nodes and edges in the graph
         const graphNodes = graph.nodes();
         const graphEdges = graph.edges();
@@ -162,9 +160,9 @@ document.addEventListener('DOMContentLoaded', function () {
             sigmaInstance.refresh()
         }
         nodes.forEach(node => {
-            console.log('Node:', node); // Debugging log
-            console.log('Node P:', node.p); // Debugging log
-            console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
+            // console.log('Node:', node); // Debugging log
+            // console.log('Node P:', node.p); // Debugging log
+            // console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
             if (!graph.hasNode(node.id)) {
                 const color = getNodeColor(node);
                 graph.addNode(node.id, {
@@ -209,24 +207,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getInfoTable(nodeData) {
         const infoContainer = document.getElementsByClassName('info-container')[0];
-        console.log('Node data:', nodeData); // Debugging log
+        // console.log('Node data:', nodeData); // Debugging log
         const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`;
-        console.log('Selected node:', selectedNode); // Debugging log
+        // console.log('Selected node:', selectedNode); // Debugging log
 
         // Get edges connected to the node
         const edges = graph.edges().filter(edge => {
             const source = graph.source(edge);
             const target = graph.target(edge);
-            console.log(`Edge: ${edge}, Source: ${source}, Target: ${target}`);
+            // console.log(`Edge: ${edge}, Source: ${source}, Target: ${target}`);
             return source === selectedNode || target === selectedNode;
         });
-        console.log('Edges:', edges); // Debugging log
+        // console.log('Edges:', edges); // Debugging log
 
         // Gets the disease nodes connected to the allele node
         const diseaseNodes = edges.map(edge => {
             return graph.source(edge) === selectedNode ? graph.target(edge) : graph.source(edge);
         });
-        console.log(diseaseNodes);
+        // console.log(diseaseNodes);
 
         if (diseaseNodes.length === 0) {
             console.error('No disease nodes found.');
@@ -271,9 +269,9 @@ document.addEventListener('DOMContentLoaded', function () {
             prevButton.className = 'btn btn-secondary';
             prevButton.textContent = '<';
             prevButton.onclick = () => {
-                console.log('Current index:', currentIndex); // Debugging log
+                // console.log('Current index:', currentIndex); // Debugging log
                 currentIndex = (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
-                console.log('Previous index:', currentIndex); // Debugging log
+                // console.log('Previous index:', currentIndex); // Debugging log
                 displayNodeInfo(diseaseNodes[currentIndex]);
             };
             navContainer.appendChild(prevButton);
@@ -283,9 +281,9 @@ document.addEventListener('DOMContentLoaded', function () {
             nextButton.className = 'btn btn-secondary';
             nextButton.textContent = '>';
             nextButton.onclick = () => {
-                console.log('Current index:', currentIndex); // Debugging log
+                // console.log('Current index:', currentIndex); // Debugging log
                 currentIndex = (currentIndex + 1) % diseaseNodes.length;
-                console.log('Next index:', currentIndex); // Debugging log
+                // console.log('Next index:', currentIndex); // Debugging log
                 displayNodeInfo(diseaseNodes[currentIndex]);
             };
             navContainer.appendChild(nextButton);
@@ -351,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function displayNodeInfo(diseaseNode) {
             // Clear previous data related to disease info
             const existingDiseaseInfo = infoContainer.querySelector('.disease-info');
-            console.log('Existing disease info:', existingDiseaseInfo); // Debugging log
+            // console.log('Existing disease info:', existingDiseaseInfo); // Debugging log
 
             // Fetch data from the API for the disease
             const disease = graph.getNodeAttributes(diseaseNode).full_label;
@@ -361,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const encodedAllele = encodeURIComponent(nodeData.full_label);
             const encodedDisease = encodeURIComponent(disease);
-            console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query parameters
+            // console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query parameters
             const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
             function updateNodeStyle(data) {
@@ -371,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(alleleNode, 'p', data.p);
                 graph.setNodeAttribute(alleleNode, 'color', getNodeColor(nodeData));
                 graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
-                console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
+                // console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
 
                 // Change border of disease nodes back to default
                 graph.nodes().forEach(node => {
