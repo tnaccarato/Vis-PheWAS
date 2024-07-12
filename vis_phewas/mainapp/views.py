@@ -293,14 +293,19 @@ def get_combined_associations(request):
     :param request:
     :return: JsonResponse
     """
-
     # Get the disease from the request
     disease = request.GET.get('disease')
+    show_subtypes = request.GET.get('show_subtypes')
 
     # Get the allele data for the disease where subtype is not 00
     allele_data = HlaPheWasCatalog.objects.filter(phewas_string=disease).values(
         'snp', 'gene_name', 'serotype', 'subtype', 'odds_ratio', 'p'
-    ).exclude(subtype='00')
+
+    )
+    if show_subtypes == 'true':
+        allele_data = allele_data.exclude(subtype='00')
+    else:
+        allele_data = allele_data.filter(subtype='00')
 
     # Generate pairwise combinations of alleles
     allele_combinations = list(itertools.combinations(allele_data, 2))
@@ -320,7 +325,6 @@ def get_combined_associations(request):
         # Only keep combined associations with p-value less than 0.05
         if combined_p_value >= 0.05:
             continue
-
 
         result.append({
             'gene1': allele1['snp'].replace('HLA_', ''),
