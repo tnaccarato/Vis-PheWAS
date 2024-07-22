@@ -172,6 +172,13 @@ function getColor(gene) {
             height: 20px;
             margin-right: 5px;
         }
+        
+        .legend-gradient {
+    width: 100px;  /* or any size you prefer */
+    height: 20px;  /* or any size you prefer */
+    background: linear-gradient(to right, darkblue, darkred);
+    border: 1px solid #000;  /* Optional: adds a border around the gradient */
+}
     </style>
                 </head>
                 <body>
@@ -187,7 +194,7 @@ function getColor(gene) {
                     <h2 id="filterDetails">Filtered to OR>=0, p<=0.005</h2>
                     <div id="circosContainer"></div>
                     <div id="tooltip" class="tooltip"></div>
-                    <div id="legend">
+                    <div id="legend" class="geneNameLegend">
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(0, 100%, 50%);"></div>A</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(240, 100%, 50%);"></div>B</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(120, 100%, 50%);"></div>C</div>
@@ -197,7 +204,11 @@ function getColor(gene) {
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(180, 100%, 50%);"></div>DQB1</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(300, 100%, 50%);"></div>DRB1</div>
                     </div>
-                    </div>
+                    <div class="associationLegend">
+    <div class="legend-item">
+        <div class="legend-gradient"></div>
+        Odds Ratio (Dark Blue to Dark Red)
+    </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Set protective and risk flags to show/hide associations
