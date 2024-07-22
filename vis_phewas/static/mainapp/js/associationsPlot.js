@@ -1,4 +1,4 @@
-import { getShowAlert } from "./utils";
+import {getShowAlert} from "./utils";
 
 // Function to fetch and show associations for a given disease
 export function fetchAndShowAssociations(disease, showSubtypes) {
@@ -64,6 +64,44 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
                 return 0;
             });
 
+            // Gets a spectrum of a specific color depending on the gene name
+// Function to get a shade of the base color for each gene
+function getColor(gene) {
+        const baseColors = {
+            'A': { h: 0, s: 100, l: 50 },       // Red
+            'B': { h: 240, s: 100, l: 50 },     // Blue
+            'C': { h: 120, s: 100, l: 50 },     // Green
+            'DPA1': { h: 270, s: 100, l: 50 },  // Purple
+            'DPB1': { h: 30, s: 100, l: 50 },   // Orange
+            'DQA1': { h: 60, s: 100, l: 50 },   // Yellow
+            'DQB1': { h: 180, s: 100, l: 50 },  // Cyan
+            'DRB1': { h: 300, s: 100, l: 50 }   // Magenta
+        };
+
+        // Extract the base gene name (before the underscore)
+        const gene_name = gene.split('_')[0];
+        const baseColor = baseColors[gene_name];
+        console.log('baseColor:', baseColor);
+
+        // If the gene is not in the base colors, return a default color
+        if (!baseColor) return 'gray';
+
+        // Get the index of the gene in the sorted list
+        const index = sortedGenes.indexOf(gene);
+
+        // Calculate the lightness variation based on the gene's index
+        const lightnessVariation = 50 + (index * 10) % 50; // Vary between 50% and 100%
+
+        // Create a spectrum color by varying the lightness of the base color
+        return `hsl(${baseColor.h}, ${baseColor.s}%, ${lightnessVariation}%)`;
+    }
+
+
+
+
+
+
+
             // Add ideograms to Circos data
             sortedGenes.forEach((gene, index) => {
                 circosData.ideograms.push({
@@ -71,7 +109,7 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
                     name: gene,
                     label: gene,
                     len: 1000000,
-                    color: `hsl(${(index * 360) / sortedGenes.length}, 100%, 50%)`
+                    color: getColor(gene),
                 });
             });
 
