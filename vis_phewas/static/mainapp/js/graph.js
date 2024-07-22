@@ -6,6 +6,7 @@ import {clamp, diseaseColor, protectiveColorScale, riskColorScale} from "./utils
 export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
     const nodeData = graph.getNodeAttributes(node);
 
+
     // Recursive helper function to remove children nodes
     const removeChildrenNodes = (nodeId) => {
         const children = graph.outNeighbors(nodeId);
@@ -42,6 +43,8 @@ export function clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHei
             // Expand node by fetching and displaying children
             fetchGraphData({ type: 'alleles', disease_id: encodeURIComponent(node), filters: filters, clicked: true });
             nodeData.expanded = true;
+            // Force display the label of the clicked node
+            nodeData.forceLabel = true;
         }
     } else if (nodeData.node_type === 'allele') {
         const leftColumn = document.getElementsByClassName('col-md-6 left-column')[0];
