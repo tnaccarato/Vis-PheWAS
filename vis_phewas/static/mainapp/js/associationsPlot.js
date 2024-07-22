@@ -64,7 +64,6 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
                 return 0;
             });
 
-            // Gets a spectrum of a specific color depending on the gene name
 // Function to get a shade of the base color for each gene
 function getColor(gene) {
         const baseColors = {
@@ -107,7 +106,7 @@ function getColor(gene) {
                 circosData.ideograms.push({
                     id: gene,
                     name: gene,
-                    label: gene,
+                    label: gene.split('_')[1], // Display only serotype/subtype in the label
                     len: 1000000,
                     color: getColor(gene),
                 });
@@ -139,24 +138,40 @@ function getColor(gene) {
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/3.0.10/umd.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                        }
-                        #circosContainer {
-                            width: 800px;
-                            height: 800px;
-                            margin: 0 auto;
-                        }
-                        .tooltip {
-                            position: absolute;
-                            background-color: #fff;
-                            border: 1px solid #ccc;
-                            padding: 5px;
-                            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                            display: none;
-                            pointer-events: none;
-                        }
-                    </style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #circosContainer {
+            width: 800px;
+            height: 800px;
+            margin: 0 auto;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            pointer-events: none;
+        }
+        #legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+    </style>
                 </head>
                 <body>
                     <button id="saveButton">Save as PNG</button>
@@ -170,6 +185,16 @@ function getColor(gene) {
                     <h2 id="filterDetails">Filtered to OR>=0, p<=0.005</h2>
                     <div id="circosContainer"></div>
                     <div id="tooltip" class="tooltip"></div>
+                    <div id="legend">
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(0, 100%, 50%);"></div>A</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(240, 100%, 50%);"></div>B</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(120, 100%, 50%);"></div>C</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(270, 100%, 50%);"></div>DPA1</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(30, 100%, 50%);"></div>DPB1</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(60, 100%, 50%);"></div>DQA1</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(180, 100%, 50%);"></div>DQB1</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: hsl(300, 100%, 50%);"></div>DRB1</div>
+                    </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Set protective and risk flags to show/hide associations
