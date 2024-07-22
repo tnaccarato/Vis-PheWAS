@@ -137,6 +137,7 @@ function getColor(gene) {
                     <script src="https://cdn.rawgit.com/nicgirault/circosJS/v2/dist/circos.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/3.0.10/umd.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                    
                     <style>
         body {
             font-family: Arial, sans-serif;
@@ -181,6 +182,7 @@ function getColor(gene) {
 <input id="ORfilter" type="range" min=0 max=10 value=1 step=0.1 />
 <label for="pvaluefilter">P-Value Filter</label>
 <input id="pvaluefilter" type="range" min=0 max=0.05 value=0.05 step=0.005 />
+<div id="graphContainer">
                     <h1>Circos Plot of Significant Pairwise Allele Associations for ${capitalizeWords(disease)}</h1>
                     <h2 id="filterDetails">Filtered to OR>=0, p<=0.005</h2>
                     <div id="circosContainer"></div>
@@ -194,6 +196,7 @@ function getColor(gene) {
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(60, 100%, 50%);"></div>DQA1</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(180, 100%, 50%);"></div>DQB1</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: hsl(300, 100%, 50%);"></div>DRB1</div>
+                    </div>
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
@@ -260,37 +263,21 @@ function getColor(gene) {
                                     d3.select(this).style('opacity', 0.7);
                                 });
 
-                            // Add save button to save the plot as a PNG image
                             document.getElementById("saveButton").addEventListener("click", function() {
-                                const svgElement = document.querySelector("#circosContainer svg");
-                                const svgData = new XMLSerializer().serializeToString(svgElement);
-                                const canvas = document.createElement("canvas");
-                                const context = canvas.getContext("2d");
-                                const svgSize = svgElement.getBoundingClientRect();
-                                canvas.width = svgSize.width;
-                                canvas.height = svgSize.height;
-                                const DOMURL = self.URL || self.webkitURL || self;
-                                const img = new Image();
-                                const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-                                const url = DOMURL.createObjectURL(svgBlob);
-                                img.onload = function() {
-                                    context.drawImage(img, 0, 0);
-                                    DOMURL.revokeObjectURL(url);
-                                    const imgURI = canvas
-                                        .toDataURL("image/png")
-                                        .replace("image/png", "image/octet-stream");
+                                html2canvas(document.getElementById('graphContainer')).then(function(canvas) {
+                                    // Create an image element
+                                    const imgURI = canvas.toDataURL("image/png");
+                            
+                                    // Prompt download
                                     const a = document.createElement("a");
-                                    // Set the file name based on the disease name
-                                    const file_name = "circos_plot_${disease.replaceAll(' ', '_')}.png";
-                                    // Download the image
-                                    a.setAttribute("download", file_name);
-                                    a.setAttribute("href", imgURI);
-                                    a.setAttribute("target", "_blank");
+                                    a.setAttribute('download', 'Circos Plot'); // Set the file name for the download
+                                    a.setAttribute('href', imgURI);
+                                    a.setAttribute('target', '_blank');
                                     a.click();
-                                };
-                                // Load the SVG data as an image
-                                img.src = url;
-                            });
+                            
+                                  
+    });
+});
                             
                             // Add buttons to toggle protective or risk associations
                             document.getElementById("showProtective").addEventListener("click", function() {
