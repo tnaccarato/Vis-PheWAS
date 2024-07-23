@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('sigma-container');
     const graph = new Graph({multi: true});
     const sigmaInstance = new Sigma(graph, container, {
-            allowInvalidContainer: true, labelRenderedSizeThreshold: 500, defaultNodeType: "bordered",
+            allowInvalidContainer: true, labelRenderedSizeThreshold: 300, defaultNodeType: "bordered",
             nodeProgramClasses: {
                 bordered: createNodeBorderProgram({
                     borders: [
