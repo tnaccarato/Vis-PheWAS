@@ -256,7 +256,7 @@ function getColor(gene) {
                             document.getElementById('ORfilter').setAttribute('max', Math.max(...circosData.links.map(d => d.oddsRatio)));
                             // document.getElementById('pvaluefilter').setAttribute('max', Math.min(...circosData.links.map(d => d.pValue)));
                             
-                            
+                            // Display tooltips for chords
                             d3.selectAll('.chord')
                                 .on('mouseover', function(event, datum) {
                                     tooltip.style.display = 'block';
@@ -273,20 +273,37 @@ function getColor(gene) {
                                     tooltip.style.display = 'none';
                                     d3.select(this).style('opacity', 0.7);
                                 });
-
+                            
+                            // Display tooltips for ideograms
+                            d3.selectAll('path', 'textpath')
+                            .on('mouseover', function(event, datum) {
+                                tooltip.style.display = 'block';
+                                tooltip.innerHTML = datum.id;
+                                console.log('datum:', datum);                                    
+                                tooltip.style.left = event.pageX + 5 + 'px';
+                                tooltip.style.top = event.pageY + 5 + 'px';
+                                d3.select(this).style('opacity', 1);
+                            })
+                            .on('mousemove', function(event) {
+                                tooltip.style.left = event.pageX + 5 + 'px';
+                                tooltip.style.top = event.pageY + 5 + 'px';
+                            })
+                            .on('mouseout', function() {
+                                tooltip.style.display = 'none';
+                                d3.select(this).style('opacity', 0.7);
+                            });
+                            
+                            // Add save button to download the plot as a PNG image
                             document.getElementById("saveButton").addEventListener("click", function() {
                                 html2canvas(document.getElementById('graphContainer')).then(function(canvas) {
                                     // Create an image element
                                     const imgURI = canvas.toDataURL("image/png");
-                            
                                     // Prompt download
                                     const a = document.createElement("a");
                                     a.setAttribute('download', 'Circos Plot'); // Set the file name for the download
                                     a.setAttribute('href', imgURI);
                                     a.setAttribute('target', '_blank');
                                     a.click();
-                            
-                                  
     });
 });
                             
