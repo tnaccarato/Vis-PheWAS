@@ -1,60 +1,67 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Index{% endblock %}
+{% extends "base.html" %} {% load static %} {% block title %}Index{% endblock %}
 {% block head %}
-    <link rel="stylesheet" href="{% static 'mainapp/css/index.css' %}">
-{% endblock %}
-{% block content %}
+<link rel="stylesheet" href="{% static 'mainapp/css/index.css' %}" />
+{% endblock %} {% block content %}
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sigma container box and toolbar -->
-            <div class="col-md-6 left-column">
-                <div id="sigma-container"></div>
-                <div id="toolbar-buttons">
-                    <button class="button btn btn-primary" onclick="addFilter()">Add Filter</button>
-                    <button class="button btn btn-primary" onclick="clearFilters()">Clear Filters</button>
-                    <button class="button btn btn-primary" onclick="applyFilters()">Apply Filters</button>
-                    <button class="button btn btn-primary" onclick="exportQuery()">Export</button>
-                </div>
-                <div class="toolbar-wrapper">
-                    {% include 'mainapp/toolbar.html' %}
-                </div>
-            </div>
-
-            <!-- Blank box for text and other content -->
-            <div class="col-md-6 right-column" style="background-color: lightgray; height: 100vh; display: none">
-                <div class="info-container">Click on an allele to display information</div>
-            </div>
-        </div>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sigma container box and toolbar -->
+    <div class="col-md-6 left-column">
+      <div id="sigma-container"></div>
+      <div id="toolbar-buttons">
+        <button class="button btn btn-primary" onclick="addFilter()">
+          Add Filter
+        </button>
+        <button class="button btn btn-primary" onclick="clearFilters()">
+          Clear Filters
+        </button>
+        <button class="button btn btn-primary" onclick="applyFilters()">
+          Apply Filters
+        </button>
+        <button class="button btn btn-primary" onclick="exportQuery()">
+          Export
+        </button>
+      </div>
+      <div class="toolbar-wrapper">{% include 'mainapp/toolbar.html' %}</div>
     </div>
 
-    <!-- Side Panel -->
-    <div id="side-panel" class="side-panel">
-        <div class="side-panel-content">
-            <!-- Initial content (optional) -->
-        </div>
+    <!-- Blank box for text and other content -->
+    <div
+      class="col-md-6 right-column"
+      style="background-color: lightgray; height: 100vh; display: none"
+    >
+      <div class="info-container">
+        Click on an allele to display information
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Options Tab -->
-    <div id="options-tab" class="tab options" onclick="toggleSidePanel('options')">Options</div>
-    <div id="help-tab" class="tab help" onclick="toggleSidePanel('help')">Help</div>
+<!-- Side Panel -->
+<div id="side-panel" class="side-panel">
+  <div class="side-panel-content">
+    <!-- Initial content (optional) -->
+  </div>
+</div>
 
-    <!-- Hidden content panels -->
-    <div id="options-panel" style="display: none;">
-        {% include "mainapp/options.html" %}
-    </div>
+<!-- Options Tab -->
+<div id="options-tab" class="tab options" onclick="toggleSidePanel('options')">
+  Options
+</div>
+<div id="help-tab" class="tab help" onclick="toggleSidePanel('help')">Help</div>
 
-    <div id="help-panel" style="display: none;">
-        {% include "mainapp/help.html" %}
-    </div>
+<!-- Hidden content panels -->
+<div id="options-panel" style="display: none">
+  {% include "mainapp/options.html" %}
+</div>
 
-    <script src="{% static 'mainapp/js/sidePanel.js' %}"></script>
-    <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
+<div id="help-panel" style="display: none">
+  {% include "mainapp/help.html" %}
+</div>
 
+<script src="{% static 'mainapp/js/sidePanel.js' %}"></script>
+<script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
 
-    <!-- Script to toggle the side panel and control contents-->
-
-
+<!-- Script to toggle the side panel and control contents-->
 
 {% endblock %}
