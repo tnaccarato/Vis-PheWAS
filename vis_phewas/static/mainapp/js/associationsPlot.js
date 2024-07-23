@@ -65,35 +65,54 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
             });
 
 // Function to get a shade of the base color for each gene
-function getColor(gene) {
-        const baseColors = {
-            'A': { h: 0, s: 100, l: 50 },       // Red
-            'B': { h: 240, s: 100, l: 50 },     // Blue
-            'C': { h: 120, s: 100, l: 50 },     // Green
-            'DPA1': { h: 270, s: 100, l: 50 },  // Purple
-            'DPB1': { h: 30, s: 100, l: 50 },   // Orange
-            'DQA1': { h: 60, s: 100, l: 50 },   // Yellow
-            'DQB1': { h: 180, s: 100, l: 50 },  // Cyan
-            'DRB1': { h: 300, s: 100, l: 50 }   // Magenta
-        };
-
-        // Extract the base gene name (before the underscore)
-        const gene_name = gene.split('_')[0];
-        const baseColor = baseColors[gene_name];
-        console.log('baseColor:', baseColor);
-
-        // If the gene is not in the base colors, return a default color
-        if (!baseColor) return 'gray';
-
-        // Get the index of the gene in the sorted list
-        const index = sortedGenes.indexOf(gene);
-
-        // Calculate the lightness variation based on the gene's index
-        const lightnessVariation = 50 + (index * 10) % 50; // Vary between 50% and 100%
-
-        // Create a spectrum color by varying the lightness of the base color
-        return `hsl(${baseColor.h}, ${baseColor.s}%, ${lightnessVariation}%)`;
+// Calculate the maximum locus value for each gene category
+const maxLocusValues = {};
+sortedGenes.forEach(gene => {
+    const [gene_name, locus] = gene.split('_');
+    const locusValue = parseInt(locus, 10);
+    if (!isNaN(locusValue)) {
+        if (!maxLocusValues[gene_name]) {
+            maxLocusValues[gene_name] = locusValue;
+        } else {
+            maxLocusValues[gene_name] = Math.max(maxLocusValues[gene_name], locusValue);
+        }
     }
+});
+
+// Function to get a shade of the base color for each gene
+function getColor(gene) {
+    const baseColors = {
+        'A': { h: 0, s: 100, l: 50 },       // Red
+        'B': { h: 240, s: 100, l: 50 },     // Blue
+        'C': { h: 120, s: 100, l: 50 },     // Green
+        'DPA1': { h: 270, s: 100, l: 50 },  // Purple
+        'DPB1': { h: 30, s: 100, l: 50 },   // Orange
+        'DQA1': { h: 60, s: 100, l: 50 },   // Yellow
+        'DQB1': { h: 180, s: 100, l: 50 },  // Cyan
+        'DRB1': { h: 300, s: 100, l: 50 }   // Magenta
+    };
+
+    // Extract the base gene name (before the underscore)
+    const split_gene = gene.split('_');
+    const gene_name = split_gene[0];
+    const locus = parseInt(split_gene[1], 10) || 0; // Ensures locus is a number
+
+    const baseColor = baseColors[gene_name];
+    console.log('baseColor:', baseColor);
+
+    // If the gene is not in the base colors, return a default color
+    if (!baseColor) return 'gray';
+
+    // Get the maximum locus value for this gene category
+    const maxLocus = maxLocusValues[gene_name] || 1; // Default to 1 to avoid division by zero
+
+    // Normalize the locus value and calculate lightness variation
+    const normalizedLocus = locus / maxLocus;
+    const lightnessVariation = 40 + normalizedLocus * 40; // Map to range 40% to 80%
+
+    // Create a spectrum color by varying the lightness of the base color
+    return `hsl(${baseColor.h}, ${baseColor.s}%, ${lightnessVariation}%)`;
+}
 
 
 
@@ -174,8 +193,8 @@ function getColor(gene) {
         }
         
         .legend-gradient {
-    width: 100px;  /* or any size you prefer */
-    height: 20px;  /* or any size you prefer */
+    width: 100px;  
+    height: 20px;
     background: linear-gradient(to right, darkblue, darkred);
     border: 1px solid #000;  /* Optional: adds a border around the gradient */
 }
@@ -256,23 +275,7 @@ function getColor(gene) {
                             document.getElementById('ORfilter').setAttribute('max', Math.max(...circosData.links.map(d => d.oddsRatio)));
                             // document.getElementById('pvaluefilter').setAttribute('max', Math.min(...circosData.links.map(d => d.pValue)));
                             
-                            // Display tooltips for chords
-                            d3.selectAll('.chord')
-                                .on('mouseover', function(event, datum) {
-                                    tooltip.style.display = 'block';
-                                    tooltip.innerHTML = datum.tooltip;
-                                    tooltip.style.left = event.pageX + 5 + 'px';
-                                    tooltip.style.top = event.pageY + 5 + 'px';
-                                    d3.select(this).style('opacity', 1);
-                                })
-                                .on('mousemove', function(event) {
-                                    tooltip.style.left = event.pageX + 5 + 'px';
-                                    tooltip.style.top = event.pageY + 5 + 'px';
-                                })
-                                .on('mouseout', function() {
-                                    tooltip.style.display = 'none';
-                                    d3.select(this).style('opacity', 0.7);
-                                });
+                            
                             
                             // Display tooltips for ideograms
                             d3.selectAll('path', 'textpath')
@@ -292,6 +295,24 @@ function getColor(gene) {
                                 tooltip.style.display = 'none';
                                 d3.select(this).style('opacity', 0.7);
                             });
+                            
+                            // Display tooltips for chords
+                            d3.selectAll('.chord')
+                                .on('mouseover', function(event, datum) {
+                                    tooltip.style.display = 'block';
+                                    tooltip.innerHTML = datum.tooltip;
+                                    tooltip.style.left = event.pageX + 5 + 'px';
+                                    tooltip.style.top = event.pageY + 5 + 'px';
+                                    d3.select(this).style('opacity', 1);
+                                })
+                                .on('mousemove', function(event) {
+                                    tooltip.style.left = event.pageX + 5 + 'px';
+                                    tooltip.style.top = event.pageY + 5 + 'px';
+                                })
+                                .on('mouseout', function() {
+                                    tooltip.style.display = 'none';
+                                    d3.select(this).style('opacity', 0.7);
+                                });
                             
                             // Add save button to download the plot as a PNG image
                             document.getElementById("saveButton").addEventListener("click", function() {
