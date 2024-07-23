@@ -1,12 +1,12 @@
 #alert-container {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1050;
-    width: 100%;
-    pointer-events: none;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  width: 100%;
+  pointer-events: none;
 }
 
 #alert-container .alert {
-    pointer-events: auto; /* Allow interactions with the alert itself */
+  pointer-events: auto; /* Allow interactions with the alert itself */
 }
