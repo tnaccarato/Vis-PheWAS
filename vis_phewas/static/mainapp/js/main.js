@@ -167,6 +167,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
             if (!graph.hasNode(node.id)) {
                 const color = getNodeColor(node);
+                const baseSize = node.node_type === 'allele' ? sizeScale(clamp(node.p, sizeScale.domain())) : 6;
+                const oddsRatioDeviationRatio = Math.abs(node.odds_ratio - 1) / node.odds_ratio;
                 graph.addNode(node.id, {
                     label: node.label.replace('HLA_', ''),
                     full_label: node.label,
@@ -179,7 +181,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     odds_ratio: node.node_type === 'allele' ? node.odds_ratio : null,
                     // If disease node, get the number of alleles associated with the disease
                     allele_count: node.node_type === 'disease' ? node.allele_count : null,
-                    borderColor: color,
+                    borderColor: node.node_type === 'allele' ? node.odds_ratio > 1 ? 'red' : 'blue' : color,
+                    originalBorderColor: node.borderColor,
+                    borderSize: node.node_type === 'allele' ? clamp(oddsRatioDeviationRatio * baseSize * 0.5, [0.5, baseSize * 0.5]) : 0,
+                    originalBorderSize: node.borderSize,
                     color: color,
                     expanded: false, // Default expanded state
                     userForceLabel: false
@@ -368,18 +373,27 @@ document.addEventListener('DOMContentLoaded', function () {
             function updateNodeStyle(data) {
                 // Update the allele node with the data from the API
                 const alleleNode = `${nodeData.node_type}-${nodeData.full_label}`;
+                const baseSize = alleleNode.node_type === 'allele' ?
+                    sizeScale(clamp(alleleNode.p, sizeScale.domain())) : 6;
+                const oddsRatioDeviationRatio = Math.abs(alleleNode.odds_ratio - 1) / alleleNode.odds_ratio;
+
                 graph.setNodeAttribute(alleleNode, 'odds_ratio', data.odds_ratio);
                 graph.setNodeAttribute(alleleNode, 'p', data.p);
-                graph.setNodeAttribute(alleleNode, 'color', getNodeColor(nodeData));
+                graph.setNodeAttribute(alleleNode, 'borderColor', data.odds_ratio > 1 ? 'red' : 'blue');
+                graph.setNodeAttribute(alleleNode, 'borderSize',
+                clamp(oddsRatioDeviationRatio * baseSize * 0.5, [0.5, baseSize * 0.5]));
+
                 graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
                 // console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
 
                 // Change border of disease nodes back to default
                 graph.nodes().forEach(node => {
-                        graph.setNodeAttribute(node, 'borderSize', 0);
-                        graph.setNodeAttribute(node, 'borderColor', getNodeColor(graph.getNodeAttributes(node)));
-                        if(graph.getNodeAttribute(node, 'userForceLabel') === false) {
-                            graph.setNodeAttribute(node, 'forceLabel', false); // Disable force label for all disease nodes
+                        if (graph.getNodeAttribute(node, 'node_type') === 'category') {
+                            return;
+                        }
+                        if (graph.getNodeAttribute(node, 'node_type') === 'disease') {
+                            graph.setNodeAttribute(node, 'borderSize', graph.setNodeAttribute(node, 'borderSize', 0));
+                            graph.setNodeAttribute(node, 'borderColor', graph.getNodeAttribute(node, 'color'));
                         }
                     }
                 );
@@ -389,6 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(diseaseNode, 'forceLabel', true); // Force label display for selected disease node
                 sigmaInstance.refresh();
             }
+
 
             fetch(url)
                 .then(response => {

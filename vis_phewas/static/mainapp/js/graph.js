@@ -145,17 +145,7 @@ export function calculateNodeColor(node) {
             return diseaseColor(clamp(node.allele_count, diseaseColor.domain()));
 
         case 'allele':
-            // Color the node based on allele's odds ratio
-            const oddsRatio = node.odds_ratio;
-            if (oddsRatio === 1) {
-                return '#a100f8'; // Green for neutral odds ratio (1)
-            }
-            // Otherwise, color the node based on the odds ratio, with red for risk and blue for protective
-            else if (oddsRatio < 1) {
-                return protectiveColorScale(clamp(oddsRatio, protectiveColorScale.domain()));
-            } else {
-                return riskColorScale(clamp(oddsRatio, riskColorScale.domain()));
-            }
+            return '#e871fb'
 
 
         default:
