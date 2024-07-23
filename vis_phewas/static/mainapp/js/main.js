@@ -182,9 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // If disease node, get the number of alleles associated with the disease
                     allele_count: node.node_type === 'disease' ? node.allele_count : null,
                     borderColor: node.node_type === 'allele' ? node.odds_ratio > 1 ? 'red' : 'blue' : color,
-                    originalBorderColor: node.borderColor,
                     borderSize: node.node_type === 'allele' ? clamp(oddsRatioDeviationRatio * baseSize * 0.5, [0.5, baseSize * 0.5]) : 0,
-                    originalBorderSize: node.borderSize,
                     color: color,
                     expanded: false, // Default expanded state
                     userForceLabel: false
@@ -373,35 +371,33 @@ document.addEventListener('DOMContentLoaded', function () {
             function updateNodeStyle(data) {
                 // Update the allele node with the data from the API
                 const alleleNode = `${nodeData.node_type}-${nodeData.full_label}`;
-                const baseSize = alleleNode.node_type === 'allele' ?
-                    sizeScale(clamp(alleleNode.p, sizeScale.domain())) : 6;
-                const oddsRatioDeviationRatio = Math.abs(alleleNode.odds_ratio - 1) / alleleNode.odds_ratio;
+                const baseSize = sizeScale(clamp(data.p, sizeScale.domain()));
+                const oddsRatioDeviationRatio = Math.abs(data.odds_ratio - 1) / data.odds_ratio;
+                const newBorderSize = clamp(oddsRatioDeviationRatio * baseSize * 0.5, [0.5, baseSize * 0.5]);
 
                 graph.setNodeAttribute(alleleNode, 'odds_ratio', data.odds_ratio);
                 graph.setNodeAttribute(alleleNode, 'p', data.p);
                 graph.setNodeAttribute(alleleNode, 'borderColor', data.odds_ratio > 1 ? 'red' : 'blue');
-                graph.setNodeAttribute(alleleNode, 'borderSize',
-                clamp(oddsRatioDeviationRatio * baseSize * 0.5, [0.5, baseSize * 0.5]));
+                graph.setNodeAttribute(alleleNode, 'borderSize', newBorderSize);
+                graph.setNodeAttribute(alleleNode, 'size', baseSize);
 
-                graph.setNodeAttribute(alleleNode, 'size', sizeScale(clamp(data.p, sizeScale.domain())));
-                // console.log('Updated node:', graph.getNodeAttributes(alleleNode)); // Debugging log
-
-                // Change border of disease nodes back to default
+                // Deselect all other disease nodes
                 graph.nodes().forEach(node => {
-                        if (graph.getNodeAttribute(node, 'node_type') === 'category') {
-                            return;
-                        }
-                        if (graph.getNodeAttribute(node, 'node_type') === 'disease') {
-                            graph.setNodeAttribute(node, 'borderSize', graph.setNodeAttribute(node, 'borderSize', 0));
-                            graph.setNodeAttribute(node, 'borderColor', graph.getNodeAttribute(node, 'color'));
-                        }
+                    if (node !== diseaseNode && graph.getNodeAttribute(node, 'node_type') === 'disease') {
+                        graph.setNodeAttribute(node, 'borderColor', graph.getNodeAttribute(node, 'color'));
+                        graph.setNodeAttribute(node, 'borderSize', 0);
+                        graph.setNodeAttribute(node, 'forceLabel', false);
                     }
-                );
-                // Change border of selected disease node to black to highlight it
-                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.1);
+                });
+
+                // Highlight the disease node
                 graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
-                graph.setNodeAttribute(diseaseNode, 'forceLabel', true); // Force label display for selected disease node
-                sigmaInstance.refresh();
+                graph.setNodeAttribute(diseaseNode, 'borderSize', 0.1);
+                graph.setNodeAttribute(diseaseNode, 'forceLabel', true);
+
+
+
+                sigmaInstance.refresh();  // Refresh the sigma instance to apply changes
             }
 
 
@@ -456,7 +452,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
 
                     infoContainer.style.overflowY = 'auto';
-                    // If there is existing disease info, replace it with the new table and update the allele with new color and size from the data
+                    // If there is existing disease info, replace it with the new table and update the allele with
+                    // new color and size from the data
                     if (existingDiseaseInfo) {
                         existingDiseaseInfo.replaceWith(table);
                     }
