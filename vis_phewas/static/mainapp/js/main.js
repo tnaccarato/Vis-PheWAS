@@ -13,6 +13,7 @@ import {clamp, closeInfoContainer, getAdjustSigmaContainer, getExportData, getSh
 import {calculateNodeColor, clickedNode, getApplyLayout, hoverOffNode, hoverOnNode} from "./graph";
 import {fetchAndShowAssociations} from "./associationsPlot";
 
+
 // Ensure the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
