@@ -23,11 +23,14 @@ document.addEventListener('DOMContentLoaded', function () {
             allowInvalidContainer: true, labelRenderedSizeThreshold: 300, defaultNodeType: "bordered",
             nodeProgramClasses: {
                 bordered: createNodeBorderProgram({
-                    borders: [
-                        {size: {attribute: "borderSize", defaultValue: 0.5}, color: {attribute: "borderColor"}},
-                        {size: {fill: true}, color: {attribute: "color"}},
-                    ],
-                }),
+                                                      borders: [
+                                                          {
+                                                              size: {attribute: "borderSize", defaultValue: 0.5},
+                                                              color: {attribute: "borderColor"}
+                                                          },
+                                                          {size: {fill: true}, color: {attribute: "color"}},
+                                                      ],
+                                                  }),
             }
         })
     ;
@@ -72,7 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (params.type) {
                     updateGraph(data.nodes, data.edges, data.visible, params.clicked);
-                } else {
+                }
+                else {
                     initializeGraph(data.nodes, data.edges, data.visible);
                 }
             })
@@ -82,7 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to initialize the graph
     function initializeGraph(nodes, edges, visible) {
         // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
-        const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID or variable
+        const container = document.getElementById('sigma-container'); // Adjust according to your actual container ID
+                                                                      // or variable
 
         // Calculate center and radius based on container dimensions
         const centerX = container.offsetWidth / 2;
@@ -151,12 +156,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!clicked) {
             // Hide all nodes and edges
             graphNodes.forEach(node => {
-                    graph.setNodeAttribute(node, 'hidden', true);
-                }
+                                   graph.setNodeAttribute(node, 'hidden', true);
+                               }
             );
             graphEdges.forEach(edge => {
-                    graph.setEdgeAttribute(edge, 'hidden', true);
-                }
+                                   graph.setEdgeAttribute(edge, 'hidden', true);
+                               }
             );
 
             sigmaInstance.refresh()
@@ -338,9 +343,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     row.appendChild(pValueCell);
                     row.onclick = () => {
                         tableSelectFilter({
-                            field: 'phewas_string',
-                            value: odds.phewas_string
-                        }, fetchGraphData, sigmaInstance, showAlert)
+                                              field: 'phewas_string',
+                                              value: odds.phewas_string
+                                          }, fetchGraphData, sigmaInstance, showAlert)
                     }
                     table.appendChild(row);
                 });
@@ -365,7 +370,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const encodedAllele = encodeURIComponent(nodeData.full_label);
             const encodedDisease = encodeURIComponent(disease);
-            // console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query parameters
+            // console.log(`Fetching data for allele: ${nodeData.full_label}, disease: ${disease}`); // Log query
+            // parameters
             const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
             function updateNodeStyle(data) {
@@ -380,6 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(alleleNode, 'borderColor', data.odds_ratio > 1 ? 'red' : 'blue');
                 graph.setNodeAttribute(alleleNode, 'borderSize', newBorderSize);
                 graph.setNodeAttribute(alleleNode, 'size', baseSize);
+                graph.setNodeAttribute(alleleNode, 'forceLabel', true);
 
                 // Deselect all other disease nodes
                 graph.nodes().forEach(node => {
@@ -387,6 +394,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         graph.setNodeAttribute(node, 'borderColor', graph.getNodeAttribute(node, 'color'));
                         graph.setNodeAttribute(node, 'borderSize', 0);
                         graph.setNodeAttribute(node, 'forceLabel', false);
+                        // Reset force labels for alleles
+                        if (graph.getNodeAttribute(node, 'node_type') === 'allele') {
+                            graph.setNodeAttribute(node, 'forceLabel', false);
+                        }
                     }
                 });
 
@@ -394,7 +405,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 graph.setNodeAttribute(diseaseNode, 'borderColor', 'black');
                 graph.setNodeAttribute(diseaseNode, 'borderSize', 0.1);
                 graph.setNodeAttribute(diseaseNode, 'forceLabel', true);
-
 
 
                 sigmaInstance.refresh();  // Refresh the sigma instance to apply changes
@@ -435,7 +445,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             const cell2 = document.createElement('td');
                             cell2.textContent = value;
                             row.appendChild(cell2);
-                            // If the key is disease, add a button to show associations for the disease in the Circos plot
+                            // If the key is disease, add a button to show associations for the disease in the Circos
+                            // plot
                             if (key === 'phewas_string') {
                                 const cell3 = document.createElement('td');
                                 const button = document.createElement('button');
@@ -506,8 +517,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     sigmaInstance.on('clickNode', ({node}) => {
-            clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable);
-        }
+                         clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable);
+                     }
     );
 
     sigmaInstance.on('enterNode', ({node}) => {
