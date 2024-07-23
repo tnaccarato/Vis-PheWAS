@@ -85,7 +85,7 @@ export function getAdjustSigmaContainer(container, sigmaInstance) {
 // Create a scale for the size of the nodes
 export const sizeScale = scaleLog()
     .domain([0.00001, 0.05])
-    .range([7, 1]);
+    .range([8, 2]);
 
 // Create a scale for the color of the nodes
 export const protectiveColorScale = scaleLog()
