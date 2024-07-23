@@ -195,8 +195,9 @@ function getColor(gene) {
         .legend-gradient {
     width: 100px;  
     height: 20px;
-    background: linear-gradient(to right, darkblue, darkred);
-    border: 1px solid #000;  /* Optional: adds a border around the gradient */
+    background: linear-gradient(to right, #0000ff, #ff0404);
+    border: 1px solid #000; 
+    margin-right: 2px;
 }
     </style>
                 </head>
@@ -226,8 +227,9 @@ function getColor(gene) {
                     <div class="associationLegend">
     <div class="legend-item">
         <div class="legend-gradient"></div>
-        Odds Ratio (Dark Blue to Dark Red)
+        Odds Ratio (Most Protective Associations to Most Risky Associations)
     </div>
+    
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Set protective and risk flags to show/hide associations
