@@ -188,8 +188,11 @@ document.addEventListener("DOMContentLoaded", function () {
           node.node_type === "allele"
             ? sizeScale(clamp(node.p, sizeScale.domain()))
             : 6;
-        const oddsRatioDeviationRatio =
+        let oddsRatioDeviationRatio =
           Math.abs(node.odds_ratio - 1) / node.odds_ratio;
+        if (node.odds_ratio > 1) {
+          oddsRatioDeviationRatio = oddsRatioDeviationRatio / 8;
+        }
         graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
           full_label: node.label,
@@ -420,8 +423,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Update the allele node with the data from the API
         const alleleNode = `${nodeData.node_type}-${nodeData.full_label}`;
         const baseSize = sizeScale(clamp(data.p, sizeScale.domain()));
-        const oddsRatioDeviationRatio =
+        let oddsRatioDeviationRatio =
           Math.abs(data.odds_ratio - 1) / data.odds_ratio;
+        if (nodeData.odds_ratio > 1) {
+          oddsRatioDeviationRatio = oddsRatioDeviationRatio / 8;
+        }
         const newBorderSize = clamp(oddsRatioDeviationRatio * baseSize * 0.5, [
           0.5,
           baseSize * 0.5,
