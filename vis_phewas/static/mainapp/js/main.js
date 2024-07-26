@@ -456,10 +456,21 @@ document.addEventListener("DOMContentLoaded", function () {
               graph.getNodeAttribute(node, "color"),
             );
             graph.setNodeAttribute(node, "borderSize", 0);
-            graph.setNodeAttribute(node, "forceLabel", false);
-            // Reset force labels for alleles
-            if (graph.getNodeAttribute(node, "node_type") === "allele") {
+            // Reset force labels for diseases
+            if (graph.getNodeAttribute(node, "userForceLabel") === false) {
               graph.setNodeAttribute(node, "forceLabel", false);
+            }
+          }
+
+          if (
+            graph.getNodeAttribute(node, "node_type") === "allele" &&
+            node !== alleleNode
+          ) {
+            // Reset force labels for alleles
+            if (graph.getNodeAttribute(node, "userForceLabel") === false) {
+              graph.setNodeAttribute(node, "forceLabel", false);
+            } else {
+              graph.setNodeAttribute(node, "forceLabel", true);
             }
           }
         });
@@ -604,6 +615,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const forceLabel = nodeAttributes.forceLabel;
     graph.setNodeAttribute(node, "forceLabel", !forceLabel);
     graph.setNodeAttribute(node, "userForceLabel", !forceLabel);
+    console.log("Force label:", !forceLabel); // Debugging log
+    console.log("User force label:", !forceLabel); // Debugging
     sigmaInstance.refresh();
   });
 

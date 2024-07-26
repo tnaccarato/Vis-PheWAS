@@ -77,7 +77,7 @@ export function clickedNode(
     infoPanel.style.display = "inline-block";
     // Reset forceLabel for all other  allele nodes
     graph.nodes().forEach((n) => {
-      if (graph.getNodeAttribute(n, "node_type") === "allele") {
+      if (graph.getNodeAttribute(n, "node_type") === "allele" && n.userForceLabel === false) {
         graph.setNodeAttribute(n, "forceLabel", false);
       }
     });
