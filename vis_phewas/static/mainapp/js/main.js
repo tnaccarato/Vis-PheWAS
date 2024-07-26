@@ -103,9 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to initialize the graph
   function initializeGraph(nodes, edges, visible) {
-    // Ensure the container is correctly referenced, assuming it has a valid ID or declared properly
-    const container = document.getElementById("sigma-container"); // Adjust according to your actual container ID
-    // or variable
+    const container = document.getElementById("sigma-container");
 
     // Calculate center and radius based on container dimensions
     const centerX = container.offsetWidth / 2;
@@ -135,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Add node to the graph with calculated positions
         graph.addNode(node.id, {
-          label: node.label.replace("HLA_", ""), // Assuming label cleanup
+          label: node.label.replace("HLA_", ""),
           full_label: node.label,
           node_type: node.node_type,
           forceLabel: true, // Force label display for category nodes
