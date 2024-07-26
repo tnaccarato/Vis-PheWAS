@@ -91,7 +91,7 @@ export function clickedNode(
   }
 
   // Update the node with new attributes
-  graph.setNodeAttributes(node, nodeData);
+  // graph.setNodeAttributes(node, nodeData);
 }
 
 export function hoverOnNode(node, graph, sigmaInstance) {
