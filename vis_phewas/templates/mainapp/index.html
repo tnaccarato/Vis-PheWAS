@@ -15,12 +15,15 @@
                                 alt="Sussex Logo"
                                 style="height: 50px; align-self: center">
                         <img
-                            src="{% static 'mainapp/img/Vis-PheWAS-Logo.webp' %}"
-                            alt="Vis-PheWAS Logo"
-                            style="height: 50px; margin-left: 3px"
+                                src="{% static 'mainapp/img/Vis-PheWAS-Logo.webp' %}"
+                                alt="Vis-PheWAS Logo"
+                                style="height: 50px; margin-left: 3px"
                         >
                     </div>
                     <div id="toolbar-buttons">
+                        <button class="toggle-button" style="display: none"> <!-- Filter panel toggle button hidden at start-->
+                            <i class="fa fa-chevron-up"></i> <!-- This is the chevron icon -->
+                        </button>
                         <button class="button btn btn-primary" onclick="addFilter()">
                             Add Filter
                         </button>

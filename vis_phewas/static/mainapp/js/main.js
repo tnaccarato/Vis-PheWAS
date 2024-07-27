@@ -7,6 +7,7 @@ import {
   getClearFilters,
   getRemoveFilter,
   getUpdateFilterInput,
+  hideFilters,
   tableSelectFilter,
 } from "./filter";
 import {
@@ -66,6 +67,10 @@ document.addEventListener("DOMContentLoaded", function () {
     showAlert,
     fetchGraphData,
   );
+
+  const toggleButton = document.getElementsByClassName("toggle-button")[0];
+
+  toggleButton.onclick = hideFilters;
 
   // Function to update global variable show_subtypes
   function updateShowSubtypes() {

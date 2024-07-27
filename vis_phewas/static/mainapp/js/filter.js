@@ -36,6 +36,7 @@ export function getClearFilters(
   fetchGraphData,
 ) {
   return function () {
+    document.querySelector(".toggle-button").style.display = "none";
     filters = [];
     const filterGroups = document.querySelectorAll(".filter-group");
     filterGroups.forEach((group) => {
@@ -140,8 +141,25 @@ export function getUpdateFilterInput(adjustSigmaContainerHeight) {
   };
 }
 
+export function hideFilters() {
+  const toggleButton = document.querySelector(".toggle-button");
+  const filterContainer = document.querySelector(".toolbar-wrapper");
+  const filterBody = document.querySelector(".toolbar");
+  const chevron = toggleButton.querySelector(".fa");
+
+  toggleButton.addEventListener("click", function () {
+    filterBody.style.display =
+      filterBody.style.display === "none" ? "block" : "none";
+    filterContainer.style.display =
+      filterContainer.style.display === "none" ? "block" : "none";
+    chevron.classList.toggle("fa-chevron-up");
+    chevron.classList.toggle("fa-chevron-down");
+  });
+}
+
 export function getAddFilter(adjustSigmaContainerHeight) {
   return function () {
+    document.querySelector(".toggle-button").style.display = "block";
     console.log("Filter count:", filterCount); // Debugging log
     // Show the toolbar if it is hidden
     const toolbar = document.getElementsByClassName("toolbar")[0];
@@ -211,6 +229,11 @@ export function getRemoveFilter(adjustSigmaContainerHeight) {
 
     adjustSigmaContainerHeight();
     filterCount--;
+    if (filterCount === 0) {
+      document.querySelector(".toggle-button").style.display = "none";
+      const toolbar = document.getElementsByClassName("toolbar")[0];
+      toolbar.style.display = "none";
+    }
   };
 }
 
