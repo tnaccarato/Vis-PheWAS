@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% load static %} {% block title %}Index{% endblock %}
+{% extends "base.html" %} {% load static %} {% block title %}{% endblock %}
 {% block head %}
     <link rel="stylesheet" href="{% static 'mainapp/css/index.css' %}"/>
 {% endblock %} {% block content %}
@@ -8,19 +8,33 @@
             <!-- Sigma container box and toolbar -->
             <div class="col-md-6 left-column">
                 <div id="sigma-container"></div>
-                <div id="toolbar-buttons">
-                    <button class="button btn btn-primary" onclick="addFilter()">
-                        Add Filter
-                    </button>
-                    <button class="button btn btn-danger" onclick="clearFilters()">
-                        Clear Filters
-                    </button>
-                    <button class="button btn btn-success" onclick="applyFilters()">
-                        Apply Filters
-                    </button>
-                    <button class="button btn btn-info" style="color: white" onclick="exportQuery()">
-                        Export Filtered Data
-                    </button>
+                <div class="toolbar-container">
+                    <div class="navbar-brand" style="display: flex; flex-direction: row">
+                        <img
+                                src="{% static 'mainapp/img/sussex_logo.webp' %}"
+                                alt="Sussex Logo"
+                                style="height: 50px; align-self: center">
+                        <img
+                            src="{% static 'mainapp/img/Vis-PheWAS-Logo.webp' %}"
+                            alt="Vis-PheWAS Logo"
+                            style="height: 50px; margin-left: 3px"
+                        >
+                    </div>
+                    <div id="toolbar-buttons">
+                        <button class="button btn btn-primary" onclick="addFilter()">
+                            Add Filter
+                        </button>
+                        <button class="button btn btn-danger" onclick="clearFilters()">
+                            Clear Filters
+                        </button>
+                        <button class="button btn btn-success" onclick="applyFilters()">
+                            Apply Filters
+                        </button>
+                        <button class="button btn btn-info" style="color: white" onclick="exportQuery()">
+                            Export Filtered Data
+                        </button>
+                    </div>
+
                 </div>
                 <div class="toolbar-wrapper">{% include 'mainapp/toolbar.html' %}</div>
             </div>
@@ -28,9 +42,9 @@
             <!-- Blank box for text and other content -->
             <div
                     class="col-md-6 right-column"
-                    style="background-color: lightgray; height: 100vh; display: none"
+                    style="height: 100vh; display: none"
             >
-                <div class="info-container">
+                <div class="info-container" style="background-color: #80e5fa">
                     Click on an allele to display information
                 </div>
             </div>
