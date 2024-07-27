@@ -130,7 +130,7 @@ body {
 }
 
 .filter-group {
-    flex: 1 1 25%;
+    flex: 1 1 18%;
     box-sizing: border-box;
     padding: 5px;
     display: flex;
@@ -290,9 +290,9 @@ input:checked + .slider:before {
 
 .side-panel {
     position: fixed;
-    right: -25%; /* Change from left to right */
+    right: -18%; /* Change from left to right */
     top: 0;
-    width: 25%;
+    width: 18%;
     height: 100%;
     background: #80e5fa;
     transition: right 0.3s ease; /* Change from left to right */
@@ -308,7 +308,7 @@ input:checked + .slider:before {
 
 #tab-container {
     position: fixed;
-    top: 15%;
+    top: 18%;
     left: 0;
     transform: translateY(-50%);
     display: flex;
@@ -336,5 +336,5 @@ input:checked + .slider:before {
 }
 
 .side-panel.open ~ #tab-container {
-    left: 25%; /* Match the width of the side panel */
+    left: 18%; /* Match the width of the side panel */
 }
