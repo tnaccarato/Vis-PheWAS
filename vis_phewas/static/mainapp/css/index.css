@@ -31,16 +31,18 @@ html, body, .container-fluid {
 }
 
 #sigma-container {
+    flex-grow: 1;
     width: 100%;
     height: 100%;
     z-index: 1; /* Set a lower z-index to ensure it's below the options tab */
     position: relative; /* Ensure it follows the stacking context */
+    background-color: aliceblue;
 }
 
 .right-column {
     display: flex;
     flex-direction: column;
-    background-color: lightgray;
+    background-color: #80e5fa;
     height: 100%;
     padding: 0;
     overflow-y: auto;
@@ -82,7 +84,8 @@ body {
 
 .toolbar {
     padding-top: 10px;
-    background-color: #f9f9f9;
+    background-color: #97e4f6;
+    display: none; /* Hide the toolbar initially */
 }
 
 .filter-group {
@@ -105,10 +108,7 @@ body {
     height: 100vh;
 }
 
-#sigma-container {
-    flex-grow: 1;
-    width: 100%;
-}
+
 
 .toolbar-wrapper {
     width: 100%;
@@ -174,18 +174,39 @@ body {
     }
 }
 
+.navbar-brand {
+    font-size: 1.5em;
+    padding-left: 1%;
+    justify-content: space-between;
+}
+
+.toolbar-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    background: #97e4f6;
+}
+
 #toolbar-buttons {
     display: flex;
-    width: 100%;
+    width: 80%;
     justify-content: center;
-    background-color: aliceblue;
+    align-self: center;
+    background-color: #97e4f6;
     padding-top: 1%;
     padding-bottom: 1%;
     border-bottom: 1px solid #ccc;
+    margin: 0 auto;
 }
 
+
 #toolbar-buttons button {
+    flex: 1;
     margin: 0 5px;
+    text-align: center;
+    border-radius: 20px;
 }
 
 .switch-container {
@@ -275,7 +296,7 @@ input:checked + .slider:before {
     top: 0;
     width: 250px;
     height: 100%;
-    background: rgb(111, 111, 111);
+    background: #80e5fa;
     transition: right 0.3s ease; /* Change from left to right */
     padding: 20px;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5); /* Adjust shadow direction */
@@ -309,7 +330,7 @@ input:checked + .slider:before {
     white-space: nowrap;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    transition:  0.3s ease;
+    transition: 0.3s ease;
 }
 
 .tab:hover {
