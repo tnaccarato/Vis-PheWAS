@@ -10,3 +10,9 @@
 #alert-container .alert {
   pointer-events: auto; /* Allow interactions with the alert itself */
 }
+
+.panel h3,
+.panel h4 {
+    text-align: center;
+}
+
