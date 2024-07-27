@@ -224,12 +224,14 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
                         <div class="associationLegend">
                             <div class="legend-item">
                                 <div class="legend-gradient"></div>
-                                Odds Ratio (Most Protective Associations to Most Risky Associations)
+                                <div class="legend-label">
+                                Odds Ratio (Most Protective Associations (0) to Most Risky Associations
                             </div>
                         </div>
                     </div>
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
+                        
+                            document.addEventListener('DOMContentLoaded', function() {
                             // Set protective and risk flags to show/hide associations
                             let protective = true;
                             let risk = true;
@@ -269,11 +271,28 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
 
                             const tooltip = document.getElementById('tooltip');
                             
+                            let maxOddsRatio = 10; // Default value set initially
+
+                            try {
+                                const oddsRatios = circosData.links.map(d => d.oddsRatio);
+                                if (oddsRatios.length > 0) { // Check if the array is not empty
+                                    maxOddsRatio = Math.max(...oddsRatios);
+                                }
+                            } catch (e) {
+                                console.error("Failed to calculate max odds ratio:", e);
+                                // maxOddsRatio remains 10 if an error occurs
+                            }
+                            
+                            
+                            // Set the legend text based on the maximum odds ratio
+                            document.querySelector('.associationLegend .legend-item .legend-label').textContent += 
+                            "(" + maxOddsRatio.toPrecision(2) + ') )';
+
+                            
                             // Sets the range of sliders based on min and max values
                             document.getElementById('ORfilter').setAttribute('min', 0);
-                            // document.getElementById('pvaluefilter').setAttribute('min', 0.05);
-                            document.getElementById('ORfilter').setAttribute('max', Math.max(...circosData.links.map(d => d.oddsRatio)));
-                            // document.getElementById('pvaluefilter').setAttribute('max', Math.min(...circosData.links.map(d => d.pValue)));
+                            document.getElementById('ORfilter').setAttribute('max', maxOddsRatio.toString());
+                           
                             
                             // Display tooltips for ideograms
                             d3.selectAll('path', 'textpath')
