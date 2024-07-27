@@ -161,9 +161,11 @@ export function getAddFilter(adjustSigmaContainerHeight) {
   return function () {
     document.querySelector(".toggle-button").style.display = "block";
     console.log("Filter count:", filterCount); // Debugging log
-    // Show the toolbar if it is hidden
-    const toolbar = document.getElementsByClassName("toolbar")[0];
-    toolbar.style.display = "block";
+    // If filter container is hidden, show it
+    const filterContainer = document.querySelector(".toolbar-wrapper");
+    filterContainer.style.display = "block";
+    const filterBody = document.querySelector(".toolbar");
+    filterBody.style.display = "block";
     if (filterCount >= 8) {
       alert("Maximum of 8 filters allowed");
     } else {
