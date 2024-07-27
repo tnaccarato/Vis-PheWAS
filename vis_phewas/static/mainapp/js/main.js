@@ -11,14 +11,13 @@ import {
   tableSelectFilter,
 } from "./filter";
 import {
-  clamp,
   closeInfoContainer,
   getAdjustSigmaContainer,
   getExportData,
   getShowAlert,
-  sizeScale,
 } from "./utils";
 import {
+  calculateBorder,
   calculateNodeColor,
   clickedNode,
   getApplyLayout,
@@ -90,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function fetchGraphData(params = {}) {
     // Add the show_subtypes parameter to the params object
     params.show_subtypes = showSubtypes;
-    // console.log('Params:', params); // Debugging log
+
     const query = new URLSearchParams(params).toString();
     const url = "/api/graph-data/" + (query ? "?" + query : "");
 
@@ -163,9 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Function to update the graph with new nodes and edges
   function updateGraph(nodes, edges, visible, clicked) {
-    // console.log(visible)
     // Get all nodes and edges in the graph
     const graphNodes = graph.nodes();
     const graphEdges = graph.edges();
@@ -181,51 +178,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
       sigmaInstance.refresh();
     }
+
     nodes.forEach((node) => {
-      // console.log('Node:', node); // Debugging log
-      // console.log('Node P:', node.p); // Debugging log
-      // console.log('Node Size:', sizeScale(clamp(node.p, sizeScale.domain))); // Debugging log
       if (!graph.hasNode(node.id)) {
-        const color = getNodeColor(node);
-        const baseSize =
-          node.node_type === "allele"
-            ? sizeScale(clamp(node.p, sizeScale.domain()))
-            : 6;
-        let oddsRatioDeviationRatio =
-          Math.abs(node.odds_ratio - 1) / node.odds_ratio;
-        if (node.odds_ratio > 1) {
-          oddsRatioDeviationRatio = oddsRatioDeviationRatio / 8;
-        }
+        let { color, baseSize, borderSize, borderColor } =
+          calculateBorder(node);
+        console.log(baseSize)
+
         graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
           full_label: node.label,
           node_type: node.node_type,
           x: Math.random() * 100,
           y: Math.random() * 100,
-          // Clamp the node size to avoid outlying values
-          size:
-            node.node_type === "allele"
-              ? sizeScale(clamp(node.p, sizeScale.domain()))
-              : 6,
-          // If there is an odds_ratio attribute in the node data, add it here
+          size: baseSize,
           odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
-          // If disease node, get the number of alleles associated with the disease
           allele_count: node.node_type === "disease" ? node.allele_count : null,
-          borderColor:
-            node.node_type === "allele"
-              ? node.odds_ratio > 1
-                ? "red"
-                : "blue"
-              : color,
-          borderSize:
-            node.node_type === "allele"
-              ? clamp(oddsRatioDeviationRatio * baseSize * 0.5, [
-                  0.5,
-                  baseSize * 0.5,
-                ])
-              : 0,
+          borderColor: node.node_type === "allele" ? borderColor : color,
+          borderSize: borderSize,
           color: color,
-          expanded: false, // Default expanded state
+          expanded: false,
           userForceLabel: false,
         });
       }
@@ -439,30 +411,28 @@ document.addEventListener("DOMContentLoaded", function () {
       // parameters
       const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
-      function updateNodeStyle(data) {
-        // Update the allele node with the data from the API
-        const alleleNode = `${nodeData.node_type}-${nodeData.full_label}`;
-        const baseSize = sizeScale(clamp(data.p, sizeScale.domain()));
-        let oddsRatioDeviationRatio =
-          Math.abs(data.odds_ratio - 1) / data.odds_ratio;
-        if (nodeData.odds_ratio > 1) {
-          oddsRatioDeviationRatio = oddsRatioDeviationRatio / 8;
-        }
-        const newBorderSize = clamp(oddsRatioDeviationRatio * baseSize * 0.5, [
-          0.5,
-          baseSize * 0.5,
-        ]);
+      function updateNodeStyle(nodeData) {
+        console.log("Node data", nodeData); // Debugging log
+        const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
+          showSubtypes === true ? "" + nodeData.subtype.toString() : ""
+        }`;
+        const node = graph.getNodeAttributes(alleleNode);
 
-        graph.setNodeAttribute(alleleNode, "odds_ratio", data.odds_ratio);
-        graph.setNodeAttribute(alleleNode, "p", data.p);
-        graph.setNodeAttribute(
-          alleleNode,
-          "borderColor",
-          data.odds_ratio > 1 ? "red" : "blue",
-        );
-        graph.setNodeAttribute(alleleNode, "borderSize", newBorderSize);
+        // Ensure that calculateBorder has the correct data
+        node.node_type = "allele";
+        node.odds_ratio = nodeData.odds_ratio;
+        node.p = nodeData.p;
+
+
+        // Calculate the color and size of the allele node based on the updated data
+        let { color, baseSize, borderSize, borderColor } =
+          calculateBorder(node);
+
+        // Update the allele node attributes with the new color and size
+        graph.setNodeAttribute(alleleNode, "color", color);
+        graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
+        graph.setNodeAttribute(alleleNode, "borderSize", borderSize);
         graph.setNodeAttribute(alleleNode, "size", baseSize);
-        graph.setNodeAttribute(alleleNode, "forceLabel", true);
 
         // Deselect all other disease nodes
         graph.nodes().forEach((node) => {
