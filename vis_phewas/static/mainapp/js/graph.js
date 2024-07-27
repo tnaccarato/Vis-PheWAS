@@ -1,7 +1,7 @@
 import { filters } from "./filter";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import { rgbaToFloat } from "sigma/utils";
-import { clamp, diseaseColor } from "./utils";
+import { clamp, diseaseColor, sizeScale } from "./utils";
 
 export function clickedNode(
   graph,
@@ -168,7 +168,7 @@ export function getApplyLayout(graph, sigmaInstance) {
   const settings = {
     iterations: 1000,
     settings: {
-      gravity: 0.5,
+      gravity: 0.1,
       scalingRatio: 2.0,
       barnesHutOptimize: true,
       barnesHutTheta: 0.5,
@@ -196,4 +196,31 @@ export function calculateNodeColor(node) {
     default:
       return "#000000";
   }
+}
+
+// Calculate the border size and colour based on the odds ratio
+export function calculateBorder(node) {
+  console.log(node)
+  const color = calculateNodeColor(node);
+  const baseSize =
+    node.node_type === "allele"
+      ? sizeScale(clamp(node.p, sizeScale.domain()))
+      : 6;
+  console.log(baseSize)
+
+  // Calculate the border size based on the odds ratio
+  let borderScaleFactor = 0.5;
+  let oddsRatio = node.odds_ratio;
+  let oddsRatioDeviation = Math.abs(oddsRatio - 1);
+  let scaledBorderSize;
+
+  if (oddsRatio >= 1) {
+    scaledBorderSize = clamp(oddsRatioDeviation / 8, [0, 1]);
+  } else {
+    scaledBorderSize = clamp(1 / oddsRatio - 1, [0, 1]);
+  }
+  let finalBorderSize = baseSize * borderScaleFactor * scaledBorderSize;
+  let borderSize = clamp(finalBorderSize, [0.5, baseSize * 0.5]);
+  let borderColor = node.odds_ratio >= 1 ? "red" : "blue";
+  return { color, baseSize, borderSize, borderColor };
 }

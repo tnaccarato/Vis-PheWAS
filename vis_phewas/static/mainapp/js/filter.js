@@ -6,7 +6,7 @@ export let filters = [];
 export function push_filters() {
   filters = [];
   const filterGroups = document.querySelectorAll(".filter-group");
-  console.log("Filter groups:", filterGroups); // Debugging log
+  // console.log("Filter groups:", filterGroups); // Debugging log
 
   filterGroups.forEach((group) => {
     const select = group.querySelector("select");
@@ -17,7 +17,7 @@ export function push_filters() {
     if (input.value === "") {
       return;
     }
-    console.log("Test");
+    // console.log("Test");
     console.log("Select:", select); // Debugging log
     console.log("Operator select:", operatorSelect); // Debugging log
     console.log("Input:", input); // Debugging log
@@ -153,7 +153,7 @@ export function hideFilters() {
     filterContainer.style.display =
       filterContainer.style.display === "none" ? "block" : "none";
     chevron.classList.toggle("fa-chevron-up");
-    chevron.classList.toggle("fa-chevron-down");
+    // chevron.classList.toggle("fa-chevron-down");
   });
 }
 
