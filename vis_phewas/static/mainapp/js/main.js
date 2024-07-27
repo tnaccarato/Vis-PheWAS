@@ -291,10 +291,14 @@ document.addEventListener("DOMContentLoaded", function () {
     infoContainer.appendChild(title);
 
     // Add a button to filter all diseases with the allele
+    const controlContainer = document.createElement("div");
+    controlContainer.style.display = "flex";
+    controlContainer.style.justifyContent = "center";
     const filterButton = document.createElement("button");
     filterButton.className = "btn btn-primary";
     filterButton.textContent = "Show All Diseases with Allele";
     filterButton.style.justifyContent = "center";
+    filterButton.style.justifySelf = "center";
     filterButton.onclick = () => {
       tableSelectFilter(
         { field: "snp", value: nodeData.full_label },
@@ -303,12 +307,14 @@ document.addEventListener("DOMContentLoaded", function () {
         showAlert,
       );
     };
-    infoContainer.appendChild(filterButton);
+    controlContainer.appendChild(filterButton);
+    infoContainer.appendChild(controlContainer);
 
     const navContainer = document.createElement("div");
     navContainer.style.display = "flex";
     navContainer.style.justifyContent = "space-between";
     navContainer.style.marginBottom = "10px";
+    navContainer.style.alignItems = "center";
 
     if (diseaseNodes.length > 1) {
       // Add a button to navigate to the previous disease node
@@ -323,6 +329,17 @@ document.addEventListener("DOMContentLoaded", function () {
         displayNodeInfo(diseaseNodes[currentIndex]);
       };
       navContainer.appendChild(prevButton);
+
+      // Add a text node to navigate between diseases
+      const navText = document.createElement("p");
+      navText.style.textAlign = "center";
+      navText.style.alignSelf = "center";
+      navText.style.fontStyle = "italic";
+      navText.style.fontWeight = "bold";
+      navText.textContent = "<- Navigate between diseases ->";
+      navText.style.margin = "0";
+
+      navContainer.append(navText);
 
       // Add a button to navigate to the next disease node
       const nextButton = document.createElement("button");
@@ -397,7 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       createOddsTable(top_odds, "Most Affected Diseases");
-      createOddsTable(lowest_odds, "Most Protective Diseases");
+      createOddsTable(lowest_odds, "Most Mitigated Diseases");
     }
 
     function displayNodeInfo(diseaseNode) {
