@@ -356,6 +356,15 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
                                 document.getElementById("filterDetails").innerText = "Filtered to OR>=" + oddsRatioThreshold + ", p<=" + pValueThreshold;
                             });
                             
+                            circos.svg().selectAll('.circosjs-label')
+                              .style('display', 'none')
+                              .on('mouseover', function() {
+                                d3.select(this).style('display', 'block');
+                              })
+                              .on('mouseout', function() {
+                                d3.select(this).style('display', 'none');
+                              });
+                            
                             // Function to update the display based on the filters
                             function updateDisplay() {
                                 d3.selectAll('.chord')
