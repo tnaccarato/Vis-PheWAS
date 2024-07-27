@@ -176,24 +176,25 @@ export function getAddFilter(adjustSigmaContainerHeight) {
         updateFilterInput(select);
       };
       select.innerHTML = `
-            <option value="snp">SNP</option>
-            <option value="gene_class">Gene Class</option>
-            <option value="gene_name">Gene Name</option>
-            <option value="serotype">Serotype</option>
-            <option value="subtype">Subtype</option>
-            <option value="phewas_code">Phecode</option>
-            <option value="phewas_string">Phenotype</option>
-            <option value="category_string">Disease Category</option>
-            <option value="cases">Number of Cases</option>
-            <option value="controls">Number of Controls</option>
-            <option value="p">P-Value</option>
-            <option value="odds_ratio">Odds Ratio</option>
-            <option value="l95">95% CI Lower Bound</option>
-            <option value="u95">95% CI Upper Bound</option>
-            <option value="maf">Minor Allele Frequency</option>
-            <option value="a1">Allele 1</option>
-            <option value="a2">Allele 2</option>
-        `;
+    <option value="snp">SNP</option>
+    <option value="gene_class">Gene Class</option>
+    <option value="gene_name">Gene Name</option>
+    <option value="serotype">Serotype</option>
+    ${showSubtypes ? `<option value="subtype">Subtype</option>` : ""}
+    <option value="phewas_code">Phecode</option>
+    <option value="phewas_string">Phenotype</option>
+    <option value="category_string">Disease Category</option>
+    <option value="cases">Number of Cases</option>
+    <option value="controls">Number of Controls</option>
+    <option value="p">P-Value</option>
+    <option value="odds_ratio">Odds Ratio</option>
+    <option value="l95">95% CI Lower Bound</option>
+    <option value="u95">95% CI Upper Bound</option>
+    <option value="maf">Minor Allele Frequency</option>
+    <option value="a1">Allele 1</option>
+    <option value="a2">Allele 2</option>
+`;
+
       filterGroup.appendChild(select);
 
       const filterInputContainer = document.createElement("div");
@@ -252,6 +253,14 @@ export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
     console.log("Filters:", filters); // Debugging log
 
     fetchGraphData({ type: "initial", filters });
+
+    // Hide the toolbar after applying the filters
+    let filterBody = document.querySelector(".toolbar");
+    filterBody.style.display =
+      filterBody.style.display === "none" ? "block" : "none";
+    let filterContainer = document.querySelector(".toolbar-wrapper");
+    filterContainer.style.display =
+      filterContainer.style.display === "none" ? "block" : "none";
 
     sigmaInstance.refresh();
   };
