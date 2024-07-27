@@ -345,3 +345,7 @@ input:checked + .slider:before {
 .toggle-button .fa-chevron-up {
     transform: rotate(180deg);
 }
+
+.toggle-button .fa-chevron-down {
+    transform: rotate(0deg);
+}
