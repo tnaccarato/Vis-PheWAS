@@ -3,10 +3,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title> Vis-PheWAS - {% block title %}{% endblock %} </title>
+    <title> Vis-PheWAS{% block title %}{% endblock %} </title>
     {% block head %}{% endblock %}
     <link rel="stylesheet" href="{% static 'base.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png'%}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png'%}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16x16.png'%}">
+<link rel="manifest" href="{% static 'img/site.webmanifest'%}">
 </head>
 <body>
 <div id="alert-container" style="margin: 0"></div>
