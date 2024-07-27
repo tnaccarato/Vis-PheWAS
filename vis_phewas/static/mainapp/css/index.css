@@ -271,30 +271,28 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 
-.side-panel {
-    position: fixed;
-    left: -300px;
-    top: 0;
-    width: 250px;
-    height: 100%;
-    background: rgb(111, 111, 111); /* Semi-transparent background */
-    transition: left 0.3s ease;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    z-index: 1000; /* Ensure it overlays other content */
-    overflow-y: auto;
-}
-
 .side-panel-content {
-    color: #fff;
+    color: black;
     position: relative;
 }
 
+.resolutionSwitchContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.panel h3,
+.panel h4 {
+    text-align: center;
+}
+
 .side-panel {
     position: fixed;
-    right: -250px; /* Change from left to right */
+    right: -25%; /* Change from left to right */
     top: 0;
-    width: 250px;
+    width: 25%;
     height: 100%;
     background: #80e5fa;
     transition: right 0.3s ease; /* Change from left to right */
@@ -338,5 +336,5 @@ input:checked + .slider:before {
 }
 
 .side-panel.open ~ #tab-container {
-    left: 250px; /* Match the width of the side panel */
+    left: 25%; /* Match the width of the side panel */
 }
