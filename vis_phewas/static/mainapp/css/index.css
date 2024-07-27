@@ -109,7 +109,6 @@ body {
 }
 
 
-
 .toolbar-wrapper {
     width: 100%;
     max-height: 50%;
@@ -337,4 +336,12 @@ input:checked + .slider:before {
 
 .side-panel.open ~ #tab-container {
     left: 18%; /* Match the width of the side panel */
+}
+
+.toggle-button .fa {
+    transition: transform 0.3s ease-in-out;
+}
+
+.toggle-button .fa-chevron-up {
+    transform: rotate(180deg);
 }
