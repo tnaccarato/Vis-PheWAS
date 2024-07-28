@@ -61,4 +61,4 @@ ENV PYTHONUNBUFFERED 1
 EXPOSE 8000
 
 # Run the application
-CMD ["sh", "-c", "until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do echo Waiting for PostgreSQL...; sleep 2; done && PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f /app/db_backup.sql && python vis_phewas/manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do echo Waiting for PostgreSQL...; sleep 2; done && if [ $(PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -tAc \"SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';\") -eq 0 ]; then PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f /app/db_backup.sql; fi && python vis_phewas/manage.py runserver 0.0.0.0:8000"]
