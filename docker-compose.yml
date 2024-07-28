@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:13
@@ -9,28 +11,17 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
   web:
-    build: .
-    command: >
-      bash -c "
-      python manage.py migrate &&
-      PGPASSWORD=$DB_PASS psql -U $DB_USER -d $DB_NAME -h $DB_HOST -f /code/db_backup.sql &&
-      python manage.py runserver 0.0.0.0:8000
-      "
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - .:/code
+      - .:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
-    environment:
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
