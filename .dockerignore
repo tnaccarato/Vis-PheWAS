@@ -1,0 +1,25 @@
+# Exclude the virtual environment
+venv/
+clean_env/
+
+# Exclude Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Exclude the Dockerfile itself
+Dockerfile
+docker-compose.yml
+
+# Exclude node_modules except during the build stage
+node_modules/
+
+# Include necessary files
+!vis_phewas/package.json
+!vis_phewas/package-lock.json
+
+# Exclude other unnecessary files
+.git
+.gitignore
+*.log
+*.md
