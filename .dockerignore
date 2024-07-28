@@ -7,10 +7,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-# Exclude the Dockerfile itself
-Dockerfile
-docker-compose.yml
-
 # Exclude node_modules except during the build stage
 node_modules/
 
