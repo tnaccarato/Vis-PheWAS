@@ -66,6 +66,7 @@ def apply_filters(queryset, filters):
     print(filters)
 
     filter_list = parse_filters(filters)
+    print("Parsed filters:", filter_list)
 
     # Process each filter
     for filter_str in filter_list:
@@ -103,33 +104,30 @@ def apply_filters(queryset, filters):
 
 def parse_filters(filters):
     """
-    Parse the filters string into a list of filter strings. Each filter string is separated by a comma.
-
+    Parse the filters string into a list of filter strings. Each filter string is separated by a comma,
+    but colons inside the filter string should not be treated as separators.
     :param filters: The filters string to parse.
-    :return:
+    :return: List of filter strings
     """
-    # Initialize an empty list to hold the filters
     filter_list = []
     buffer = []
     colon_count = 0
 
-    # Parse the string manually
     for char in filters:
-        if char == ':':
-            colon_count += 1
-        if char == ',' and colon_count < 2:
+        if char == ',' and colon_count == 2:
             # End of one filter segment
             filter_list.append(''.join(buffer).strip())
             buffer = []
             colon_count = 0
         else:
+            if char == ':':
+                colon_count += 1
             buffer.append(char)
 
     # Append the last filter in the buffer
     if buffer:
         filter_list.append(''.join(buffer).strip())
 
-    # Return the list of filter strings
     return filter_list
 
 
