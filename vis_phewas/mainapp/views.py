@@ -1,9 +1,11 @@
 import itertools
+import re
 import urllib.parse
 from io import StringIO
 
 import pandas as pd
 from django.db import models
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -49,86 +51,84 @@ def graph_data(request) -> JsonResponse:
     return JsonResponse({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def apply_filters(queryset, filters):
-    """
-    Apply filters to the queryset based on the provided filter strings.
-    :param queryset:
-    :param filters:
-    :return:
-    """
-    # print("Initial queryset length:", queryset.count())
-    # print("Filters:", filters)
+def apply_filters(queryset, filters, category_id=None):
+    if category_id:
+        category_string = category_id.replace('cat-', '').replace('_', ' ')
+        queryset = queryset.filter(category_string=category_string)
 
-    # If no filters are provided, return the queryset as is
     if not filters:
         return queryset.filter(p__lte=0.05)
 
-    print(filters)
-
     filter_list = parse_filters(filters)
-    print("Parsed filters:", filter_list)
 
-    # Process each filter
-    for filter_str in filter_list:
-        print(f"Original filter string: {filter_str.strip()}")
+    combined_query = Q()
 
-        # Split the filter string by the first two colons
-        field, operator, value = filter_str.split(':', 2)
+    for logical_operator, filter_str in filter_list:
+        print(f"Processing filter: {logical_operator} {filter_str}")
+        parts = filter_str.split(':', 2)
+        if len(parts) < 3:
+            continue
+        field, operator, value = parts
 
-        print(f"Field: {field}, Operator: {operator}, Value: {value}")
+        # Remove any trailing commas from the value
+        value = value.rstrip(',')
 
-        # Apply the filter based on the operator
         if operator == '==':
-            queryset = queryset.filter(**{f'{field}__iexact': value})
+            q = Q(**{f'{field}__iexact': value})
         elif operator == 'contains':
-            queryset = queryset.filter(**{f'{field}__icontains': value})
+            q = Q(**{f'{field}__icontains': value})
         elif operator == '>':
-            queryset = queryset.filter(**{f'{field}__gt': value})
+            q = Q(**{f'{field}__gt': value})
         elif operator == '<':
-            queryset = queryset.filter(**{f'{field}__lt': value})
+            q = Q(**{f'{field}__lt': value})
         elif operator == '>=':
-            queryset = queryset.filter(**{f'{field}__gte': value})
+            q = Q(**{f'{field}__gte': value})
         elif operator == '<=':
-            queryset = queryset.filter(**{f'{field}__lte': value})
+            q = Q(**{f'{field}__lte': value})
+        else:
+            continue
 
-    # Ensure to apply the final filter condition after all filters
+        if logical_operator == 'AND':
+            combined_query &= q
+        elif logical_operator == 'OR':
+            combined_query |= q
+
+    queryset = queryset.filter(combined_query)
+
+    print("SQL Query:", queryset.query)
+    print("Count before p-value filter:", queryset.count())
+
     filtered_queryset = queryset.filter(p__lte=0.05)
-    print("Filtered queryset length:", filtered_queryset.count())
+    print("Final filtered count:", filtered_queryset.count())
 
-    # Debug: print the SQL query being executed
-    # print("SQL Query:", str(filtered_queryset.query))
-
-    # Return the filtered queryset
     return filtered_queryset
 
 
 def parse_filters(filters):
-    """
-    Parse the filters string into a list of filter strings. Each filter string is separated by a comma,
-    but colons inside the filter string should not be treated as separators.
-    :param filters: The filters string to parse.
-    :return: List of filter strings
-    """
+    print("Parsing filters:", filters)
     filter_list = []
-    buffer = []
-    colon_count = 0
+    current_operator = None
+    pattern = re.compile(r'\s*(AND|OR)\s*')
+    parts = pattern.split(filters)
 
-    for char in filters:
-        if char == ',' and colon_count == 2:
-            # End of one filter segment
-            filter_list.append(''.join(buffer).strip())
-            buffer = []
-            colon_count = 0
-        else:
-            if char == ':':
-                colon_count += 1
-            buffer.append(char)
+    for part in parts:
+        part = part.strip()
+        if part in ('AND', 'OR'):
+            current_operator = part
+        elif part:
+            # Split by comma, but only if not inside quotes
+            sub_parts = re.findall(r'([^,]+|"[^"]*")+', part)
+            for sub_part in sub_parts:
+                sub_part = sub_part.strip().strip('"')
+                if current_operator:
+                    filter_list.append((current_operator, sub_part))
+                    current_operator = None
+                else:
+                    filter_list.append(('AND', sub_part))
 
-    # Append the last filter in the buffer
-    if buffer:
-        filter_list.append(''.join(buffer).strip())
-
+    print("Parsed filter list:", filter_list)
     return filter_list
+
 
 
 def get_category_data(filters) -> tuple:
