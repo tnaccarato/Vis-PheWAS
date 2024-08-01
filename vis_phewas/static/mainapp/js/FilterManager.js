@@ -68,6 +68,10 @@ export class FilterManager {
 
   // Method to clear filters
   clearFilters = () => {
+    if(this.filterCount <= 1){
+      const addFilterButton = document.querySelector(".addFilter");
+      addFilterButton.disabled = false;
+    }
     // Clear the filters array and remove all filter groups from frontend
     document.querySelector(".toggle-button").style.display = "none";
     this.filters = [];
@@ -190,6 +194,20 @@ export class FilterManager {
 
   // Method to add a filter
   addFilter = () => {
+    // If the filter count is greater than or equal to 8, disables the add filter button
+    if(this.filterCount >= 8) {
+        const addFilterButton = document.querySelector(".addFilter");
+      addFilterButton.disabled = true;
+    }
+    // If the filter count is greater than or equal to 1, enables the add and apply filter buttons
+    if(this.filterCount >= 1){
+        const addFilterButton = document.querySelector(".addFilter");
+        const applyFilterButton = document.querySelector(".applyFilter");
+        addFilterButton.disabled = false;
+        applyFilterButton.disabled = false;
+    }
+
+
     document.querySelector(".toggle-button").style.display = "block";
     console.log("Filter count:", this.filterCount); // Debugging log
     const filterContainer = document.querySelector(".toolbar-wrapper");
@@ -265,6 +283,9 @@ export class FilterManager {
     this.filterCount--;
     if (this.filterCount === 0) {
       document.querySelector(".toggle-button").style.display = "none";
+      // Disable the apply filter button and enable the add filter button
+      document.querySelector(".addFilter").disabled = false;
+      document.querySelector(".applyFilter").disabled = true;
       const toolbar = document.getElementsByClassName("toolbar")[0];
       toolbar.style.display = "none";
     }
