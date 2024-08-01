@@ -253,6 +253,8 @@ export class FilterManager {
     this.sigmaInstance.refresh();
   };
 
+
+  // Arrow function for tableSelectFilter
   tableSelectFilter = (table_selection) => {
     console.log("Table selection:", table_selection);
     this.filters = [];
