@@ -1,16 +1,9 @@
 import Graph from "graphology";
 import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
-import {
-  calculateBorder,
-  calculateNodeColor,
-  clickedNode,
-  getApplyLayout,
-  hoverOffNode,
-  hoverOnNode,
-} from "./graph";
+import GraphHelper from "./graph";
 import { fetchAndShowAssociations } from "./associationsPlot";
-import {closeInfoContainer} from "./utils";
+import { closeInfoContainer } from "./utils";
 import UIManager from "./UIManager";
 
 class GraphManager {
@@ -34,12 +27,13 @@ class GraphManager {
       },
     });
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
+    this.graphHelper = new GraphHelper(this.sigmaInstance, this.adjustSigmaContainerHeight);
     this.initEventListeners();
   }
 
   initEventListeners() {
     this.sigmaInstance.on("clickNode", ({ node }) => {
-      clickedNode(
+      this.graphHelper.clickedNode(
         this.graph,
         node,
         this.fetchGraphData.bind(this),
@@ -49,11 +43,11 @@ class GraphManager {
     });
 
     this.sigmaInstance.on("enterNode", ({ node }) => {
-      hoverOnNode(node, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOnNode(node, this.graph, this.sigmaInstance);
     });
 
     this.sigmaInstance.on("leaveNode", ({ node }) => {
-      hoverOffNode(node, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOffNode(node, this.graph, this.sigmaInstance);
     });
 
     this.sigmaInstance.on("rightClickNode", ({ node }) => {
@@ -105,7 +99,7 @@ class GraphManager {
         const x = centerX + radius * Math.cos(angle);
         const y = centerY - radius * Math.sin(angle);
 
-        const color = calculateNodeColor(node);
+        const color = this.graphHelper.calculateNodeColor(node);
 
         this.graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
@@ -149,7 +143,7 @@ class GraphManager {
 
     nodes.forEach((node) => {
       if (!this.graph.hasNode(node.id)) {
-        let { color, baseSize, borderSize, borderColor } = calculateBorder(node);
+        let { color, baseSize, borderSize, borderColor } = this.graphHelper.calculateBorder(node);
         this.graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
           full_label: node.label,
@@ -179,11 +173,12 @@ class GraphManager {
   }
 
   applyLayout() {
-    getApplyLayout(this.graph, this.sigmaInstance);
+    this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
   }
 
   getInfoTable(nodeData) {
     const infoContainer = document.getElementsByClassName("info-container")[0];
+    console.log("infoContainer:", infoContainer); // Debugging log
     const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`;
 
     const edges = this.graph.edges().filter((edge) => {
@@ -192,11 +187,15 @@ class GraphManager {
       return source === selectedNode || target === selectedNode;
     });
 
+    console.log("edges:", edges); // Debugging log
+
     const diseaseNodes = edges.map((edge) => {
       return this.graph.source(edge) === selectedNode
         ? this.graph.target(edge)
         : this.graph.source(edge);
     });
+
+    console.log("diseaseNodes:", diseaseNodes); // Debugging log
 
     if (diseaseNodes.length === 0) {
       console.error("No disease nodes found.");
@@ -359,7 +358,7 @@ class GraphManager {
         node.odds_ratio = nodeData.odds_ratio;
         node.p = nodeData.p;
 
-        let { color, baseSize, borderSize, borderColor } = calculateBorder(node);
+        let { color, baseSize, borderSize, borderColor } = this.graphHelper.calculateBorder(node);
 
         this.graph.setNodeAttribute(alleleNode, "color", color);
         this.graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
