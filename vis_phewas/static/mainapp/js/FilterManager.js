@@ -4,12 +4,7 @@ import DOMPurify from "dompurify"; // Class to manage filter functionality
 // Class to manage filter functionality
 export class FilterManager {
   // Constructor
-  constructor(
-    adjustSigmaContainerHeight,
-    showAlert,
-    fetchGraphData,
-    sigmaInstance,
-  ) {
+  constructor(adjustSigmaContainerHeight, showAlert, fetchGraphData, sigmaInstance) {
     this.filterCount = 0;
     this.filters = [];
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
@@ -25,6 +20,27 @@ export class FilterManager {
     toggleButton.addEventListener("click", this.hideFilters);
   };
 
+  // Method to update button states
+  updateButtonStates = () => {
+    const addFilterButton = document.querySelector(".addFilter");
+    const clearFiltersButton = document.querySelector(".clearFilters");
+    const applyFiltersButton = document.querySelector(".applyFilters");
+
+    if (this.filterCount >= 8) {
+      addFilterButton.disabled = true;
+    } else {
+      addFilterButton.disabled = false;
+    }
+
+    if (this.filterCount === 0) {
+      clearFiltersButton.disabled = true;
+      applyFiltersButton.disabled = true;
+    } else {
+      clearFiltersButton.disabled = false;
+      applyFiltersButton.disabled = false;
+    }
+  };
+
   // Method to push filters to the filters array
   pushFilters = () => {
     // Clear the filters array and get all filter groups from frontend
@@ -37,7 +53,6 @@ export class FilterManager {
       const operatorSelect = group.querySelector(".operator-select");
       const input = group.querySelector(".field-input");
       const logicalOperator = group.querySelector(".logical-operator");
-      console.log("Logical operator:", logicalOperator); // Debugging log
 
       // If the input is empty, skip the filter
       if (input.value === "") {
@@ -46,9 +61,7 @@ export class FilterManager {
 
       // Sanitize values
       const sanitizedSelectValue = DOMPurify.sanitize(select.value);
-      const sanitizedOperatorValue = operatorSelect
-        ? DOMPurify.sanitize(operatorSelect.value)
-        : "==";
+      const sanitizedOperatorValue = operatorSelect ? DOMPurify.sanitize(operatorSelect.value) : "==";
       const sanitizedInputValue = DOMPurify.sanitize(input.value.toLowerCase());
 
       // Construct the filter string
@@ -56,23 +69,18 @@ export class FilterManager {
         const filter = `${sanitizedSelectValue}:${sanitizedOperatorValue}:${sanitizedInputValue}`;
         // If the filter is not the first filter, add the logical operator
         if (index > 0 && logicalOperator) {
-          this.filters.push(
-            `${DOMPurify.sanitize(logicalOperator.value)} ${filter}`,
-          );
+          this.filters.push(`${DOMPurify.sanitize(logicalOperator.value)} ${filter}`);
         } else {
           this.filters.push(filter);
         }
       }
     });
+
+    this.updateButtonStates(); // Update button states after pushing filters
   };
 
   // Method to clear filters
   clearFilters = () => {
-    if(this.filterCount <= 1){
-      const addFilterButton = document.querySelector(".addFilter");
-      addFilterButton.disabled = false;
-    }
-    // Clear the filters array and remove all filter groups from frontend
     document.querySelector(".toggle-button").style.display = "none";
     this.filters = [];
     const filterGroups = document.querySelectorAll(".filter-group");
@@ -83,33 +91,27 @@ export class FilterManager {
     this.filterCount = 0;
     closeInfoContainer(this.adjustSigmaContainerHeight)();
     const toolbar = document.getElementsByClassName("toolbar")[0];
-    toolbar.style.display = "none";
+    if (toolbar) {
+      toolbar.style.display = "none";
+    }
     // Show alert message and fetch graph data
     this.showAlert("Filters cleared. Showing all data.");
     this.fetchGraphData();
+
+    this.updateButtonStates(); // Update button states after clearing filters
   };
 
   // Method to update filter input based on the selected field
   updateFilterInput = (select) => {
-    const filterInputContainer = select.parentNode.querySelector(
-      "#filter-input-container",
-    );
+    const filterInputContainer = select.parentNode.querySelector("#filter-input-container");
     const selectedField = DOMPurify.sanitize(select.value);
 
     // Clear the filter input container
     filterInputContainer.innerHTML = "";
-    console.log("Selected field:", selectedField); // Debugging log
 
     // Add the appropriate input based on the selected field
     if (
-      [
-        "snp",
-        "phewas_code",
-        "phewas_string",
-        "category_string",
-        "serotype",
-        "subtype",
-      ].includes(selectedField)
+      ["snp", "phewas_code", "phewas_string", "category_string", "serotype", "subtype"].includes(selectedField)
     ) {
       const operator = document.createElement("select");
       operator.innerHTML = DOMPurify.sanitize(`
@@ -124,9 +126,7 @@ export class FilterManager {
       input.className = "field-input";
       filterInputContainer.appendChild(input);
     } else if (
-      ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(
-        selectedField,
-      )
+      ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(selectedField)
     ) {
       const operator = document.createElement("select");
       operator.innerHTML = DOMPurify.sanitize(`
@@ -142,9 +142,7 @@ export class FilterManager {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-    } else if (
-      ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
-    ) {
+    } else if (["gene_class", "gene_name", "a1", "a2"].includes(selectedField)) {
       const select = document.createElement("select");
       select.className = "field-input";
       if (selectedField === "gene_class") {
@@ -180,36 +178,19 @@ export class FilterManager {
   hideFilters = () => {
     const filterContainer = document.querySelector(".toolbar-wrapper");
     const filterBody = document.querySelector(".toolbar");
-    const chevron = document.querySelector(".toggle-button .fa");
+    const chevron = document.querySelector(".toggle-button .fa-chevron-down");
 
-    filterBody.style.display =
-      filterBody.style.display === "none" ? "block" : "none";
-    filterContainer.style.display =
-      filterContainer.style.display === "none" ? "block" : "none";
-    chevron.classList.toggle("up");
-    chevron.classList.toggle("down");
-    console.log("Chevron Up:", chevron.classList.contains("up")); // Debugging log
-    console.log("Chevron Down:", chevron.classList.contains("down")); // Debugging
+    const isFilterBodyVisible = filterBody.style.display === "block";
+
+    filterBody.style.display = isFilterBodyVisible ? "none" : "block";
+    filterContainer.style.display = isFilterBodyVisible ? "none" : "block";
+    chevron.classList.toggle("up", isFilterBodyVisible);
+    chevron.classList.toggle("down", !isFilterBodyVisible);
   };
 
   // Method to add a filter
   addFilter = () => {
-    // If the filter count is greater than or equal to 8, disables the add filter button
-    if(this.filterCount >= 8) {
-        const addFilterButton = document.querySelector(".addFilter");
-      addFilterButton.disabled = true;
-    }
-    // If the filter count is greater than or equal to 1, enables the add and apply filter buttons
-    if(this.filterCount >= 1){
-        const addFilterButton = document.querySelector(".addFilter");
-        const applyFilterButton = document.querySelector(".applyFilter");
-        addFilterButton.disabled = false;
-        applyFilterButton.disabled = false;
-    }
-
-
     document.querySelector(".toggle-button").style.display = "block";
-    console.log("Filter count:", this.filterCount); // Debugging log
     const filterContainer = document.querySelector(".toolbar-wrapper");
     filterContainer.style.display = "block";
     const filterBody = document.querySelector(".toolbar");
@@ -271,7 +252,7 @@ export class FilterManager {
       this.adjustSigmaContainerHeight();
 
       this.filterCount++;
-      console.log(this.filterCount);
+      this.updateButtonStates(); // Update button states after adding a filter
     }
   };
 
@@ -283,12 +264,10 @@ export class FilterManager {
     this.filterCount--;
     if (this.filterCount === 0) {
       document.querySelector(".toggle-button").style.display = "none";
-      // Disable the apply filter button and enable the add filter button
-      document.querySelector(".addFilter").disabled = false;
-      document.querySelector(".applyFilter").disabled = true;
       const toolbar = document.getElementsByClassName("toolbar")[0];
       toolbar.style.display = "none";
     }
+    this.updateButtonStates(); // Update button states after removing a filter
   };
 
   applyFilters = () => {
@@ -300,27 +279,22 @@ export class FilterManager {
     const message = `Applying filters: ${this.filters.join(" ")}`;
     this.showAlert(message);
 
-    console.log("Filters:", this.filters);
-
     this.fetchGraphData({ type: "initial", filters: this.filters.join(" ") });
 
     const filterBody = document.querySelector(".toolbar");
-    filterBody.style.display =
-      filterBody.style.display === "none" ? "block" : "none";
+    filterBody.style.display = filterBody.style.display === "none" ? "block" : "none";
     const filterContainer = document.querySelector(".toolbar-wrapper");
-    filterContainer.style.display =
-      filterContainer.style.display === "none" ? "block" : "none";
+    filterContainer.style.display = filterContainer.style.display === "none" ? "block" : "none";
 
     this.sigmaInstance.refresh();
   };
 
   // Arrow function for tableSelectFilter
   tableSelectFilter = (table_selection) => {
-    console.log("Table selection:", table_selection);
     this.filters = [];
     this.clearFilters();
     this.filters.push(
-      `${DOMPurify.sanitize(table_selection.field)}:==:${DOMPurify.sanitize(table_selection.value.toLowerCase())}`,
+      `${DOMPurify.sanitize(table_selection.field)}:==:${DOMPurify.sanitize(table_selection.value.toLowerCase())}`
     );
     this.showAlert(`Selecting from table: ${this.filters.join(", ")}`);
     const filterGroup = document.createElement("div");
@@ -361,5 +335,6 @@ export class FilterManager {
     // Show the hide filters button
     document.querySelector(".toggle-button").style.display = "block";
     this.sigmaInstance.refresh();
+    this.updateButtonStates(); // Update button states after table selection
   };
 }

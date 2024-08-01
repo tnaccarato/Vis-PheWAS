@@ -96,6 +96,8 @@ body {
     margin-right: 10px;
 }
 
+
+
 .left-column {
     display: flex;
     flex-direction: column;
@@ -105,15 +107,16 @@ body {
 
 .toolbar-wrapper {
     width: 100%;
-    max-height: 50%;
+    max-height: 33%;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
 #filters-container {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; /* Space between filter groups */
+    padding: 10px;
 }
 
 .filter-group {
@@ -202,7 +205,7 @@ body {
     border-radius: 20px;
 }
 
-.button.exportQuery {
+.button.exportQuery{
     background-color: #08d0d9;
 }
 
