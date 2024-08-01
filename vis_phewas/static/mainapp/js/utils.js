@@ -78,6 +78,7 @@ export function getShowAlert(message) {
     `;
 }
 
+// Function to adjust the height of the Sigma container based on the height of the filters container
 export function getAdjustSigmaContainer(container, sigmaInstance) {
   const filtersContainer = document.getElementById("filters-container");
   const filtersHeight = filtersContainer.offsetHeight;
