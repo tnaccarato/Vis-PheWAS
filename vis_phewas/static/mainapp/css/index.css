@@ -339,13 +339,13 @@ input:checked + .slider:before {
 }
 
 .toggle-button .fa {
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.1s ease-in-out;
 }
 
-.toggle-button .fa-chevron-up {
-    transform: rotate(180deg);
+.toggle-button .up {
+    transform: rotate(540deg);
 }
 
-.toggle-button .fa-chevron-down {
+.toggle-button .down {
     transform: rotate(0deg);
 }
