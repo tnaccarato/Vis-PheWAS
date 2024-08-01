@@ -1,5 +1,5 @@
 import { getAdjustSigmaContainer, getExportData, getShowAlert } from "./utils";
-import { FilterManager } from "./filter";
+import { FilterManager } from "./FilterManager";
 import GraphManager from "./GraphManager";
 import { fetchAndShowAssociations } from "./associationsPlot";
 

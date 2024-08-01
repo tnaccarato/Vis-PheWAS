@@ -1,7 +1,7 @@
 import Graph from "graphology";
 import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
-import GraphHelper from "./graph";
+import GraphHelper from "./GraphHelper";
 import { fetchAndShowAssociations } from "./associationsPlot";
 import { closeInfoContainer } from "./utils";
 import UIManager from "./UIManager";
