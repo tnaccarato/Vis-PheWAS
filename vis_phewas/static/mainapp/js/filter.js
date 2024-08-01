@@ -1,87 +1,85 @@
 import { closeInfoContainer } from "./utils";
 
-export let filterCount = 0;
-export let filters = [];
+// Class to manage filter functionality
+export class FilterManager {
+  // Constructor
+  constructor(adjustSigmaContainerHeight, showAlert, fetchGraphData, sigmaInstance) {
+    this.filterCount = 0;
+    this.filters = [];
+    this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
+    this.showAlert = showAlert;
+    this.fetchGraphData = fetchGraphData;
+    this.sigmaInstance = sigmaInstance;
+  }
 
-export function push_filters() {
-  filters = [];
-  const filterGroups = document.querySelectorAll(".filter-group");
+  // Method to push filters to the filters array
+  pushFilters = () => {
+    // Clear the filters array and get all filter groups from frontend
+    this.filters = [];
+    const filterGroups = document.querySelectorAll(".filter-group");
 
-  filterGroups.forEach((group, index) => {
-    const select = group.querySelector("select.field-select");
-    const operatorSelect = group.querySelector(".operator-select");
-    const input = group.querySelector(".field-input");
-    const logicalOperator = group.querySelector(".logical-operator");
-    // Debug test if logical operator is selected
-    console.log("Logical operator:", logicalOperator); // Debugging log
+    // Iterate over each filter group and push the filter to the filters array
+    filterGroups.forEach((group, index) => {
+      const select = group.querySelector("select.field-select");
+      const operatorSelect = group.querySelector(".operator-select");
+      const input = group.querySelector(".field-input");
+      const logicalOperator = group.querySelector(".logical-operator");
+      console.log("Logical operator:", logicalOperator); // Debugging log
 
-    // If input is empty, skip the filter
-    if (input.value === "") {
-      return;
-    }
-
-    if (select && input) {
-      const filter = `${select.value}:${operatorSelect ? operatorSelect.value : "=="}:${input.value.toLowerCase()}`;
-      if (index > 0 && logicalOperator) {
-        filters.push(`${logicalOperator.value} ${filter}`);
-      } else {
-        filters.push(filter);
+      // If the input is empty, skip the filter
+      if (input.value === "") {
+        return;
       }
-    }
-  });
-}
 
-export function getClearFilters(
-  adjustSigmaContainerHeight,
-  showAlert,
-  fetchGraphData,
-) {
-  return function () {
+      // Construct the filter string
+      if (select && input) {
+        const filter = `${select.value}:${operatorSelect ? operatorSelect.value : "=="}:${input.value.toLowerCase()}`;
+        // If the filter is not the first filter, add the logical operator
+        if (index > 0 && logicalOperator) {
+          this.filters.push(`${logicalOperator.value} ${filter}`);
+          // If the filter is the first filter, add the filter without the logical operator
+        } else {
+          this.filters.push(filter);
+        }
+      }
+    });
+  };
+
+  // Method to clear filters
+  clearFilters = () => {
+    // Clear the filters array and remove all filter groups from frontend
     document.querySelector(".toggle-button").style.display = "none";
-    filters = [];
+    this.filters = [];
     const filterGroups = document.querySelectorAll(".filter-group");
     filterGroups.forEach((group) => {
       group.remove();
     });
-    filterCount = 0;
-    // Clear the info container
-    closeInfoContainer(adjustSigmaContainerHeight)();
-    // Hide the toolbar
+    // Reset the filter count and close the info container
+    this.filterCount = 0;
+    closeInfoContainer(this.adjustSigmaContainerHeight)();
     const toolbar = document.getElementsByClassName("toolbar")[0];
     toolbar.style.display = "none";
-    // Display an alert message for confirmation of filters cleared
-    showAlert("Filters cleared. Showing all data.");
-    fetchGraphData();
+    // Show alert message and fetch graph data
+    this.showAlert("Filters cleared. Showing all data.");
+    this.fetchGraphData();
   };
-}
 
-export function getUpdateFilterInput(adjustSigmaContainerHeight) {
-  return function (select) {
-    const filterInputContainer = select.parentNode.querySelector(
-      "#filter-input-container",
-    );
+    // Method to update filter input based on the selected field
+  updateFilterInput = (select) => {
+    const filterInputContainer = select.parentNode.querySelector("#filter-input-container");
     const selectedField = select.value;
 
-    // Clear the input container
+    // Clear the filter input container
     filterInputContainer.innerHTML = "";
     console.log("Selected field:", selectedField); // Debugging log
 
-    // Add the appropriate input element based on the selected field
-    if (
-      [
-        "snp",
-        "phewas_code",
-        "phewas_string",
-        "category_string",
-        "serotype",
-        "subtype",
-      ].includes(selectedField)
-    ) {
+    // Add the appropriate input based on the selected field
+    if (["snp", "phewas_code", "phewas_string", "category_string", "serotype", "subtype"].includes(selectedField)) {
       const operator = document.createElement("select");
       operator.innerHTML = `
-            <option value="==">Exactly</option>
-            <option value="contains">Contains</option>
-            `;
+        <option value="==">Exactly</option>
+        <option value="contains">Contains</option>
+      `;
       operator.className = "operator-select";
       filterInputContainer.appendChild(operator);
       const input = document.createElement("input");
@@ -89,18 +87,14 @@ export function getUpdateFilterInput(adjustSigmaContainerHeight) {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-    } else if (
-      ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(
-        selectedField,
-      )
-    ) {
+    } else if (["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(selectedField)) {
       const operator = document.createElement("select");
       operator.innerHTML = `
-            <option value=">">> (Greater than)</option>
-            <option value="<">< (Less than)</option>
-            <option value=">=">>= (Greater than or equal to)</option>
-            <option value="<="><= (Less than or equal to)</option>
-        `;
+        <option value=">">> (Greater than)</option>
+        <option value="<">< (Less than)</option>
+        <option value=">=">>= (Greater than or equal to)</option>
+        <option value="<="><= (Less than or equal to)</option>
+      `;
       operator.className = "operator-select";
       filterInputContainer.appendChild(operator);
       const input = document.createElement("input");
@@ -108,73 +102,69 @@ export function getUpdateFilterInput(adjustSigmaContainerHeight) {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-    } else if (
-      ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
-    ) {
+    } else if (["gene_class", "gene_name", "a1", "a2"].includes(selectedField)) {
       const select = document.createElement("select");
       select.className = "field-input";
       if (selectedField === "gene_class") {
         select.innerHTML = `
-            <option value="1">Class 1</option>
-            <option value="2">Class 2</option>
-            `;
+          <option value="1">Class 1</option>
+          <option value="2">Class 2</option>
+        `;
       } else if (selectedField === "gene_name") {
         select.innerHTML = `
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="DPA1">DPA1</option>
-            <option value="DPB1">DPB1</option>
-            <option value="DQA1">DQA1</option>
-            <option value="DQB1">DQB1</option>
-            <option value="DRB1">DRB1</option>
-            `;
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="DPA1">DPA1</option>
+          <option value="DPB1">DPB1</option>
+          <option value="DQA1">DQA1</option>
+          <option value="DQB1">DQB1</option>
+          <option value="DRB1">DRB1</option>
+        `;
       } else {
         select.innerHTML = `
-                <option value="A">A</option>
-                <option value="P">P</option>
-                `;
+          <option value="A">A</option>
+          <option value="P">P</option>
+        `;
       }
       filterInputContainer.appendChild(select);
     }
 
-    adjustSigmaContainerHeight();
+    // Adjust the sigma container height so that the graph is not hidden
+    this.adjustSigmaContainerHeight();
   };
-}
 
-export function hideFilters() {
-  const toggleButton = document.querySelector(".toggle-button");
-  const filterContainer = document.querySelector(".toolbar-wrapper");
-  const filterBody = document.querySelector(".toolbar");
-  const chevron = toggleButton.querySelector(".fa");
+  // Method to show/hide filters
+  hideFilters = () => {
+    // Get the toggle button, filter container, filter body, and chevron icon
+    const toggleButton = document.querySelector(".toggle-button");
+    const filterContainer = document.querySelector(".toolbar-wrapper");
+    const filterBody = document.querySelector(".toolbar");
+    const chevron = toggleButton.querySelector(".fa");
 
-  toggleButton.addEventListener("click", function () {
-    filterBody.style.display =
-      filterBody.style.display === "none" ? "block" : "none";
-    filterContainer.style.display =
-      filterContainer.style.display === "none" ? "block" : "none";
-    chevron.classList.toggle("fa-chevron-up");
-    // chevron.classList.toggle("fa-chevron-down");
-  });
-}
+    // Add event listener to the toggle button
+    toggleButton.addEventListener("click", () => {
+      filterBody.style.display = filterBody.style.display === "none" ? "block" : "none";
+      filterContainer.style.display = filterContainer.style.display === "none" ? "block" : "none";
+      chevron.classList.toggle("fa-chevron-up");
+    });
+  };
 
-export function getAddFilter(adjustSigmaContainerHeight) {
-  return function () {
+  // Method to add a filter
+  addFilter = () => {
     document.querySelector(".toggle-button").style.display = "block";
-    console.log("Filter count:", filterCount); // Debugging log
-    // If filter container is hidden, show it
+    console.log("Filter count:", this.filterCount); // Debugging log
     const filterContainer = document.querySelector(".toolbar-wrapper");
     filterContainer.style.display = "block";
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display = "block";
-    if (filterCount >= 8) {
+    if (this.filterCount >= 8) {
       alert("Maximum of 8 filters allowed");
     } else {
       const filterGroup = document.createElement("div");
       filterGroup.className = "filter-group";
 
-      // Add logical operator selector if it's not the first filter
-      if (filterCount > 0) {
+      if (this.filterCount > 0) {
         const logicalOperator = document.createElement("select");
         logicalOperator.className = "logical-operator";
         logicalOperator.innerHTML = `
@@ -186,9 +176,7 @@ export function getAddFilter(adjustSigmaContainerHeight) {
 
       const select = document.createElement("select");
       select.className = "field-select";
-      select.onchange = function () {
-        updateFilterInput(select);
-      };
+      select.onchange = () => this.updateFilterInput(select);
       select.innerHTML = `
         <option value="snp">SNP</option>
         <option value="gene_class">Gene Class</option>
@@ -208,7 +196,6 @@ export function getAddFilter(adjustSigmaContainerHeight) {
         <option value="a1">Allele 1</option>
         <option value="a2">Allele 2</option>
       `;
-
       filterGroup.appendChild(select);
 
       const filterInputContainer = document.createElement("div");
@@ -218,119 +205,97 @@ export function getAddFilter(adjustSigmaContainerHeight) {
       const minusButton = document.createElement("button");
       minusButton.className = "btn btn-danger";
       minusButton.textContent = "-";
-      minusButton.onclick = function () {
-        removeFilter(minusButton);
-      };
+      minusButton.onclick = () => this.removeFilter(minusButton);
       filterGroup.appendChild(minusButton);
 
       document.getElementById("filters-container").appendChild(filterGroup);
 
-      // Gets content of the filter group
-      window.updateFilterInput(select);
+      this.updateFilterInput(select);
 
-      // Adjust the width of the Sigma container
-      adjustSigmaContainerHeight();
+      this.adjustSigmaContainerHeight();
 
-      filterCount++;
-      console.log(filterCount);
+      this.filterCount++;
+      console.log(this.filterCount);
     }
   };
-}
 
-export function getRemoveFilter(adjustSigmaContainerHeight) {
-  return function (button) {
+  removeFilter = (button) => {
     const filterGroup = button.parentNode;
     filterGroup.remove();
 
-    adjustSigmaContainerHeight();
-    filterCount--;
-    if (filterCount === 0) {
+    this.adjustSigmaContainerHeight();
+    this.filterCount--;
+    if (this.filterCount === 0) {
       document.querySelector(".toggle-button").style.display = "none";
       const toolbar = document.getElementsByClassName("toolbar")[0];
       toolbar.style.display = "none";
     }
   };
-}
 
-export function getApplyFilters(showAlert, fetchGraphData, sigmaInstance) {
-  return function () {
-    push_filters();
-    // If there are no filters, show an alert message and return early
-    if (filters.length === 0) {
-      showAlert("No filters selected. Showing all data.");
+  applyFilters = () => {
+    this.pushFilters();
+    if (this.filters.length === 0) {
+      this.showAlert("No filters selected. Showing all data.");
       return;
     }
-    // Display a dismissible alert message for confirmation of filters applied
-    const message = `Applying filters: ${filters.join(" ")}`;
-    showAlert(message);
+    const message = `Applying filters: ${this.filters.join(" ")}`;
+    this.showAlert(message);
 
-    console.log("Filters:", filters); // Debugging log
+    console.log("Filters:", this.filters);
 
-    fetchGraphData({ type: "initial", filters: filters.join(" ") });
+    this.fetchGraphData({ type: "initial", filters: this.filters.join(" ") });
 
-    // Hide the toolbar after applying the filters
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display = filterBody.style.display === "none" ? "block" : "none";
     const filterContainer = document.querySelector(".toolbar-wrapper");
     filterContainer.style.display = filterContainer.style.display === "none" ? "block" : "none";
 
-    sigmaInstance.refresh();
+    this.sigmaInstance.refresh();
   };
-}
 
-// Function to push the table selection filter to the filters array and apply the filter
-export function tableSelectFilter(
-  table_selection,
-  fetchGraphData,
-  sigmaInstance,
-  showAlert,
-) {
-  console.log("Table selection:", table_selection);
-  filters = [];
-  clearFilters();
-  filters.push(
-    `${table_selection.field}:==:${table_selection.value.toLowerCase()}`,
-  );
-  showAlert(`Selecting from table: ${filters.join(", ")}`);
-  // Add a filter group to the filters container locked with the table selection filter
-  const filterGroup = document.createElement("div");
-  filterGroup.className = "filter-group";
-  const select = document.createElement("select");
-  select.className = "field-select";
-  select.innerHTML = `
+  tableSelectFilter = (table_selection) => {
+    console.log("Table selection:", table_selection);
+    this.filters = [];
+    this.clearFilters();
+    this.filters.push(
+        `${table_selection.field}:==:${table_selection.value.toLowerCase()}`,
+    );
+    this.showAlert(`Selecting from table: ${this.filters.join(", ")}`);
+    const filterGroup = document.createElement("div");
+    filterGroup.className = "filter-group";
+    const select = document.createElement("select");
+    select.className = "field-select";
+    select.innerHTML = `
             <option value="${table_selection.field}" selected>${table_selection.field}</option>
         `;
-  select.disabled = true;
-  const operatorSelect = document.createElement("select");
-  operatorSelect.className = "operator-select";
-  operatorSelect.innerHTML = `
+    select.disabled = true;
+    const operatorSelect = document.createElement("select");
+    operatorSelect.className = "operator-select";
+    operatorSelect.innerHTML = `
             <option value="==">Exactly</option>
         `;
-  operatorSelect.disabled = true;
-  filterGroup.appendChild(select);
-  filterGroup.appendChild(operatorSelect);
-  const filterInputContainer = document.createElement("div");
-  filterInputContainer.id = "filter-input-container";
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = table_selection.value;
-  input.className = "field-input";
-  input.disabled = true;
-  filterInputContainer.appendChild(input);
-  filterGroup.appendChild(filterInputContainer);
-  const minusButton = document.createElement("button");
-  minusButton.className = "btn btn-danger";
-  minusButton.textContent = "-";
-  minusButton.onclick = function () {
-    removeFilter(minusButton);
+    operatorSelect.disabled = true;
+    filterGroup.appendChild(select);
+    filterGroup.appendChild(operatorSelect);
+    const filterInputContainer = document.createElement("div");
+    filterInputContainer.id = "filter-input-container";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = table_selection.value;
+    input.className = "field-input";
+    input.disabled = true;
+    filterInputContainer.appendChild(input);
+    filterGroup.appendChild(filterInputContainer);
+    const minusButton = document.createElement("button");
+    minusButton.className = "btn btn-danger";
+    minusButton.textContent = "-";
+    minusButton.onclick = () => this.removeFilter(minusButton);
+    filterGroup.appendChild(minusButton);
+    const toolbar = document.getElementsByClassName("toolbar")[0];
+    toolbar.style.display = "block";
+    document.getElementById("filters-container").appendChild(filterGroup);
+    this.filterCount++;
+    this.fetchGraphData({ type: "initial", filters: this.filters });
+    this.sigmaInstance.refresh();
   };
-  filterGroup.appendChild(minusButton);
-  // Unhide the toolbar if it is hidden
-  const toolbar = document.getElementsByClassName("toolbar")[0];
-  toolbar.style.display = "block";
-  document.getElementById("filters-container").appendChild(filterGroup);
-  // Increment the filter count
-  filterCount++;
-  fetchGraphData({ type: "initial", filters });
-  sigmaInstance.refresh();
 }
