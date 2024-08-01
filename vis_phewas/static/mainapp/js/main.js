@@ -1,15 +1,7 @@
 import Graph from "graphology";
 import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
-import {
-  getAddFilter,
-  getApplyFilters,
-  getClearFilters,
-  getRemoveFilter,
-  getUpdateFilterInput,
-  hideFilters,
-  tableSelectFilter,
-} from "./filter";
+import { FilterManager } from "./filter";
 import {
   closeInfoContainer,
   getAdjustSigmaContainer,
@@ -26,50 +18,194 @@ import {
 } from "./graph";
 import { fetchAndShowAssociations } from "./associationsPlot";
 
+const container = document.getElementById("sigma-container");
+const graph = new Graph({ multi: true });
+const sigmaInstance = new Sigma(graph, container, {
+  allowInvalidContainer: true,
+  labelRenderedSizeThreshold: 300,
+  defaultNodeType: "bordered",
+  nodeProgramClasses: {
+    bordered: createNodeBorderProgram({
+      borders: [
+        {
+          size: { attribute: "borderSize", defaultValue: 0.5 },
+          color: { attribute: "borderColor" },
+        },
+        { size: { fill: true }, color: { attribute: "color" } },
+      ],
+    }),
+  },
+});
+
+// Function to calculate the color of a node based on its node type
+function getNodeColor(node) {
+  return calculateNodeColor(node);
+}
+
+// Function to apply the layout to the graph
+function applyLayout() {
+  getApplyLayout(graph, sigmaInstance);
+}
+
+// Function to initialize the graph
+function initializeGraph(nodes, edges, visible) {
+  const container = document.getElementById("sigma-container");
+
+  // Calculate center and radius based on container dimensions
+  const centerX = container.offsetWidth / 2;
+  const centerY = container.offsetHeight / 2;
+  const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
+
+  // Clear any existing graph data
+  graph.clear();
+
+  // Loop through nodes to position them in a circle starting at 12 o'clock
+  nodes.forEach((node, nodeNumber) => {
+    if ((!node) in visible) {
+      return;
+    }
+    if (!graph.hasNode(node.id)) {
+      // Calculate the angle with an offset to start at 12 o'clock
+      const angle = (2 * Math.PI * nodeNumber) / nodes.length - Math.PI / 2;
+      // Calculate x and y coordinates based on the angle
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
+
+      // Get the color of the node based on its node type
+      const color = getNodeColor(node);
+
+      // Debugging log to check angles and positions
+      // console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
+
+      // Add node to the graph with calculated positions
+      graph.addNode(node.id, {
+        label: node.label.replace("HLA_", ""),
+        full_label: node.label,
+        node_type: node.node_type,
+        forceLabel: true, // Force label display for category nodes
+        x: x,
+        y: y,
+        size: 8,
+        borderColor: color,
+        borderSize: 0,
+        hidden: false,
+        color: color,
+        userForceLabel: false, // Variable to store user preference for label display
+      });
+    }
+  });
+
+  edges.forEach((edge) => {
+    if (!graph.hasEdge(edge.id)) {
+      graph.addEdge(edge.source, edge.target);
+      graph.setEdgeAttribute(edge.source, edge.target, "hidden", false);
+      // console.log('Edge:', edge); // Debugging log
+    }
+  });
+}
+
+function updateGraph(nodes, edges, visible, clicked) {
+  // Get all nodes and edges in the graph
+  const graphNodes = graph.nodes();
+  const graphEdges = graph.edges();
+
+  if (!clicked) {
+    // Hide all nodes and edges
+    graphNodes.forEach((node) => {
+      graph.setNodeAttribute(node, "hidden", true);
+    });
+    graphEdges.forEach((edge) => {
+      graph.setEdgeAttribute(edge, "hidden", true);
+    });
+
+    sigmaInstance.refresh();
+  }
+
+  nodes.forEach((node) => {
+    if (!graph.hasNode(node.id)) {
+      let { color, baseSize, borderSize, borderColor } = calculateBorder(node);
+      console.log(baseSize);
+
+      graph.addNode(node.id, {
+        label: node.label.replace("HLA_", ""),
+        full_label: node.label,
+        node_type: node.node_type,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: baseSize,
+        odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
+        allele_count: node.node_type === "disease" ? node.allele_count : null,
+        borderColor: node.node_type === "allele" ? borderColor : color,
+        borderSize: borderSize,
+        color: color,
+        expanded: false,
+        userForceLabel: false,
+      });
+    }
+    graph.setNodeAttribute(node.id, "hidden", visible.includes(node.id));
+  });
+
+  edges.forEach((edge) => {
+    if (!graph.hasEdge(edge.id)) {
+      graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
+    }
+  });
+
+  applyLayout();
+}
+
+// Function to fetch graph data from the API
+function fetchGraphData(params = {}) {
+  // Add the show_subtypes parameter to the params object
+  params.show_subtypes = showSubtypes;
+
+  const query = new URLSearchParams(params).toString();
+  const url = "/api/graph-data/" + (query ? "?" + query : "");
+
+  fetch(url)
+    .then((response) => response.json())
+    .then((data) => {
+      if (params.type) {
+        updateGraph(data.nodes, data.edges, data.visible, params.clicked);
+      } else {
+        initializeGraph(data.nodes, data.edges, data.visible);
+      }
+    })
+    .catch((error) => console.error("Error loading graph data:", error));
+}
+
+// Instantiate FilterManager
+const filterManager = new FilterManager(
+  adjustSigmaContainerHeight,
+  showAlert,
+  fetchGraphData,
+  sigmaInstance,
+);
+
+// Function to adjust Sigma container height
+function adjustSigmaContainerHeight() {
+  getAdjustSigmaContainer(container, sigmaInstance);
+}
+
+// Function to show an alert message
+function showAlert(message) {
+  getShowAlert(message);
+}
+
 // Ensure the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   // Get DOM elements
-  const container = document.getElementById("sigma-container");
-  const graph = new Graph({ multi: true });
-  const sigmaInstance = new Sigma(graph, container, {
-    allowInvalidContainer: true,
-    labelRenderedSizeThreshold: 300,
-    defaultNodeType: "bordered",
-    nodeProgramClasses: {
-      bordered: createNodeBorderProgram({
-        borders: [
-          {
-            size: { attribute: "borderSize", defaultValue: 0.5 },
-            color: { attribute: "borderColor" },
-          },
-          { size: { fill: true }, color: { attribute: "color" } },
-        ],
-      }),
-    },
-  });
-  window.updateFilterInput = getUpdateFilterInput(adjustSigmaContainerHeight);
-  window.addFilter = getAddFilter(adjustSigmaContainerHeight);
-  window.removeFilter = getRemoveFilter(adjustSigmaContainerHeight);
+
+  // Assign instance methods to the window object without invoking them
+  window.updateFilterInput = filterManager.updateFilterInput;
+  window.addFilter = filterManager.addFilter;
+  window.removeFilter = filterManager.removeFilter;
+  window.applyFilters = filterManager.applyFilters;
+  window.clearFilters = filterManager.clearFilters;
   window.fetchAndShowAssociations = fetchAndShowAssociations;
 
-  function adjustSigmaContainerHeight() {
-    getAdjustSigmaContainer(container, sigmaInstance);
-  }
-
-  window.applyFilters = getApplyFilters(
-    showAlert,
-    fetchGraphData,
-    sigmaInstance,
-  );
-  window.clearFilters = getClearFilters(
-    adjustSigmaContainerHeight,
-    showAlert,
-    fetchGraphData,
-  );
-
   const toggleButton = document.getElementsByClassName("toggle-button")[0];
-
-  toggleButton.onclick = hideFilters;
+  toggleButton.onclick = filterManager.hideFilters;
 
   // Function to update global variable show_subtypes
   function updateShowSubtypes() {
@@ -84,144 +220,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fetch the graph data on page load
   fetchGraphData();
-
-  // Function to fetch graph data from the API
-  function fetchGraphData(params = {}) {
-    // Add the show_subtypes parameter to the params object
-    params.show_subtypes = showSubtypes;
-
-    const query = new URLSearchParams(params).toString();
-    const url = "/api/graph-data/" + (query ? "?" + query : "");
-
-    fetch(url)
-      .then((response) => response.json())
-      .then((data) => {
-        if (params.type) {
-          updateGraph(data.nodes, data.edges, data.visible, params.clicked);
-        } else {
-          initializeGraph(data.nodes, data.edges, data.visible);
-        }
-      })
-      .catch((error) => console.error("Error loading graph data:", error));
-  }
-
-  // Function to initialize the graph
-  function initializeGraph(nodes, edges, visible) {
-    const container = document.getElementById("sigma-container");
-
-    // Calculate center and radius based on container dimensions
-    const centerX = container.offsetWidth / 2;
-    const centerY = container.offsetHeight / 2;
-    const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
-
-    // Clear any existing graph data
-    graph.clear();
-
-    // Loop through nodes to position them in a circle starting at 12 o'clock
-    nodes.forEach((node, nodeNumber) => {
-      if ((!node) in visible) {
-        return;
-      }
-      if (!graph.hasNode(node.id)) {
-        // Calculate the angle with an offset to start at 12 o'clock
-        const angle = (2 * Math.PI * nodeNumber) / nodes.length - Math.PI / 2;
-        // Calculate x and y coordinates based on the angle
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle); // Inverted y-axis to start at 12 o'clock
-
-        // Get the color of the node based on its node type
-        const color = getNodeColor(node);
-
-        // Debugging log to check angles and positions
-        // console.log(`Node ${node.id}: angle ${angle} radians, x: ${x}, y: ${y}`);
-
-        // Add node to the graph with calculated positions
-        graph.addNode(node.id, {
-          label: node.label.replace("HLA_", ""),
-          full_label: node.label,
-          node_type: node.node_type,
-          forceLabel: true, // Force label display for category nodes
-          x: x,
-          y: y,
-          size: 8,
-          borderColor: color,
-          borderSize: 0,
-          hidden: false,
-          color: color,
-          userForceLabel: false, // Variable to store user preference for label display
-        });
-      }
-    });
-
-    edges.forEach((edge) => {
-      if (!graph.hasEdge(edge.id)) {
-        graph.addEdge(edge.source, edge.target);
-        graph.setEdgeAttribute(edge.source, edge.target, "hidden", false);
-        // console.log('Edge:', edge); // Debugging log
-      }
-    });
-  }
-
-  function updateGraph(nodes, edges, visible, clicked) {
-    // Get all nodes and edges in the graph
-    const graphNodes = graph.nodes();
-    const graphEdges = graph.edges();
-
-    if (!clicked) {
-      // Hide all nodes and edges
-      graphNodes.forEach((node) => {
-        graph.setNodeAttribute(node, "hidden", true);
-      });
-      graphEdges.forEach((edge) => {
-        graph.setEdgeAttribute(edge, "hidden", true);
-      });
-
-      sigmaInstance.refresh();
-    }
-
-    nodes.forEach((node) => {
-      if (!graph.hasNode(node.id)) {
-        let { color, baseSize, borderSize, borderColor } =
-          calculateBorder(node);
-        console.log(baseSize)
-
-        graph.addNode(node.id, {
-          label: node.label.replace("HLA_", ""),
-          full_label: node.label,
-          node_type: node.node_type,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: baseSize,
-          odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
-          allele_count: node.node_type === "disease" ? node.allele_count : null,
-          borderColor: node.node_type === "allele" ? borderColor : color,
-          borderSize: borderSize,
-          color: color,
-          expanded: false,
-          userForceLabel: false,
-        });
-      }
-      graph.setNodeAttribute(node.id, "hidden", visible.includes(node.id));
-    });
-
-    edges.forEach((edge) => {
-      if (!graph.hasEdge(edge.id)) {
-        graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
-      }
-    });
-
-    applyLayout();
-  }
-
-  // Function to calculate the color of a node based on its node type
-  function getNodeColor(node) {
-    return calculateNodeColor(node);
-  }
-
-  // Function to apply the layout to the graph
-  function applyLayout() {
-    getApplyLayout(graph, sigmaInstance);
-  }
 
   function getInfoTable(nodeData) {
     const infoContainer = document.getElementsByClassName("info-container")[0];
@@ -277,7 +275,7 @@ document.addEventListener("DOMContentLoaded", function () {
     filterButton.style.justifyContent = "center";
     filterButton.style.justifySelf = "center";
     filterButton.onclick = () => {
-      tableSelectFilter(
+      filterManager.tableSelectFilter(
         { field: "snp", value: nodeData.full_label },
         fetchGraphData,
         sigmaInstance,
@@ -374,7 +372,7 @@ document.addEventListener("DOMContentLoaded", function () {
           pValueCell.textContent = odds.p.toString();
           row.appendChild(pValueCell);
           row.onclick = () => {
-            tableSelectFilter(
+            filterManager.tableSelectFilter(
               {
                 field: "phewas_string",
                 value: odds.phewas_string,
@@ -422,7 +420,6 @@ document.addEventListener("DOMContentLoaded", function () {
         node.node_type = "allele";
         node.odds_ratio = nodeData.odds_ratio;
         node.p = nodeData.p;
-
 
         // Calculate the color and size of the allele node based on the updated data
         let { color, baseSize, borderSize, borderColor } =
@@ -620,9 +617,6 @@ document.addEventListener("DOMContentLoaded", function () {
   window.exportQuery = function () {
     getExportData(showAlert);
   };
-
-  // Function to show an alert message
-  function showAlert(message) {
-    getShowAlert(message);
-  }
 });
+
+export { filterManager };

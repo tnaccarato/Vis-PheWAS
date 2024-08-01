@@ -1,5 +1,5 @@
-import { filters } from "./filter";
-import forceAtlas2 from "graphology-layout-forceatlas2";
+import {filterManager} from "./main";
+import forceAtlas2     from "graphology-layout-forceatlas2";
 import { rgbaToFloat } from "sigma/utils";
 import { clamp, diseaseColor, sizeScale } from "./utils";
 
@@ -39,7 +39,7 @@ export function clickedNode(
       fetchGraphData({
         type: "diseases",
         category_id: node,
-        filters: filters,
+        filters: filterManager.filters,
         clicked: true,
       });
       nodeData.expanded = true;
@@ -54,7 +54,7 @@ export function clickedNode(
       fetchGraphData({
         type: "alleles",
         disease_id: encodeURIComponent(node),
-        filters: filters,
+        filters: filterManager.filters,
         clicked: true,
       });
       nodeData.expanded = true;

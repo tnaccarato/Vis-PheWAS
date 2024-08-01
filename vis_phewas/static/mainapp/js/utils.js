@@ -1,5 +1,5 @@
-import { filters, push_filters } from "./filter";
-import { scaleLog } from "d3-scale";
+import {filterManager} from "./main.js";
+import { scaleLog }    from "d3-scale";
 import * as d3 from "d3";
 
 export function closeInfoContainer(adjustSigmaContainerHeight) {
@@ -21,16 +21,16 @@ export function closeInfoContainer(adjustSigmaContainerHeight) {
 
 export function getExportData(showAlert) {
   // Push filters to the filters array to make sure the filters are applied
-  push_filters();
-  console.log("Filters:", filters); // Debugging log
+  filterManager.pushFilters();
+  console.log("Filters:", filterManager.filters); // Debugging log
 
   // If filters is empty, set it to an empty array
-  if (!filters) {
-    filters = [];
+  if (!filterManager.filters) {
+    filterManager.filters = [];
   }
 
   // Construct the query string
-  const query = new URLSearchParams({ filters: filters }).toString();
+  const query = new URLSearchParams({ filters: filterManager.filters }).toString();
   // Construct the URL from which to fetch the data
   const url = "/api/export-query/" + (query ? "?" + query : "");
 
@@ -46,7 +46,7 @@ export function getExportData(showAlert) {
         return;
       }
       // Construct the alert message
-      const filtersDisplay = filters.length > 0 ? filters.join(", ") : "None";
+      const filtersDisplay = filterManager.filters.length > 0 ? filterManager.filters.join(", ") : "None";
       const alertMessage = `Exporting Data...<br><b>Filters selected:</b> ${filtersDisplay}<br><b>Dataset length:</b> ${length}`;
       showAlert(alertMessage);
       // Return the response as a blob object
