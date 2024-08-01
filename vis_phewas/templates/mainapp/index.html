@@ -24,16 +24,16 @@
                         <button class="toggle-button" style="display: none"> <!-- Filter panel toggle button hidden at start-->
                             <i class="fa fa-chevron-down down"></i> <!-- This is the chevron icon -->
                         </button>
-                        <button class="button btn btn-primary" onclick="addFilter()">
+                        <button class="button btn btn-primary addFilter" onclick="addFilter()">
                             Add Filter
                         </button>
-                        <button class="button btn btn-danger" onclick="clearFilters()">
+                        <button class="button btn btn-danger clearFilters" onclick="clearFilters()" disabled>
                             Clear Filters
                         </button>
-                        <button class="button btn btn-success" onclick="applyFilters()">
+                        <button class="button btn btn-success applyFilters" onclick="applyFilters()" disabled>
                             Apply Filters
                         </button>
-                        <button class="button btn btn-info" style="color: white" onclick="exportQuery()">
+                        <button class="button btn btn-info exportQuery" style="color: white" onclick="exportQuery()">
                             Export Filtered Data
                         </button>
                     </div>
