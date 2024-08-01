@@ -1,4 +1,5 @@
 import { closeInfoContainer } from "./utils";
+import DOMPurify from "dompurify";
 
 // Class to manage filter functionality
 export class FilterManager {
@@ -31,13 +32,17 @@ export class FilterManager {
         return;
       }
 
+      // Sanitize values
+      const sanitizedSelectValue = DOMPurify.sanitize(select.value);
+      const sanitizedOperatorValue = operatorSelect ? DOMPurify.sanitize(operatorSelect.value) : "==";
+      const sanitizedInputValue = DOMPurify.sanitize(input.value.toLowerCase());
+
       // Construct the filter string
       if (select && input) {
-        const filter = `${select.value}:${operatorSelect ? operatorSelect.value : "=="}:${input.value.toLowerCase()}`;
+        const filter = `${sanitizedSelectValue}:${sanitizedOperatorValue}:${sanitizedInputValue}`;
         // If the filter is not the first filter, add the logical operator
         if (index > 0 && logicalOperator) {
-          this.filters.push(`${logicalOperator.value} ${filter}`);
-          // If the filter is the first filter, add the filter without the logical operator
+          this.filters.push(`${DOMPurify.sanitize(logicalOperator.value)} ${filter}`);
         } else {
           this.filters.push(filter);
         }
@@ -64,10 +69,10 @@ export class FilterManager {
     this.fetchGraphData();
   };
 
-    // Method to update filter input based on the selected field
+  // Method to update filter input based on the selected field
   updateFilterInput = (select) => {
     const filterInputContainer = select.parentNode.querySelector("#filter-input-container");
-    const selectedField = select.value;
+    const selectedField = DOMPurify.sanitize(select.value);
 
     // Clear the filter input container
     filterInputContainer.innerHTML = "";
@@ -76,10 +81,10 @@ export class FilterManager {
     // Add the appropriate input based on the selected field
     if (["snp", "phewas_code", "phewas_string", "category_string", "serotype", "subtype"].includes(selectedField)) {
       const operator = document.createElement("select");
-      operator.innerHTML = `
+      operator.innerHTML = DOMPurify.sanitize(`
         <option value="==">Exactly</option>
         <option value="contains">Contains</option>
-      `;
+      `);
       operator.className = "operator-select";
       filterInputContainer.appendChild(operator);
       const input = document.createElement("input");
@@ -89,12 +94,12 @@ export class FilterManager {
       filterInputContainer.appendChild(input);
     } else if (["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(selectedField)) {
       const operator = document.createElement("select");
-      operator.innerHTML = `
+      operator.innerHTML = DOMPurify.sanitize(`
         <option value=">">> (Greater than)</option>
         <option value="<">< (Less than)</option>
         <option value=">=">>= (Greater than or equal to)</option>
         <option value="<="><= (Less than or equal to)</option>
-      `;
+      `);
       operator.className = "operator-select";
       filterInputContainer.appendChild(operator);
       const input = document.createElement("input");
@@ -106,12 +111,12 @@ export class FilterManager {
       const select = document.createElement("select");
       select.className = "field-input";
       if (selectedField === "gene_class") {
-        select.innerHTML = `
+        select.innerHTML = DOMPurify.sanitize(`
           <option value="1">Class 1</option>
           <option value="2">Class 2</option>
-        `;
+        `);
       } else if (selectedField === "gene_name") {
-        select.innerHTML = `
+        select.innerHTML = DOMPurify.sanitize(`
           <option value="A">A</option>
           <option value="B">B</option>
           <option value="C">C</option>
@@ -120,12 +125,12 @@ export class FilterManager {
           <option value="DQA1">DQA1</option>
           <option value="DQB1">DQB1</option>
           <option value="DRB1">DRB1</option>
-        `;
+        `);
       } else {
-        select.innerHTML = `
+        select.innerHTML = DOMPurify.sanitize(`
           <option value="A">A</option>
           <option value="P">P</option>
-        `;
+        `);
       }
       filterInputContainer.appendChild(select);
     }
@@ -167,22 +172,22 @@ export class FilterManager {
       if (this.filterCount > 0) {
         const logicalOperator = document.createElement("select");
         logicalOperator.className = "logical-operator";
-        logicalOperator.innerHTML = `
+        logicalOperator.innerHTML = DOMPurify.sanitize(`
           <option value="AND">AND</option>
           <option value="OR">OR</option>
-        `;
+        `);
         filterGroup.appendChild(logicalOperator);
       }
 
       const select = document.createElement("select");
       select.className = "field-select";
       select.onchange = () => this.updateFilterInput(select);
-      select.innerHTML = `
+      select.innerHTML = DOMPurify.sanitize(`
         <option value="snp">SNP</option>
         <option value="gene_class">Gene Class</option>
         <option value="gene_name">Gene Name</option>
         <option value="serotype">Serotype</option>
-        ${showSubtypes ? `<option value="subtype">Subtype</option>` : ""}
+        ${window.showSubtypes ? `<option value="subtype">Subtype</option>` : ""}
         <option value="phewas_code">Phecode</option>
         <option value="phewas_string">Phenotype</option>
         <option value="category_string">Disease Category</option>
@@ -195,7 +200,7 @@ export class FilterManager {
         <option value="maf">Minor Allele Frequency</option>
         <option value="a1">Allele 1</option>
         <option value="a2">Allele 2</option>
-      `;
+      `);
       filterGroup.appendChild(select);
 
       const filterInputContainer = document.createElement("div");
@@ -253,29 +258,28 @@ export class FilterManager {
     this.sigmaInstance.refresh();
   };
 
-
   // Arrow function for tableSelectFilter
   tableSelectFilter = (table_selection) => {
     console.log("Table selection:", table_selection);
     this.filters = [];
     this.clearFilters();
     this.filters.push(
-        `${table_selection.field}:==:${table_selection.value.toLowerCase()}`,
+      `${DOMPurify.sanitize(table_selection.field)}:==:${DOMPurify.sanitize(table_selection.value.toLowerCase())}`,
     );
     this.showAlert(`Selecting from table: ${this.filters.join(", ")}`);
     const filterGroup = document.createElement("div");
     filterGroup.className = "filter-group";
     const select = document.createElement("select");
     select.className = "field-select";
-    select.innerHTML = `
-            <option value="${table_selection.field}" selected>${table_selection.field}</option>
-        `;
+    select.innerHTML = DOMPurify.sanitize(`
+      <option value="${table_selection.field}" selected>${table_selection.field}</option>
+    `);
     select.disabled = true;
     const operatorSelect = document.createElement("select");
     operatorSelect.className = "operator-select";
-    operatorSelect.innerHTML = `
-            <option value="==">Exactly</option>
-        `;
+    operatorSelect.innerHTML = DOMPurify.sanitize(`
+      <option value="==">Exactly</option>
+    `);
     operatorSelect.disabled = true;
     filterGroup.appendChild(select);
     filterGroup.appendChild(operatorSelect);
@@ -283,7 +287,7 @@ export class FilterManager {
     filterInputContainer.id = "filter-input-container";
     const input = document.createElement("input");
     input.type = "text";
-    input.value = table_selection.value;
+    input.value = DOMPurify.sanitize(table_selection.value);
     input.className = "field-input";
     input.disabled = true;
     filterInputContainer.appendChild(input);
