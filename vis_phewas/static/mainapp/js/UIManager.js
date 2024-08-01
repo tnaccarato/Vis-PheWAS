@@ -30,10 +30,6 @@ class UIManager {
     window.applyFilters = this.filterManager.applyFilters;
     window.clearFilters = this.filterManager.clearFilters;
     window.fetchAndShowAssociations = fetchAndShowAssociations;
-
-    const toggleButton = document.getElementsByClassName("toggle-button")[0];
-    toggleButton.onclick = this.filterManager.hideFilters;
-
     window.updateShowSubtypes = this.updateShowSubtypes.bind(this);
     window.exportQuery = this.exportQuery.bind(this);
   }

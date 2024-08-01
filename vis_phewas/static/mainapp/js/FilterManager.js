@@ -1,17 +1,29 @@
 import { closeInfoContainer } from "./utils";
-import DOMPurify from "dompurify";
+import DOMPurify from "dompurify"; // Class to manage filter functionality
 
 // Class to manage filter functionality
 export class FilterManager {
   // Constructor
-  constructor(adjustSigmaContainerHeight, showAlert, fetchGraphData, sigmaInstance) {
+  constructor(
+    adjustSigmaContainerHeight,
+    showAlert,
+    fetchGraphData,
+    sigmaInstance,
+  ) {
     this.filterCount = 0;
     this.filters = [];
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     this.showAlert = showAlert;
     this.fetchGraphData = fetchGraphData;
     this.sigmaInstance = sigmaInstance;
+    this.setEventListeners();
   }
+
+  // Method to set event listeners for toolbar buttons
+  setEventListeners = () => {
+    const toggleButton = document.querySelector(".toggle-button");
+    toggleButton.addEventListener("click", this.hideFilters);
+  };
 
   // Method to push filters to the filters array
   pushFilters = () => {
@@ -34,7 +46,9 @@ export class FilterManager {
 
       // Sanitize values
       const sanitizedSelectValue = DOMPurify.sanitize(select.value);
-      const sanitizedOperatorValue = operatorSelect ? DOMPurify.sanitize(operatorSelect.value) : "==";
+      const sanitizedOperatorValue = operatorSelect
+        ? DOMPurify.sanitize(operatorSelect.value)
+        : "==";
       const sanitizedInputValue = DOMPurify.sanitize(input.value.toLowerCase());
 
       // Construct the filter string
@@ -42,7 +56,9 @@ export class FilterManager {
         const filter = `${sanitizedSelectValue}:${sanitizedOperatorValue}:${sanitizedInputValue}`;
         // If the filter is not the first filter, add the logical operator
         if (index > 0 && logicalOperator) {
-          this.filters.push(`${DOMPurify.sanitize(logicalOperator.value)} ${filter}`);
+          this.filters.push(
+            `${DOMPurify.sanitize(logicalOperator.value)} ${filter}`,
+          );
         } else {
           this.filters.push(filter);
         }
@@ -71,7 +87,9 @@ export class FilterManager {
 
   // Method to update filter input based on the selected field
   updateFilterInput = (select) => {
-    const filterInputContainer = select.parentNode.querySelector("#filter-input-container");
+    const filterInputContainer = select.parentNode.querySelector(
+      "#filter-input-container",
+    );
     const selectedField = DOMPurify.sanitize(select.value);
 
     // Clear the filter input container
@@ -79,7 +97,16 @@ export class FilterManager {
     console.log("Selected field:", selectedField); // Debugging log
 
     // Add the appropriate input based on the selected field
-    if (["snp", "phewas_code", "phewas_string", "category_string", "serotype", "subtype"].includes(selectedField)) {
+    if (
+      [
+        "snp",
+        "phewas_code",
+        "phewas_string",
+        "category_string",
+        "serotype",
+        "subtype",
+      ].includes(selectedField)
+    ) {
       const operator = document.createElement("select");
       operator.innerHTML = DOMPurify.sanitize(`
         <option value="==">Exactly</option>
@@ -92,7 +119,11 @@ export class FilterManager {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-    } else if (["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(selectedField)) {
+    } else if (
+      ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(
+        selectedField,
+      )
+    ) {
       const operator = document.createElement("select");
       operator.innerHTML = DOMPurify.sanitize(`
         <option value=">">> (Greater than)</option>
@@ -107,7 +138,9 @@ export class FilterManager {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-    } else if (["gene_class", "gene_name", "a1", "a2"].includes(selectedField)) {
+    } else if (
+      ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
+    ) {
       const select = document.createElement("select");
       select.className = "field-input";
       if (selectedField === "gene_class") {
@@ -141,18 +174,18 @@ export class FilterManager {
 
   // Method to show/hide filters
   hideFilters = () => {
-    // Get the toggle button, filter container, filter body, and chevron icon
-    const toggleButton = document.querySelector(".toggle-button");
     const filterContainer = document.querySelector(".toolbar-wrapper");
     const filterBody = document.querySelector(".toolbar");
-    const chevron = toggleButton.querySelector(".fa");
+    const chevron = document.querySelector(".toggle-button .fa");
 
-    // Add event listener to the toggle button
-    toggleButton.addEventListener("click", () => {
-      filterBody.style.display = filterBody.style.display === "none" ? "block" : "none";
-      filterContainer.style.display = filterContainer.style.display === "none" ? "block" : "none";
-      chevron.classList.toggle("fa-chevron-up");
-    });
+    filterBody.style.display =
+      filterBody.style.display === "none" ? "block" : "none";
+    filterContainer.style.display =
+      filterContainer.style.display === "none" ? "block" : "none";
+    chevron.classList.toggle("up");
+    chevron.classList.toggle("down");
+    console.log("Chevron Up:", chevron.classList.contains("up")); // Debugging log
+    console.log("Chevron Down:", chevron.classList.contains("down")); // Debugging
   };
 
   // Method to add a filter
@@ -251,9 +284,11 @@ export class FilterManager {
     this.fetchGraphData({ type: "initial", filters: this.filters.join(" ") });
 
     const filterBody = document.querySelector(".toolbar");
-    filterBody.style.display = filterBody.style.display === "none" ? "block" : "none";
+    filterBody.style.display =
+      filterBody.style.display === "none" ? "block" : "none";
     const filterContainer = document.querySelector(".toolbar-wrapper");
-    filterContainer.style.display = filterContainer.style.display === "none" ? "block" : "none";
+    filterContainer.style.display =
+      filterContainer.style.display === "none" ? "block" : "none";
 
     this.sigmaInstance.refresh();
   };
