@@ -302,6 +302,8 @@ export class FilterManager {
     document.getElementById("filters-container").appendChild(filterGroup);
     this.filterCount++;
     this.fetchGraphData({ type: "initial", filters: this.filters });
+    // Show the hide filters button
+    document.querySelector(".toggle-button").style.display = "block";
     this.sigmaInstance.refresh();
   };
 }
