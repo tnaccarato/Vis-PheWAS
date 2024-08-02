@@ -23,22 +23,11 @@ export class FilterManager {
   // Method to update button states
   updateButtonStates = () => {
     const addFilterButton = document.querySelector(".addFilter");
-    const clearFiltersButton = document.querySelector(".clearFilters");
     const applyFiltersButton = document.querySelector(".applyFilters");
 
-    if (this.filterCount >= 8) {
-      addFilterButton.disabled = true;
-    } else {
-      addFilterButton.disabled = false;
-    }
+    addFilterButton.disabled = this.filterCount >= 8;
 
-    if (this.filterCount === 0) {
-      clearFiltersButton.disabled = true;
-      applyFiltersButton.disabled = true;
-    } else {
-      clearFiltersButton.disabled = false;
-      applyFiltersButton.disabled = false;
-    }
+    applyFiltersButton.disabled = this.filterCount === 0;
   };
 
   // Method to push filters to the filters array
