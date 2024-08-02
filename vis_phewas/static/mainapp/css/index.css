@@ -96,11 +96,7 @@ body {
     margin-right: 10px;
 }
 
-.filter-group select,
-.filter-group input,
-.filter-group button {
-    margin-right: 10px;
-}
+
 
 .left-column {
     display: flex;
@@ -111,15 +107,16 @@ body {
 
 .toolbar-wrapper {
     width: 100%;
-    max-height: 50%;
+    max-height: 33%;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
 #filters-container {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; /* Space between filter groups */
+    padding: 10px;
 }
 
 .filter-group {
@@ -206,6 +203,17 @@ body {
     margin: 0 5px;
     text-align: center;
     border-radius: 20px;
+}
+
+.button.exportQuery{
+    background-color: #08d0d9;
+}
+
+.button:disabled {
+    background-color: #ccc;
+    opacity: 0.25;
+    color: #666;
+    cursor: not-allowed;
 }
 
 .switch-container {
@@ -339,13 +347,13 @@ input:checked + .slider:before {
 }
 
 .toggle-button .fa {
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.1s ease-in-out;
 }
 
-.toggle-button .fa-chevron-up {
-    transform: rotate(180deg);
+.toggle-button .up {
+    transform: rotate(540deg);
 }
 
-.toggle-button .fa-chevron-down {
+.toggle-button .down {
     transform: rotate(0deg);
 }
