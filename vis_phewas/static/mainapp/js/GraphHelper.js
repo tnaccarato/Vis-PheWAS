@@ -2,11 +2,13 @@ import forceAtlas2 from "graphology-layout-forceatlas2";
 import { rgbaToFloat } from "sigma/utils";
 import { clamp, diseaseColor, sizeScale } from "./utils";
 import { filterManager } from "./main";
+import {GraphManager} from "./GraphManager";
 
 class GraphHelper {
   constructor(sigmaInstance, adjustSigmaContainerHeight) {
     this.sigmaInstance = sigmaInstance;
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
+    this.graphManager = GraphManager;
   }
 
   clickedNode(graph, node, fetchGraphData, adjustSigmaContainerHeight, getInfoTable) {
@@ -126,10 +128,10 @@ class GraphHelper {
       iterations: 1000,
       settings: {
         gravity: 0.1,
-        scalingRatio: 2.0,
-        barnesHutOptimize: true,
-        barnesHutTheta: 0.5,
-        adjustSizes: false,
+        scalingRatio: 10,
+        // barnesHutOptimize: true,
+        // barnesHutTheta: 0.5,
+        adjustSizes: true,
       },
     };
     forceAtlas2.assign(graph, settings);
