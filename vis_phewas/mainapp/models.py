@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class HlaPheWasCatalog(models.Model):
     """
     Model representing a HLA PheWas Catalog entry.
@@ -31,6 +30,24 @@ class HlaPheWasCatalog(models.Model):
         db_table = 'hla_phewas_catalog'
         verbose_name = 'HLA PheWAS Catalog'
         verbose_name_plural = 'HLA PheWAS Catalog'
+        indexes = [
+            models.Index(fields=['snp'], name='snp_idx'),
+            models.Index(fields=['phewas_code'], name='phewas_code_idx'),
+            models.Index(fields=['phewas_string'], name='phewas_string_idx'),
+            models.Index(fields=['category_string'], name='category_string_idx'),
+            models.Index(fields=['odds_ratio'], name='odds_ratio_idx'),
+            models.Index(fields=['p'], name='p_value_idx'),
+            models.Index(fields=['gene_name'], name='gene_name_idx'),
+            models.Index(fields=['chromosome'], name='chromosome_idx'),
+            models.Index(fields=['serotype'], name='serotype_idx'),
+            models.Index(fields=['subtype'], name='subtype_idx'),
+        ]
+        index_together = [
+            ['category_string', 'phewas_string'],
+            ['phewas_string', 'snp'],
+            ['snp', 'p'],
+            ['snp', 'odds_ratio'],
+        ]
 
     snp = models.CharField(max_length=50)
     phewas_code = models.FloatField()
