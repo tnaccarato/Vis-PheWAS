@@ -170,6 +170,7 @@ export class FilterManager {
     const chevron = document.querySelector(".toggle-button .fa-chevron-down");
 
     const isFilterBodyVisible = filterBody.style.display === "block";
+    this.adjustSigmaContainerHeight();
 
     filterBody.style.display = isFilterBodyVisible ? "none" : "block";
     filterContainer.style.display = isFilterBodyVisible ? "none" : "block";
@@ -184,6 +185,7 @@ export class FilterManager {
     filterContainer.style.display = "block";
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display = "block";
+    this.adjustSigmaContainerHeight();
     if (this.filterCount >= 8) {
       alert("Maximum of 8 filters allowed");
     } else {
