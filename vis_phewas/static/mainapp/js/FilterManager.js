@@ -165,12 +165,14 @@ export class FilterManager {
 
   // Method to show/hide filters
   hideFilters = () => {
+    this.adjustSigmaContainerHeight();
+    console.log("Sigma Adjusted")
     const filterContainer = document.querySelector(".toolbar-wrapper");
     const filterBody = document.querySelector(".toolbar");
     const chevron = document.querySelector(".toggle-button .fa-chevron-down");
 
     const isFilterBodyVisible = filterBody.style.display === "block";
-    this.adjustSigmaContainerHeight();
+
 
     filterBody.style.display = isFilterBodyVisible ? "none" : "block";
     filterContainer.style.display = isFilterBodyVisible ? "none" : "block";
