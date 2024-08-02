@@ -78,13 +78,18 @@ export function getShowAlert(message) {
     `;
 }
 
-// Function to adjust the height of the Sigma container based on the height of the filters container
+// Function to adjust the size of the Sigma container based on the size of the filters container
 export function getAdjustSigmaContainer(container, sigmaInstance) {
   const filtersContainer = document.getElementById("filters-container");
-  const filtersHeight = filtersContainer.offsetHeight;
 
-  container.style.height = `calc(100% - ${filtersHeight}px)`;
-  sigmaInstance.refresh();
+  // Using requestAnimationFrame to optimize resizing
+  window.requestAnimationFrame(() => {
+    const filtersHeight = filtersContainer.offsetHeight;
+    const filtersWidth = filtersContainer.offsetWidth;
+    container.style.offsetWidth = `${filtersWidth}`;
+    container.style.height = `calc(100% - ${filtersHeight}px)`;
+    sigmaInstance.refresh();
+  });
 }
 
 // Create a scale for the size of the nodes

@@ -3,7 +3,6 @@ import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
 import GraphHelper from "./GraphHelper";
 import { fetchAndShowAssociations } from "./associationsPlot";
-import { closeInfoContainer } from "./utils";
 import UIManager from "./UIManager";
 
 class GraphManager {
@@ -12,7 +11,7 @@ class GraphManager {
     this.graph = new Graph({ multi: true });
     this.sigmaInstance = new Sigma(this.graph, this.container, {
       allowInvalidContainer: true,
-      labelRenderedSizeThreshold: 300,
+      labelRenderedSizeThreshold: 35,
       defaultNodeType: "bordered",
       nodeProgramClasses: {
         bordered: createNodeBorderProgram({
@@ -27,7 +26,10 @@ class GraphManager {
       },
     });
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
-    this.graphHelper = new GraphHelper(this.sigmaInstance, this.adjustSigmaContainerHeight);
+    this.graphHelper = new GraphHelper(
+      this.sigmaInstance,
+      this.adjustSigmaContainerHeight,
+    );
     this.initEventListeners();
   }
 
@@ -38,7 +40,7 @@ class GraphManager {
         node,
         this.fetchGraphData.bind(this),
         this.adjustSigmaContainerHeight,
-        this.getInfoTable.bind(this)
+        this.getInfoTable.bind(this),
       );
     });
 
@@ -75,7 +77,12 @@ class GraphManager {
       .then((response) => response.json())
       .then((data) => {
         if (params.type) {
-          this.updateGraph(data.nodes, data.edges, data.visible, params.clicked);
+          this.updateGraph(
+            data.nodes,
+            data.edges,
+            data.visible,
+            params.clicked,
+          );
         } else {
           this.initializeGraph(data.nodes, data.edges, data.visible);
         }
@@ -143,7 +150,8 @@ class GraphManager {
 
     nodes.forEach((node) => {
       if (!this.graph.hasNode(node.id)) {
-        let { color, baseSize, borderSize, borderColor } = this.graphHelper.calculateBorder(node);
+        let { color, baseSize, borderSize, borderColor } =
+          this.graphHelper.calculateBorder(node);
         this.graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
           full_label: node.label,
@@ -157,6 +165,7 @@ class GraphManager {
           borderSize: borderSize,
           color: color,
           expanded: false,
+          forceLabel: node.node_type === "allele",
           userForceLabel: false,
         });
       }
@@ -209,7 +218,9 @@ class GraphManager {
     const closeButton = document.createElement("button");
     closeButton.className = "btn btn-danger";
     closeButton.textContent = "X";
-    closeButton.onclick = closeInfoContainer(this.adjustSigmaContainerHeight);
+    closeButton.onclick = this.closeInfoContainer(
+      this.adjustSigmaContainerHeight,
+    );
     infoContainer.appendChild(closeButton);
 
     const title = document.createElement("h3");
@@ -227,9 +238,10 @@ class GraphManager {
     filterButton.style.justifySelf = "center";
     filterButton.onclick = () => {
       if (window.filterManager) {
-        window.filterManager.tableSelectFilter(
-          { field: "snp", value: nodeData.full_label }
-        );
+        window.filterManager.tableSelectFilter({
+          field: "snp",
+          value: nodeData.full_label,
+        });
       } else {
         console.error("filterManager is not defined");
       }
@@ -286,7 +298,8 @@ class GraphManager {
         infoContainer.appendChild(oddsHead);
 
         const table = document.createElement("table");
-        table.className = "odds-table table table-striped table-bordered table-hover table-sm";
+        table.className =
+          "odds-table table table-striped table-bordered table-hover table-sm";
 
         const headerRow = document.createElement("tr");
         const header1 = document.createElement("th");
@@ -320,7 +333,7 @@ class GraphManager {
                 },
                 this.fetchGraphData.bind(this),
                 this.sigmaInstance,
-                UIManager.showAlert
+                UIManager.showAlert,
               );
             } else {
               console.error("filterManager is not defined");
@@ -358,7 +371,8 @@ class GraphManager {
         node.odds_ratio = nodeData.odds_ratio;
         node.p = nodeData.p;
 
-        let { color, baseSize, borderSize, borderColor } = this.graphHelper.calculateBorder(node);
+        let { color, baseSize, borderSize, borderColor } =
+          this.graphHelper.calculateBorder(node);
 
         this.graph.setNodeAttribute(alleleNode, "color", color);
         this.graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
@@ -373,7 +387,7 @@ class GraphManager {
             this.graph.setNodeAttribute(
               node,
               "borderColor",
-              this.graph.getNodeAttribute(node, "color")
+              this.graph.getNodeAttribute(node, "color"),
             );
             this.graph.setNodeAttribute(node, "borderSize", 0);
             if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
@@ -469,7 +483,7 @@ class GraphManager {
 
     const encodedAllele = encodeURIComponent(nodeData.full_label);
     const encodedDisease = encodeURIComponent(
-      this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label
+      this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label,
     );
     const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
@@ -494,6 +508,35 @@ class GraphManager {
         errorMessage.textContent = `Error loading allele info: ${error.message}`;
         infoContainer.appendChild(errorMessage);
       });
+  }
+
+  closeInfoContainer(adjustSigmaContainerHeight) {
+    return () => {
+      const leftColumn = document.getElementsByClassName(
+        "col-md-6 left-column",
+      )[0];
+      leftColumn.style.width = "100%";
+      // Resize the Sigma container
+      adjustSigmaContainerHeight();
+      const rightColumn = document.getElementsByClassName(
+        "col-md-6 right-column",
+      )[0];
+      rightColumn.style.display = "none";
+      const infoPanel = document.getElementsByClassName("info-container")[0];
+      infoPanel.style.display = "none";
+      // Add the force label to the allele nodes
+      const nodes = this.graph.nodes();
+      nodes.forEach((n) => {
+        if (
+          (this.graph.getNodeAttribute(n, "node_type") === "allele" &&
+            !this.graph.getNodeAttribute(n, "userForceLabel")) ||
+          (this.graph.getNodeAttribute(n, "node_type") === "disease" &&
+            this.graph.getNodeAttribute(n, "expanded"))
+        ) {
+          this.graph.setNodeAttribute(n, "forceLabel", true);
+        }
+      });
+    };
   }
 }
 

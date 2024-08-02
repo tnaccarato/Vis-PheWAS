@@ -165,11 +165,14 @@ export class FilterManager {
 
   // Method to show/hide filters
   hideFilters = () => {
+    this.adjustSigmaContainerHeight();
+    console.log("Sigma Adjusted")
     const filterContainer = document.querySelector(".toolbar-wrapper");
     const filterBody = document.querySelector(".toolbar");
     const chevron = document.querySelector(".toggle-button .fa-chevron-down");
 
     const isFilterBodyVisible = filterBody.style.display === "block";
+
 
     filterBody.style.display = isFilterBodyVisible ? "none" : "block";
     filterContainer.style.display = isFilterBodyVisible ? "none" : "block";
@@ -184,6 +187,7 @@ export class FilterManager {
     filterContainer.style.display = "block";
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display = "block";
+    this.adjustSigmaContainerHeight();
     if (this.filterCount >= 8) {
       alert("Maximum of 8 filters allowed");
     } else {
