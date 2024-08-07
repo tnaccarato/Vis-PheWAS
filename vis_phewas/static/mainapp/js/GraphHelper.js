@@ -87,6 +87,7 @@ class GraphHelper {
         });
         nodeData.expanded = true;
         nodeData.forceLabel = true;
+        nodeData.userForceLabel = true;
       }
       // If the node is an allele
     } else if (nodeData.node_type === "allele") {

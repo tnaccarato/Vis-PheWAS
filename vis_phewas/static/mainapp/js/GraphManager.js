@@ -261,7 +261,8 @@ class GraphManager {
     closeButton.textContent = "X";
     closeButton.onclick = closeInfoContainer( // Call the closeInfoContainer function
       this.adjustSigmaContainerHeight,
-      this.graph
+      this.graph,
+        this.sigmaInstance
     );
     infoContainer.appendChild(closeButton);
 

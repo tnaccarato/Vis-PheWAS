@@ -13,7 +13,8 @@ class UIManager {
       this.adjustSigmaContainerHeight.bind(this),
       this.showAlert.bind(this),
       this.graphManager.fetchGraphData.bind(this.graphManager),
-      this.graphManager.sigmaInstance
+      this.graphManager.sigmaInstance,
+      this.graphManager
     );
 
     // Set the filterManager on the window object
