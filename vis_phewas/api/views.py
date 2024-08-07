@@ -419,10 +419,13 @@ class GetDiseasesForCategoryView(APIView):
 
         try:
             # Get the diseases for the category
-            diseases = HlaPheWasCatalog.objects.filter(category_string=category).values('phewas_string').distinct()
+            diseases = HlaPheWasCatalog.objects.filter(category_string=category, p__lte=0.05).values('phewas_string').distinct()
+            # Sort the diseases by phewas_string
+            diseases = sorted([disease['phewas_string'] for disease in diseases])
+            print(type(diseases))
 
             # Return the diseases
-            return Response({"diseases": list(diseases)})
+            return Response({"diseases": diseases})
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
