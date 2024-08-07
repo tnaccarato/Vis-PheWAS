@@ -123,6 +123,7 @@ class GraphHelper {
     infoPanel.style.display = "inline-block";
   }
 
+  // Method for simulating a click to a node in the graph
   static simulateClickToNode(
     graphManagerInstance,
     graph,
@@ -192,6 +193,7 @@ class GraphHelper {
       .then((data) => {
         const table = document.createElement("table");
         table.className = "table table-striped table-bordered table-hover table-sm";
+        console.log(data.diseases);
         const diseases = data.diseases;
 
         const thead = document.createElement("thead");
@@ -202,7 +204,7 @@ class GraphHelper {
         diseases.forEach((disease) => {
           const tr = document.createElement("tr");
           const td = document.createElement("td");
-          td.textContent = disease.phewas_string;
+          td.textContent = disease
           tr.appendChild(td);
           tbody.appendChild(tr);
           table.appendChild(tbody);
