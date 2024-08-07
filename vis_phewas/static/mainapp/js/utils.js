@@ -1,8 +1,12 @@
-import {filterManager} from "./main.js";
-import { scaleLog }    from "d3-scale";
+import { filterManager } from "./main.js";
+import { scaleLog } from "d3-scale";
 import * as d3 from "d3";
 
-export function closeInfoContainer(adjustSigmaContainerHeight) {
+export function closeInfoContainer(
+  adjustSigmaContainerHeight,
+  graph,
+  sigmaInstance,
+) {
   return function () {
     const leftColumn = document.getElementsByClassName(
       "col-md-6 left-column",
@@ -16,6 +20,23 @@ export function closeInfoContainer(adjustSigmaContainerHeight) {
     rightColumn.style.display = "none";
     const infoPanel = document.getElementsByClassName("info-container")[0];
     infoPanel.style.display = "none";
+    // For each node in the graph, set forceLabel to userForceLabel
+    graph.nodes().forEach((node) => {
+      const nodeType = graph.getNodeAttribute(node, "node_type");
+      console.log(graph.getNodeAttributes(node))
+      console.log(nodeType);
+      if (nodeType === "allele") {
+        graph.setNodeAttribute(node, "forceLabel", true);
+      } else if (nodeType === "disease") {
+        console.log(node.userForceLabel);
+        graph.setNodeAttribute(
+          node,
+          "forceLabel",
+          graph.getNodeAttribute(node, "userForceLabel"),
+        );
+      }
+    });
+    sigmaInstance.refresh();
   };
 }
 
@@ -30,7 +51,9 @@ export function getExportData(showAlert) {
   }
 
   // Construct the query string
-  const query = new URLSearchParams({ filters: filterManager.filters }).toString();
+  const query = new URLSearchParams({
+    filters: filterManager.filters,
+  }).toString();
   // Construct the URL from which to fetch the data
   const url = "/api/export-query/" + (query ? "?" + query : "");
 
@@ -46,7 +69,10 @@ export function getExportData(showAlert) {
         return;
       }
       // Construct the alert message
-      const filtersDisplay = filterManager.filters.length > 0 ? filterManager.filters.join(", ") : "None";
+      const filtersDisplay =
+        filterManager.filters.length > 0
+          ? filterManager.filters.join(", ")
+          : "None";
       const alertMessage = `Exporting Data...<br><b>Filters selected:</b> ${filtersDisplay}<br><b>Dataset length:</b> ${length}`;
       showAlert(alertMessage);
       // Return the response as a blob object
@@ -104,5 +130,3 @@ export const diseaseColor = scaleLog()
 export function clamp(value, domain) {
   return Math.max(domain[0], Math.min(domain[domain.length - 1], value));
 }
-
-
