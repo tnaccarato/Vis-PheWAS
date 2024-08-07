@@ -9,6 +9,7 @@ export class FilterManager {
     showAlert,
     fetchGraphData,
     sigmaInstance,
+    GraphManager,
   ) {
     this.filterCount = 0;
     this.filters = [];
@@ -17,6 +18,7 @@ export class FilterManager {
     this.fetchGraphData = fetchGraphData;
     this.sigmaInstance = sigmaInstance;
     this.setEventListeners();
+    this.graphManager = GraphManager
   }
 
   // Method to set event listeners for toolbar buttons
@@ -87,7 +89,7 @@ export class FilterManager {
     });
     // Reset the filter count and close the info container
     this.filterCount = 0;
-    closeInfoContainer(this.adjustSigmaContainerHeight)();
+    closeInfoContainer(this.adjustSigmaContainerHeight, this.graphManager.graph, this.sigmaInstance)();
     const toolbar = document.getElementsByClassName("toolbar")[0];
     if (toolbar) {
       toolbar.style.display = "none";
