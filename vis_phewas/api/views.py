@@ -195,7 +195,7 @@ def get_disease_data(category_id, filters) -> tuple:
     # Get the disease data for the selected category
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     # Get the unique diseases for the selected category
-    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
+    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string', 'category_string').distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     # Get the number of alleles associated with each disease and annotate the queryset
@@ -206,7 +206,8 @@ def get_disease_data(category_id, filters) -> tuple:
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     # Create the nodes and edges
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
-              'node_type': 'disease', 'allele_count': disease['allele_count']} for disease in filtered_queryset]
+              'node_type': 'disease', 'allele_count': disease['allele_count'], 'category': disease['category_string']}
+             for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
              filtered_queryset]
     # Return the nodes, edges, and visible nodes
@@ -404,6 +405,7 @@ class GetNodePathView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class GetDiseasesForCategoryView(APIView):
     """
     API view to get the diseases for a specific category.
@@ -432,5 +434,3 @@ class GetDiseasesForCategoryView(APIView):
             return Response({"diseases": diseases})
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
