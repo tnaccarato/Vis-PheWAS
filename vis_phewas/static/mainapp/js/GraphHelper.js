@@ -187,7 +187,7 @@ class GraphHelper {
 
     category = category.replace("cat-", "");
     category = encodeURIComponent(category);
-    const url = `/api/get-diseases/?category=${category}`;
+    const url = `/api/get-diseases/?category=${category}&filters=${filterManager.filters}`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
