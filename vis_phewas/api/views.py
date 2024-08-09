@@ -60,7 +60,7 @@ def apply_filters(queryset, filters, category_id=None):
     """
     # If a category_id is provided, filter by that category
     if category_id:
-        category_string = category_id.replace('cat-', '').replace('_', ' ')
+        category_string = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
 
     # If no filters are provided, return the queryset filtered by p-value
@@ -173,11 +173,14 @@ def get_category_data(filters) -> tuple:
     filtered_queryset = apply_filters(queryset, filters)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["category-"+node['category_string'].replace(' ','_') for node in visible_nodes]
+    print(visible_nodes)
 
     # Sort the queryset by category_string
     filtered_queryset = filtered_queryset.order_by('category_string')
     # Create the nodes and edges
-    nodes = [{'id': f"cat-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
+    nodes = [{'id': f"category-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
               'node_type': 'category'} for category in filtered_queryset]
     edges = []
     # Return the nodes, edges, and visible nodes
@@ -193,7 +196,7 @@ def get_disease_data(category_id, filters) -> tuple:
     """
     # print(filters)
     # Get the disease data for the selected category
-    category_string = category_id.replace('cat-', '').replace('_', ' ')
+    category_string = category_id.replace('category-', '').replace('_', ' ')
     # Get the unique diseases for the selected category
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
                                                                                        'category_string').distinct()
@@ -203,6 +206,8 @@ def get_disease_data(category_id, filters) -> tuple:
     filtered_queryset = filtered_queryset.annotate(allele_count=models.Count('snp'))
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["disease-"+node['phewas_string'].replace(' ','_') for node in visible_nodes]
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     # Create the nodes and edges
@@ -243,6 +248,8 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     filtered_queryset = apply_filters(queryset, filters)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["allele-"+node['snp'].replace(' ','_') for node in visible_nodes]
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     # Get the nodes and edges
@@ -394,7 +401,7 @@ class GetNodePathView(APIView):
             # Get the category from the database for the disease
             category = HlaPheWasCatalog.objects.filter(phewas_string=disease).values('category_string').distinct()[0][
                 'category_string']
-            category = f"cat-{category.replace(' ', '_')}"
+            category = f"category-{category.replace(' ', '_')}"
 
             disease = f"disease-{disease.replace(' ', '_')}"
             # Create the path
