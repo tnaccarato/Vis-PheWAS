@@ -1,15 +1,16 @@
-import { closeInfoContainer } from "./utils";
-import DOMPurify from "dompurify"; // Class to manage filter functionality
+import { clickAllCategories, closeInfoContainer } from "./utils";
+import DOMPurify from "dompurify"; // Class to manage filter
+// functionality
 
 // Class to manage filter functionality
 export class FilterManager {
   // Constructor
   constructor(
-    adjustSigmaContainerHeight,
-    showAlert,
-    fetchGraphData,
-    sigmaInstance,
-    GraphManager,
+      adjustSigmaContainerHeight,
+      showAlert,
+      fetchGraphData,
+      sigmaInstance,
+      GraphManager,
   ) {
     this.filterCount = 0;
     this.filters = [];
@@ -18,7 +19,7 @@ export class FilterManager {
     this.fetchGraphData = fetchGraphData;
     this.sigmaInstance = sigmaInstance;
     this.setEventListeners();
-    this.graphManager = GraphManager
+    this.graphManager = GraphManager;
   }
 
   // Method to set event listeners for toolbar buttons
@@ -58,8 +59,8 @@ export class FilterManager {
       // Sanitize values
       const sanitizedSelectValue = DOMPurify.sanitize(select.value);
       const sanitizedOperatorValue = operatorSelect
-        ? DOMPurify.sanitize(operatorSelect.value)
-        : "==";
+          ? DOMPurify.sanitize(operatorSelect.value)
+          : "==";
       const sanitizedInputValue = DOMPurify.sanitize(input.value.toLowerCase());
 
       // Construct the filter string
@@ -68,9 +69,10 @@ export class FilterManager {
         // If the filter is not the first filter, add the logical operator
         if (index > 0 && logicalOperator) {
           this.filters.push(
-            `${DOMPurify.sanitize(logicalOperator.value)} ${filter}`,
+              `${DOMPurify.sanitize(logicalOperator.value)} ${filter}`,
           );
-        } else {
+        }
+        else {
           this.filters.push(filter);
         }
       }
@@ -89,7 +91,11 @@ export class FilterManager {
     });
     // Reset the filter count and close the info container
     this.filterCount = 0;
-    closeInfoContainer(this.adjustSigmaContainerHeight, this.graphManager.graph, this.sigmaInstance)();
+    closeInfoContainer(
+        this.adjustSigmaContainerHeight,
+        this.graphManager.graph,
+        this.sigmaInstance,
+    )();
     const toolbar = document.getElementsByClassName("toolbar")[0];
     if (toolbar) {
       toolbar.style.display = "none";
@@ -104,7 +110,7 @@ export class FilterManager {
   // Method to update filter input based on the selected field
   updateFilterInput = (select) => {
     const filterInputContainer = select.parentNode.querySelector(
-      "#filter-input-container",
+        "#filter-input-container",
     );
     const selectedField = DOMPurify.sanitize(select.value);
 
@@ -115,14 +121,14 @@ export class FilterManager {
 
     // If the selected field is a snp, phewas_code, phewas_string, category_string, serotype, or subtype
     if (
-      [
-        "snp",
-        "phewas_code",
-        "phewas_string",
-        "category_string",
-        "serotype",
-        "subtype",
-      ].includes(selectedField)
+        [
+          "snp",
+          "phewas_code",
+          "phewas_string",
+          "category_string",
+          "serotype",
+          "subtype",
+        ].includes(selectedField)
     ) {
       // Add an input field
       const operator = document.createElement("select");
@@ -139,10 +145,11 @@ export class FilterManager {
       input.className = "field-input";
       filterInputContainer.appendChild(input);
       // If the selected field is cases, controls, p, odds_ratio, l95, u95, or maf
-    } else if (
-      ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(
-        selectedField,
-      )
+    }
+    else if (
+        ["cases", "controls", "p", "odds_ratio", "l95", "u95", "maf"].includes(
+            selectedField,
+        )
     ) {
       // Add a select field for the operator
       const operator = document.createElement("select");
@@ -163,8 +170,9 @@ export class FilterManager {
       input.className = "field-input";
       filterInputContainer.appendChild(input);
       // If the selected field is gene_class, gene_name, a1, or a2
-    } else if (
-      ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
+    }
+    else if (
+        ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
     ) {
       // Add a select field for the operator
       const select = document.createElement("select");
@@ -175,7 +183,8 @@ export class FilterManager {
           <option value="1">Class 1</option>
           <option value="2">Class 2</option>
         `);
-      } else if (selectedField === "gene_name") {
+      }
+      else if (selectedField === "gene_name") {
         // Add a select field for the gene name
         select.innerHTML = DOMPurify.sanitize(`
           <option value="A">A</option>
@@ -187,7 +196,8 @@ export class FilterManager {
           <option value="DQB1">DQB1</option>
           <option value="DRB1">DRB1</option>
         `);
-      } else {
+      }
+      else {
         // Add a select field for the allele
         select.innerHTML = DOMPurify.sanitize(`
           <option value="A">A</option>
@@ -234,7 +244,8 @@ export class FilterManager {
     // Check if the maximum number of filters has been reached
     if (this.filterCount >= 8) {
       alert("Maximum of 8 filters allowed");
-    } else {
+    }
+    else {
       // Create a new filter group
       const filterGroup = document.createElement("div");
       filterGroup.className = "filter-group";
@@ -336,29 +347,29 @@ export class FilterManager {
     this.showAlert(message);
 
     // Fetch graph data with the filters
-    this.fetchGraphData({ type: "initial", filters: this.filters.join(" ") });
+    this.fetchGraphData({filters: this.filters.join(" ")});
 
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display =
-      filterBody.style.display === "none" ? "block" : "none";
+        filterBody.style.display === "none" ? "block" : "none";
     const filterContainer = document.querySelector(".toolbar-wrapper");
     // Toggle the visibility of the filter body and state of the chevron
     filterContainer.style.display =
-      filterContainer.style.display === "none" ? "block" : "none";
+        filterContainer.style.display === "none" ? "block" : "none";
 
     // Refresh the sigma instance
     this.sigmaInstance.refresh();
   };
 
   // Arrow function for tableSelectFilter
-  tableSelectFilter = (table_selection) => {
+  tableSelectFilter = async (table_selection) => {
     // Clear the filters array
     this.filters = [];
     // Clear the filters container
     this.clearFilters();
     // Push the table selection to the filters array
     this.filters.push(
-      `${DOMPurify.sanitize(table_selection.field)}:==:${DOMPurify.sanitize(table_selection.value.toLowerCase())}`,
+        `${DOMPurify.sanitize(table_selection.field)}:==:${DOMPurify.sanitize(table_selection.value.toLowerCase())}`,
     );
     // Show an alert message
     this.showAlert(`Selecting from table: ${this.filters.join(", ")}`);
@@ -405,10 +416,30 @@ export class FilterManager {
     toolbar.style.display = "block";
     document.getElementById("filters-container").appendChild(filterGroup);
     this.filterCount++; // Increment the filter count
-    this.fetchGraphData({ type: "initial", filters: this.filters });
+    console.log("Fetching graph data"); // Debugging log
+
+    // Fetch the graph data and wait for it to complete
+    await this.fetchGraphData({filters: this.filters});
+
     // Show the hide filters button
     document.querySelector(".toggle-button").style.display = "block";
-    this.sigmaInstance.refresh();
+
+    console.log("Table selection filter applied"); // Debugging log
+
+    // Wait a bit for the graph to update fully
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Simulate a click on all categories after the data fetch and graph refresh are complete
+    await clickAllCategories(
+        this.graphManager.graph,
+        this.sigmaInstance,
+        this.graphManager.graphHelper,
+        this.fetchGraphData.bind(this),  // Bind 'this' to maintain context
+        this.adjustSigmaContainerHeight,
+        this.graphManager,
+    );
+
     this.updateButtonStates(); // Update button states after table selection
-  };
 }
+}
+
