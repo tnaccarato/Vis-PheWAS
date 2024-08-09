@@ -195,7 +195,8 @@ def get_disease_data(category_id, filters) -> tuple:
     # Get the disease data for the selected category
     category_string = category_id.replace('cat-', '').replace('_', ' ')
     # Get the unique diseases for the selected category
-    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string', 'category_string').distinct()
+    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
+                                                                                       'category_string').distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     # Get the number of alleles associated with each disease and annotate the queryset
@@ -247,7 +248,8 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     # Get the nodes and edges
     # Annotate node with odds_ratio for dynamic node colouring
     nodes = [
-        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele,
+        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele',
+         'disease': disease_string, **allele,
          } for allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
