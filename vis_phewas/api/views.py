@@ -410,6 +410,8 @@ class GetDiseasesForCategoryView(APIView):
     """
 
     def get(self, request):
+        # Get filters from the request
+        filters = request.GET.get('filters')
         # Get the category from the request
         category = request.GET.get('category')
         # Replace underscores with spaces
@@ -418,12 +420,14 @@ class GetDiseasesForCategoryView(APIView):
             return Response({"error": "Category parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Get the diseases for the category
-            diseases = HlaPheWasCatalog.objects.filter(category_string=category, p__lte=0.05).values('phewas_string').distinct()
+            # Get the diseases for the category with the selected filters
+            diseases = HlaPheWasCatalog.objects.filter(category_string=category)
+            # Apply the filters
+            diseases = apply_filters(diseases, filters)
+            # Get the unique diseases
+            diseases = diseases.values('phewas_string').distinct()
             # Sort the diseases by phewas_string
             diseases = sorted([disease['phewas_string'] for disease in diseases])
-            print(type(diseases))
-
             # Return the diseases
             return Response({"diseases": diseases})
         except Exception as e:
