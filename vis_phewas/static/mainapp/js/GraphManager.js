@@ -3,7 +3,7 @@ import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
 import GraphHelper from "./GraphHelper";
 import { fetchAndShowAssociations } from "./associationsPlot";
-import {closeInfoContainer} from "./utils";
+import { closeInfoContainer } from "./utils";
 
 // Main class for managing the graph
 class GraphManager {
@@ -35,7 +35,11 @@ class GraphManager {
     // Set the adjustSigmaContainerHeight function
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     // Create a new GraphHelper object for the GraphManager
-    this.graphHelper = new GraphHelper(this, this.sigmaInstance, this.adjustSigmaContainerHeight);
+    this.graphHelper = new GraphHelper(
+      this,
+      this.sigmaInstance,
+      this.adjustSigmaContainerHeight,
+    );
     // Initialize the event listeners
     this.initEventListeners();
   }
@@ -111,25 +115,44 @@ class GraphManager {
 
   // Method to initialize the graph with the nodes, edges, and visible parameters
   initializeGraph(nodes, edges, visible) {
-    // Get the center of the container
-    const centerX = this.container.offsetWidth / 2;
-    const centerY = this.container.offsetHeight / 2;
-    // Calculate the radius of the graph
-    const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
+    // Get the container's center
+    const containerCenterX = this.container.offsetWidth / 2;
+    const containerCenterY = this.container.offsetHeight / 2;
 
     // Clear the graph
     this.graph.clear();
 
-    // Iterate over the nodes
-    nodes.forEach((node, nodeNumber) => {
-      if ((!node) in visible) {
-        return;
+    // Group nodes by category
+    const categoryGroups = {};
+    nodes.forEach((node) => {
+      const category = node.category || node.id;
+      if (!categoryGroups[category]) {
+        categoryGroups[category] = [];
       }
-      // If the node is not in the graph, add it
-      if (!this.graph.hasNode(node.id)) {
-        const angle = (2 * Math.PI * nodeNumber) / nodes.length - Math.PI / 2;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle);
+      categoryGroups[category].push(node);
+    });
+
+    // Set initial category positions, evenly spaced in a circular pattern
+    const categorySpacing = 600;  // Increase spacing between categories
+    const totalCategories = Object.keys(categoryGroups).length;
+    const angleStep = (
+        2 * Math.PI
+    ) / totalCategories;
+
+    Object.keys(categoryGroups).forEach((category, index) => {
+      const angle = index * angleStep;
+      const x = containerCenterX + Math.sin(angle) * categorySpacing;
+      const y = containerCenterY + Math.cos(angle) * categorySpacing;
+
+      const groupNodes = categoryGroups[category];
+      const radius = 400 + groupNodes.length * 5; // Adjust radius based on node count
+
+      groupNodes.forEach((node, nodeNumber) => {
+        const nodeAngle = (
+            2 * Math.PI * nodeNumber
+        ) / groupNodes.length;
+        const nodeX = x + radius * Math.cos(nodeAngle);
+        const nodeY = y + radius * Math.sin(nodeAngle);
 
         const color = this.graphHelper.calculateNodeColor(node);
 
@@ -139,8 +162,9 @@ class GraphManager {
           full_label: node.label,
           node_type: node.node_type,
           forceLabel: true,
-          x: x,
-          y: y,
+          x: nodeX,
+          y: nodeY,
+          fixed: node.node_type === "category",
           size: 8,
           borderColor: color,
           borderSize: 0,
@@ -148,7 +172,7 @@ class GraphManager {
           color: color,
           userForceLabel: false,
         });
-      }
+      });
     });
 
     // Iterate over the edges
@@ -160,11 +184,12 @@ class GraphManager {
     });
   }
 
+
+
   // Method to update the graph with the nodes, edges, visible, and clicked parameters
   updateGraph(nodes, edges, visible, clicked) {
     const graphNodes = this.graph.nodes();
     const graphEdges = this.graph.edges();
-
 
     if (!clicked) {
       graphNodes.forEach((node) => {
@@ -190,6 +215,7 @@ class GraphManager {
           node_type: node.node_type,
           x: Math.random() * 100,
           y: Math.random() * 100,
+          fixed: node.node_type === "category", // Fix location of category nodes
           size: baseSize,
           odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
           allele_count: node.node_type === "disease" ? node.allele_count : null,
@@ -197,6 +223,7 @@ class GraphManager {
           borderSize: borderSize,
           color: color,
           expanded: false,
+          category: node.node_type === "disease" ? node.category : null,
           forceLabel: node.node_type === "allele",
           userForceLabel: false,
         });
@@ -259,10 +286,11 @@ class GraphManager {
     const closeButton = document.createElement("button");
     closeButton.className = "btn btn-danger";
     closeButton.textContent = "X";
-    closeButton.onclick = closeInfoContainer( // Call the closeInfoContainer function
+    closeButton.onclick = closeInfoContainer(
+      // Call the closeInfoContainer function
       this.adjustSigmaContainerHeight,
       this.graph,
-        this.sigmaInstance
+      this.sigmaInstance,
     );
     infoContainer.appendChild(closeButton);
 
@@ -283,7 +311,8 @@ class GraphManager {
     filterButton.style.justifySelf = "center";
     filterButton.onclick = () => {
       if (window.filterManager) {
-        window.filterManager.tableSelectFilter({ // Call the tableSelectFilter function with the snp field
+        window.filterManager.tableSelectFilter({
+          // Call the tableSelectFilter function with the snp field
           field: "snp",
           value: nodeData.full_label,
         });
@@ -378,13 +407,14 @@ class GraphManager {
           pValueCell.textContent = odds.p.toString();
           row.appendChild(pValueCell);
           row.onclick = () => {
-              console.log(odds.phewas_string)
-              GraphHelper.simulateClickToNode( // Add the simulateClickToNode function to click to the disease node
-                this,
-                this.graph,
-                odds.phewas_string,
-                this.graphHelper
-              );
+            console.log(odds.phewas_string);
+            GraphHelper.simulateClickToNode(
+              // Add the simulateClickToNode function to click to the disease node
+              this,
+              this.graph,
+              odds.phewas_string,
+              this.graphHelper,
+            );
           };
           table.appendChild(row);
         });
@@ -559,7 +589,7 @@ class GraphManager {
     const encodedAllele = encodeURIComponent(nodeData.full_label);
     // Get the disease node
     const encodedDisease = encodeURIComponent(
-        // Get the full label of the disease node
+      // Get the full label of the disease node
       this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label,
     );
     // Fetch the data from the URL
@@ -573,7 +603,8 @@ class GraphManager {
         return response.json(); // Return the response as JSON
       })
       .then((data) => {
-        if (data.error) { // If there is an error in the data, log the error
+        if (data.error) {
+          // If there is an error in the data, log the error
           throw new Error(data.error); // Log the error
         }
 
