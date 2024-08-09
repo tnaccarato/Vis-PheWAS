@@ -1,7 +1,14 @@
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import { rgbaToFloat } from "sigma/utils";
-import { clamp, closeInfoContainer, diseaseColor, sizeScale } from "./utils";
-import { filterManager } from "./main";
+import {
+  clamp,
+  closeInfoContainer,
+  diseaseColor,
+  formatCategoryString,
+  sizeScale,
+} from "./utils";
+import { filterManager } from "./main"; // Helper class for
+// graph operations
 
 // Helper class for graph operations
 class GraphHelper {
@@ -18,7 +25,8 @@ class GraphHelper {
     node,
     fetchGraphData,
     adjustSigmaContainerHeight,
-    getInfoTable,
+    getInfoTable = null,
+    allCategories = false,
   ) {
     // Get the node data
     const nodeData = graph.getNodeAttributes(node);
@@ -52,12 +60,14 @@ class GraphHelper {
     if (nodeData.node_type === "category") {
       // If the node is expanded
       if (nodeData.expanded) {
-        // Remove children nodes
-        removeChildrenNodes(node);
-        /// Set expanded to false
-        nodeData.expanded = false;
-        // If the node is not expanded
-      } else {
+        this.getDiseasesForCategory(node);
+      }
+      //   // Remove children nodes
+      //   removeChildrenNodes(node);
+      //   /// Set expanded to false
+      //   nodeData.expanded = false;
+      //   // If the node is not expanded
+      else {
         // Fetch graph data for diseases
         fetchGraphData({
           type: "diseases",
@@ -65,10 +75,10 @@ class GraphHelper {
           filters: filterManager.filters,
           clicked: true,
         });
-        // Get the diseases for the category
-        this.getDiseasesForCategory(node);
-        // Set expanded to true
         nodeData.expanded = true;
+        if (!allCategories) {
+          this.getDiseasesForCategory(node);
+        }
       }
       // If the node is a disease
     } else if (nodeData.node_type === "disease") {
@@ -76,6 +86,7 @@ class GraphHelper {
       if (nodeData.expanded) {
         removeChildrenNodes(node);
         nodeData.expanded = false;
+        nodeData.forceLabel = false;
         // If the node is not expanded
       } else {
         // Fetch graph data for alleles
@@ -87,27 +98,26 @@ class GraphHelper {
         });
         nodeData.expanded = true;
         nodeData.forceLabel = true;
-        nodeData.userForceLabel = true;
+        // nodeData.userForceLabel = true;
       }
       // If the node is an allele
     } else if (nodeData.node_type === "allele") {
       this.displayInfoContainer(adjustSigmaContainerHeight);
       graph.nodes().forEach((n) => {
-        if (
-          graph.getNodeAttribute(n, "node_type") === "allele" &&
-          !n.userForceLabel
-        ) {
+        const node_type = graph.getNodeAttribute(n, "node_type");
+        if (node_type !== "category" && !n.userForceLabel) {
           graph.setNodeAttribute(n, "forceLabel", false);
         }
       });
       nodeData.forceLabel = true;
       // Get the info table for the allele
-      getInfoTable(nodeData);
+      if (getInfoTable) {
+        getInfoTable(nodeData);
+      }
     }
   }
 
   displayInfoContainer(adjustSigmaContainerHeight) {
-
     // Display the allele info in the info panel
     const leftColumn = document.getElementsByClassName(
       "col-md-6 left-column",
@@ -130,7 +140,6 @@ class GraphHelper {
     diseaseName,
     graphHelperInstance,
   ) {
-    console.log(graph);
     diseaseName = encodeURIComponent(diseaseName);
     const url = `/api/get-path-to-node/?disease=${diseaseName}`;
 
@@ -138,7 +147,6 @@ class GraphHelper {
       .then((response) => response.json())
       .then((data) => {
         const path = data.path;
-        console.log("Path to node:", path);
 
         const clickNodesInPath = (index) => {
           if (index >= path.length) return;
@@ -172,28 +180,44 @@ class GraphHelper {
       });
   }
 
+  // Method for getting diseases for a category
   getDiseasesForCategory(category) {
+    // Display the info container
     this.displayInfoContainer(this.adjustSigmaContainerHeight);
+    // Get the info container
     const infoContainer = document.getElementsByClassName("info-container")[0];
     infoContainer.innerHTML = "";
     // Add close button to the info panel
     const closeButton = document.createElement("button");
     closeButton.className = "btn-close";
     closeButton.setAttribute("type", "button");
-    closeButton.onclick = closeInfoContainer(this.adjustSigmaContainerHeight, this.graphManager.graph);
+    closeButton.onclick = closeInfoContainer(
+      this.adjustSigmaContainerHeight,
+      this.graphManager.graph,
+    );
 
+    // Add the close button to the info container
     infoContainer.appendChild(closeButton);
 
-
-    category = category.replace("cat-", "");
-    category = encodeURIComponent(category);
-    const url = `/api/get-diseases/?category=${category}`;
+    // Get the diseases for the category
+    category = category.replace("category-", ""); // Remove the category prefix for easier processing
+    // Encode components and construct the URL
+    let encoded_category = encodeURIComponent(category);
+    let filters = encodeURIComponent(filterManager.filters);
+    // Construct the URL and fetch the data
+    const url = `/api/get-diseases/?category=${encoded_category}&filters=${filters}`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
+        // Create a header for the diseases
+        const header = document.createElement("h3");
+        header.textContent = `Diseases for ${formatCategoryString(category)}`;
+        header.style.alignSelf = "center";
+        infoContainer.appendChild(header);
+        // Create a table for the diseases for the category
         const table = document.createElement("table");
-        table.className = "table table-striped table-bordered table-hover table-sm";
-        console.log(data.diseases);
+        table.className =
+          "table table-striped table-bordered table-hover table-sm";
         const diseases = data.diseases;
 
         const thead = document.createElement("thead");
@@ -204,14 +228,14 @@ class GraphHelper {
         diseases.forEach((disease) => {
           const tr = document.createElement("tr");
           const td = document.createElement("td");
-          td.textContent = disease
+          td.textContent = disease;
           tr.appendChild(td);
           tbody.appendChild(tr);
           table.appendChild(tbody);
 
+          // Add an event listener to the table row to simulate a click to the node
           tr.addEventListener("click", (event) => {
             const diseaseName = event.target.textContent;
-            console.log(this.graphManager);
             GraphHelper.simulateClickToNode(
               this.graphManager,
               this.graphManager.graph,
@@ -284,46 +308,59 @@ class GraphHelper {
 
   // Method for updating the graph
   applyLayout(graph) {
-    // Get the nodes of the graph
-    const nodes = graph.nodes();
-    // Sort the nodes by label
-    const sortedNodes = nodes.sort((a, b) => {
-      return graph
-        .getNodeAttribute(a, "label")
-        .localeCompare(graph.getNodeAttribute(b, "label"));
-    });
+  const nodes = graph.nodes();
+  const categoryNodes = nodes.filter(node => graph.getNodeAttribute(node, "node_type") === "category");
+  const centerX = 500; // Adjust based on your graph size
+  const centerY = 500; // Adjust based on your graph size
+  const categoryRadius = 400; // Radius for the category circle
 
-    // Set the x and y coordinates of the nodes
-    let angleStep = -(2 * Math.PI) / sortedNodes.length;
-    sortedNodes.forEach((node, index) => {
-      if (graph.getNodeAttribute(node, "node_type") !== "category") {
-        graph.setNodeAttribute(
-          node,
-          "x",
-          100 * Math.cos(Math.PI / 2 + angleStep * index),
-        );
-        graph.setNodeAttribute(
-          node,
-          "y",
-          100 * Math.sin(Math.PI / 2 + angleStep * index),
-        );
-      }
-    });
+  // Step 1: Position category nodes in a circle
+  const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
+  categoryNodes.forEach((categoryNode, index) => {
+    const angle = categoryAngleStep * index;
+    const x = centerX + categoryRadius * Math.sin(angle);
+    const y = centerY + categoryRadius * Math.cos(angle);
+    graph.setNodeAttribute(categoryNode, "x", x);
+    graph.setNodeAttribute(categoryNode, "y", y);
+    graph.setNodeAttribute(categoryNode, "fixed", true);
+  });
 
-    // Apply the force atlas 2 layout
-    const settings = {
-      iterations: 1000,
-      settings: {
-        gravity: 0.1,
-        scalingRatio: 10,
-        // barnesHutOptimize: true,
-        // barnesHutTheta: 0.5,
-        adjustSizes: true,
-      },
-    };
-    forceAtlas2.assign(graph, settings);
-    this.sigmaInstance.refresh();
-  }
+  // Step 2: Position disease nodes around their categories
+  const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
+  categoryNodes.forEach(categoryNode => {
+    const relatedDiseaseNodes = nodes.filter(
+      node => graph.getNodeAttribute(node, "category") === graph.getNodeAttribute(categoryNode, "label") &&
+               graph.getNodeAttribute(node, "node_type") === "disease"
+    );
+
+    const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
+    relatedDiseaseNodes.forEach((diseaseNode, index) => {
+      const angle = diseaseAngleStep * index;
+      const diseaseX = graph.getNodeAttribute(categoryNode, "x") + diseaseRadius * Math.sin(angle);
+      const diseaseY = graph.getNodeAttribute(categoryNode, "y") + diseaseRadius * Math.cos(angle);
+
+      graph.setNodeAttribute(diseaseNode, "x", diseaseX);
+      graph.setNodeAttribute(diseaseNode, "y", diseaseY);
+      graph.setNodeAttribute(diseaseNode, "fixed", true);
+      graph.setNodeAttribute(diseaseNode, "size", 10);
+    });
+  });
+
+  // Step 3: Apply Force Atlas 2 to non-fixed nodes (if any)
+  const settings = {
+    iterations: 100,
+    settings: {
+      gravity: 0.005,
+      scalingRatio: 5,
+      strongGravityMode: true,
+      slowDown: 10,
+    },
+    nodeUpdater: (node, attributes) => !attributes.fixed,
+  };
+  forceAtlas2.assign(graph, settings);
+
+  this.sigmaInstance.refresh();
+}
 
   // Method for calculating the color of a node
   calculateNodeColor(node) {
@@ -377,6 +414,19 @@ class GraphHelper {
     let borderColor = node.odds_ratio >= 1 ? "red" : "blue";
     // Return the border size and color
     return { color, baseSize, borderSize, borderColor };
+  }
+
+  // Show the source of edge on a label on hover
+  hoverOnEdge(edge, graph, sigmaInstance) {
+    const source = graph.getNodeAttribute(graph.source(edge), "label");
+    const edgeLabel = `${source}`;
+    graph.setEdgeAttribute(edge, "label", edgeLabel);
+    graph.setEdgeAttribute(edge, "forceLabel", true);
+  }
+
+  // Hide the source of edge on a label on hover
+  hoverOffEdge(edge, graph, sigmaInstance) {
+    graph.setEdgeAttribute(edge, "label", "");
   }
 }
 
