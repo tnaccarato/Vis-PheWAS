@@ -25,7 +25,8 @@ class GraphHelper {
     node,
     fetchGraphData,
     adjustSigmaContainerHeight,
-    getInfoTable,
+    getInfoTable = null,
+    allCategories = false,
   ) {
     // Get the node data
     const nodeData = graph.getNodeAttributes(node);
@@ -74,10 +75,10 @@ class GraphHelper {
           filters: filterManager.filters,
           clicked: true,
         });
-        // Get the diseases for the category
-        this.getDiseasesForCategory(node);
-        // Set expanded to true
         nodeData.expanded = true;
+        if (!allCategories) {
+          this.getDiseasesForCategory(node);
+        }
       }
       // If the node is a disease
     } else if (nodeData.node_type === "disease") {
@@ -110,7 +111,9 @@ class GraphHelper {
       });
       nodeData.forceLabel = true;
       // Get the info table for the allele
-      getInfoTable(nodeData);
+      if (getInfoTable) {
+        getInfoTable(nodeData);
+      }
     }
   }
 
@@ -197,7 +200,7 @@ class GraphHelper {
     infoContainer.appendChild(closeButton);
 
     // Get the diseases for the category
-    category = category.replace("cat-", ""); // Remove the category prefix for easier processing
+    category = category.replace("category-", ""); // Remove the category prefix for easier processing
     // Encode components and construct the URL
     let encoded_category = encodeURIComponent(category);
     let filters = encodeURIComponent(filterManager.filters);
@@ -305,63 +308,59 @@ class GraphHelper {
 
   // Method for updating the graph
   applyLayout(graph) {
-    const nodes = graph.nodes();
+  const nodes = graph.nodes();
+  const categoryNodes = nodes.filter(node => graph.getNodeAttribute(node, "node_type") === "category");
+  const centerX = 500; // Adjust based on your graph size
+  const centerY = 500; // Adjust based on your graph size
+  const categoryRadius = 400; // Radius for the category circle
 
-    // Adjust the radius and spacing
-    const diseaseRadius = 90; // Radius for positioning disease nodes around category nodes
+  // Step 1: Position category nodes in a circle
+  const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
+  categoryNodes.forEach((categoryNode, index) => {
+    const angle = categoryAngleStep * index;
+    const x = centerX + categoryRadius * Math.sin(angle);
+    const y = centerY + categoryRadius * Math.cos(angle);
+    graph.setNodeAttribute(categoryNode, "x", x);
+    graph.setNodeAttribute(categoryNode, "y", y);
+    graph.setNodeAttribute(categoryNode, "fixed", true);
+  });
 
-    const categoryNodes = nodes.filter(
-      (node) => graph.getNodeAttribute(node, "node_type") === "category",
+  // Step 2: Position disease nodes around their categories
+  const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
+  categoryNodes.forEach(categoryNode => {
+    const relatedDiseaseNodes = nodes.filter(
+      node => graph.getNodeAttribute(node, "category") === graph.getNodeAttribute(categoryNode, "label") &&
+               graph.getNodeAttribute(node, "node_type") === "disease"
     );
 
-    categoryNodes.forEach((categoryNode) => {
-      const relatedDiseaseNodes = nodes.filter(
-        (node) =>
-          graph.getNodeAttribute(node, "category") ===
-          graph.getNodeAttribute(categoryNode, "label") &&
-          graph.getNodeAttribute(node, "node_type") === "disease",
-      );
+    const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
+    relatedDiseaseNodes.forEach((diseaseNode, index) => {
+      const angle = diseaseAngleStep * index;
+      const diseaseX = graph.getNodeAttribute(categoryNode, "x") + diseaseRadius * Math.sin(angle);
+      const diseaseY = graph.getNodeAttribute(categoryNode, "y") + diseaseRadius * Math.cos(angle);
 
-      const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
-
-      relatedDiseaseNodes.forEach((diseaseNode, index) => {
-        const angle = diseaseAngleStep * index;
-        const diseaseX = graph.getNodeAttribute(categoryNode, "x") + diseaseRadius * Math.sin(angle);
-        const diseaseY = graph.getNodeAttribute(categoryNode, "y") + diseaseRadius * Math.cos(angle);
-
-        graph.setNodeAttribute(diseaseNode, "x", diseaseX);
-        graph.setNodeAttribute(diseaseNode, "y", diseaseY);
-        graph.setNodeAttribute(diseaseNode, "fixed", true); // Fix the disease nodes in place
-
-        // Optionally, set the size of nodes if not already set to prevent overlap
-        graph.setNodeAttribute(diseaseNode, "size", 10); // Adjust size as needed
-      });
+      graph.setNodeAttribute(diseaseNode, "x", diseaseX);
+      graph.setNodeAttribute(diseaseNode, "y", diseaseY);
+      graph.setNodeAttribute(diseaseNode, "fixed", true);
+      graph.setNodeAttribute(diseaseNode, "size", 10);
     });
+  });
 
-    // Step 2: Apply Force Atlas 2 layout to all nodes, including allele nodes
-    const settings = {
-      iterations: 5000, // Increased iterations for better stability
-      settings: {
-        gravity: 0.1, // Increased gravity to pull nodes toward the center
-        scalingRatio: 10, // Higher scaling to increase node repulsion and reduce overlap
-        adjustSizes: true, // Prevent node overlap by adjusting sizes dynamically
-        barnesHutOptimize: true, // Barnes-Hut for better performance
-        barnesHutTheta: 0.5, // Balance between speed and accuracy
-        strongGravityMode: false, // Disable strong gravity for natural positioning
-      },
-      nodeUpdater: (node, attributes) => {
-        if (attributes.fixed) {
-          return false; // Keep disease and category nodes fixed
-        }
-        return true; // Allow allele nodes to be influenced by the layout
-      },
-    };
-    forceAtlas2.assign(graph, settings);
-    this.sigmaInstance.refresh();
+  // Step 3: Apply Force Atlas 2 to non-fixed nodes (if any)
+  const settings = {
+    iterations: 100,
+    settings: {
+      gravity: 0.005,
+      scalingRatio: 5,
+      strongGravityMode: true,
+      slowDown: 10,
+    },
+    nodeUpdater: (node, attributes) => !attributes.fixed,
+  };
+  forceAtlas2.assign(graph, settings);
+
+  this.sigmaInstance.refresh();
 }
-
-
-
 
   // Method for calculating the color of a node
   calculateNodeColor(node) {
