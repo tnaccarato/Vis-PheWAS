@@ -18,6 +18,8 @@ class GraphManager {
       allowInvalidContainer: true,
       labelRenderedSizeThreshold: 35,
       defaultNodeType: "bordered",
+      enableEdgeEvents: true,
+      renderEdgeLabels: true,
       // Configure the node program classes
       nodeProgramClasses: {
         bordered: createNodeBorderProgram({
@@ -81,6 +83,16 @@ class GraphManager {
     // Prevent the context menu from appearing on right-click to stop interfering with the rightClickNode event
     this.container.addEventListener("contextmenu", (event) => {
       event.preventDefault();
+    });
+
+    // Event listener for entering an edge
+    this.sigmaInstance.on("enterEdge", ({ edge }) => {
+      this.graphHelper.hoverOnEdge(edge, this.graph, this.sigmaInstance);
+    });
+
+    // Event listener for leaving an edge
+    this.sigmaInstance.on("leaveEdge", ({ edge }) => {
+      this.graphHelper.hoverOffEdge(edge, this.graph, this.sigmaInstance);
     });
   }
 
@@ -226,6 +238,7 @@ class GraphManager {
           category: node.node_type === "disease" ? node.category : null,
           forceLabel: node.node_type === "allele",
           userForceLabel: false,
+          disease: node.node_type === "allele" ? node.disease : null,
         });
       }
       // Set the hidden attribute of the node based on the visible parameter
