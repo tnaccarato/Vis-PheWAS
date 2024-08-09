@@ -130,3 +130,11 @@ export const diseaseColor = scaleLog()
 export function clamp(value, domain) {
   return Math.max(domain[0], Math.min(domain[domain.length - 1], value));
 }
+
+// Function to format the category string to be more readable
+export function formatCategoryString(string) {
+  return string
+    .split("_") // Split the string by underscores
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+    .join(" "); // Join the words back together with a space
+}
