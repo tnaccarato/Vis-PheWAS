@@ -1,7 +1,7 @@
 import forceAtlas2 from "graphology-layout-forceatlas2";
-import { rgbaToFloat } from "sigma/utils";
-import { clamp, closeInfoContainer, diseaseColor, sizeScale } from "./utils";
-import { filterManager } from "./main";
+import { rgbaToFloat }                                                              from "sigma/utils";
+import { clamp, closeInfoContainer, diseaseColor, sizeScale, formatCategoryString } from "./utils";
+import { filterManager }                                                            from "./main";
 
 // Helper class for graph operations
 class GraphHelper {
@@ -172,8 +172,11 @@ class GraphHelper {
       });
   }
 
+  // Method for getting diseases for a category
   getDiseasesForCategory(category) {
+    // Display the info container
     this.displayInfoContainer(this.adjustSigmaContainerHeight);
+    // Get the info container
     const infoContainer = document.getElementsByClassName("info-container")[0];
     infoContainer.innerHTML = "";
     // Add close button to the info panel
@@ -182,15 +185,26 @@ class GraphHelper {
     closeButton.setAttribute("type", "button");
     closeButton.onclick = closeInfoContainer(this.adjustSigmaContainerHeight, this.graphManager.graph);
 
+    // Add the close button to the info container
     infoContainer.appendChild(closeButton);
 
 
-    category = category.replace("cat-", "");
-    category = encodeURIComponent(category);
-    const url = `/api/get-diseases/?category=${category}&filters=${filterManager.filters}`;
+    // Get the diseases for the category
+    category = category.replace("cat-", ""); // Remove the category prefix for easier processing
+    // Encode components and construct the URL
+    let encoded_category = encodeURIComponent(category);
+    let filters = encodeURIComponent(filterManager.filters);
+    // Construct the URL and fetch the data
+    const url = `/api/get-diseases/?category=${encoded_category}&filters=${filters}`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
+        // Create a header for the diseases
+        const header = document.createElement("h3");
+        header.textContent = `Diseases for ${formatCategoryString(category)}`;
+        header.style.alignSelf = "center";
+        infoContainer.appendChild(header);
+        // Create a table for the diseases for the category
         const table = document.createElement("table");
         table.className = "table table-striped table-bordered table-hover table-sm";
         console.log(data.diseases);
@@ -209,6 +223,7 @@ class GraphHelper {
           tbody.appendChild(tr);
           table.appendChild(tbody);
 
+          // Add an event listener to the table row to simulate a click to the node
           tr.addEventListener("click", (event) => {
             const diseaseName = event.target.textContent;
             console.log(this.graphManager);
