@@ -3,7 +3,7 @@ import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
 import GraphHelper from "./GraphHelper";
 import { fetchAndShowAssociations } from "./associationsPlot";
-import {closeInfoContainer} from "./utils";
+import { closeInfoContainer } from "./utils";
 
 // Main class for managing the graph
 class GraphManager {
@@ -18,6 +18,8 @@ class GraphManager {
       allowInvalidContainer: true,
       labelRenderedSizeThreshold: 35,
       defaultNodeType: "bordered",
+      enableEdgeEvents: true,
+      renderEdgeLabels: true,
       // Configure the node program classes
       nodeProgramClasses: {
         bordered: createNodeBorderProgram({
@@ -35,9 +37,14 @@ class GraphManager {
     // Set the adjustSigmaContainerHeight function
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     // Create a new GraphHelper object for the GraphManager
-    this.graphHelper = new GraphHelper(this, this.sigmaInstance, this.adjustSigmaContainerHeight);
+    this.graphHelper = new GraphHelper(
+      this,
+      this.sigmaInstance,
+      this.adjustSigmaContainerHeight,
+    );
     // Initialize the event listeners
     this.initEventListeners();
+    this.visibleNodes = new Set();
   }
 
   // Method to initialize the event listeners
@@ -69,8 +76,6 @@ class GraphManager {
       const forceLabel = nodeAttributes.forceLabel;
       this.graph.setNodeAttribute(node, "forceLabel", !forceLabel);
       this.graph.setNodeAttribute(node, "userForceLabel", !forceLabel);
-      console.log("Force label:", !forceLabel); // Debugging log
-      console.log("User force label:", !forceLabel); // Debugging
       this.sigmaInstance.refresh();
     });
 
@@ -78,10 +83,22 @@ class GraphManager {
     this.container.addEventListener("contextmenu", (event) => {
       event.preventDefault();
     });
+
+    // Event listener for entering an edge
+    this.sigmaInstance.on("enterEdge", ({ edge }) => {
+      this.graphHelper.hoverOnEdge(edge, this.graph, this.sigmaInstance);
+    });
+
+    // Event listener for leaving an edge
+    this.sigmaInstance.on("leaveEdge", ({ edge }) => {
+      this.graphHelper.hoverOffEdge(edge, this.graph, this.sigmaInstance);
+    });
   }
 
   // Method to fetch the graph data
   fetchGraphData(params = {}) {
+    console.log(params);
+    console.log(params.type);
     // Set the default parameters
     params.show_subtypes = window.showSubtypes;
 
@@ -95,6 +112,7 @@ class GraphManager {
       .then((data) => {
         // If the type parameter is set, update the graph
         if (params.type) {
+          console.log("Updating")
           this.updateGraph(
             data.nodes,
             data.edges,
@@ -103,118 +121,111 @@ class GraphManager {
           );
           // Otherwise, initialize the graph
         } else {
+          console.log("Initializing")
+          console.log(data)
           this.initializeGraph(data.nodes, data.edges, data.visible);
         }
       })
       .catch((error) => console.error("Error loading graph data:", error));
   }
 
-  // Method to initialize the graph with the nodes, edges, and visible parameters
   initializeGraph(nodes, edges, visible) {
-    // Get the center of the container
-    const centerX = this.container.offsetWidth / 2;
-    const centerY = this.container.offsetHeight / 2;
-    // Calculate the radius of the graph
-    const radius = Math.min(centerX, centerY) - 100; // Adjusting radius to ensure nodes don't touch the edges
+  const containerCenterX = this.container.offsetWidth / 2;
+  const containerCenterY = this.container.offsetHeight / 2;
+  this.graph.clear();
+  console.log(this.visibleNodes);
+  this.visibleNodes = new Set(visible); // Initialize the visible nodes set
+  console.log(this.visibleNodes);
 
-    // Clear the graph
-    this.graph.clear();
+  const categoryRadius = 400; // Adjust this value as needed
+  const categoryNodes = nodes.filter(node => node.node_type === "category");
+  const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
 
-    // Iterate over the nodes
-    nodes.forEach((node, nodeNumber) => {
-      if ((!node) in visible) {
-        return;
-      }
-      // If the node is not in the graph, add it
-      if (!this.graph.hasNode(node.id)) {
-        const angle = (2 * Math.PI * nodeNumber) / nodes.length - Math.PI / 2;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle);
+  categoryNodes.forEach((node, index) => {
+    if (this.visibleNodes.has(node.id)) {
+      const angle = categoryAngleStep * index;
+      const x = containerCenterX + categoryRadius * Math.cos(angle);
+      const y = containerCenterY + categoryRadius * Math.sin(angle);
 
-        const color = this.graphHelper.calculateNodeColor(node);
+      const color = this.graphHelper.calculateNodeColor(node);
 
-        // Add the node to the graph
-        this.graph.addNode(node.id, {
-          label: node.label.replace("HLA_", ""),
-          full_label: node.label,
-          node_type: node.node_type,
-          forceLabel: true,
-          x: x,
-          y: y,
-          size: 8,
-          borderColor: color,
-          borderSize: 0,
-          hidden: false,
-          color: color,
-          userForceLabel: false,
-        });
-      }
-    });
+      this.graph.addNode(node.id, {
+        label: node.label,
+        full_label: node.label,
+        node_type: node.node_type,
+        forceLabel: true,
+        x: x,
+        y: y,
+        fixed: true,
+        size: 10,
+        borderColor: color,
+        borderSize: 0,
+        hidden: false,
+        color: color,
+        userForceLabel: false,
+      });
+    }
+  });
 
-    // Iterate over the edges
-    edges.forEach((edge) => {
-      if (!this.graph.hasEdge(edge.id)) {
-        this.graph.addEdge(edge.source, edge.target);
-        this.graph.setEdgeAttribute(edge.source, edge.target, "hidden", false);
-      }
-    });
-  }
+  this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
+}
+
+
 
   // Method to update the graph with the nodes, edges, visible, and clicked parameters
   updateGraph(nodes, edges, visible, clicked) {
-    const graphNodes = this.graph.nodes();
-    const graphEdges = this.graph.edges();
+  if (!clicked) {
+    this.graph.nodes().forEach((node) => {
+      this.graph.setNodeAttribute(node, "hidden", true);
+    });
+    this.graph.edges().forEach((edge) => {
+      this.graph.setEdgeAttribute(edge, "hidden", true);
+    });
+    this.sigmaInstance.refresh();
+  }
 
+  visible.forEach((node) => this.visibleNodes.add(node)); // Add new visible nodes to the visibleNodes set
 
-    if (!clicked) {
-      graphNodes.forEach((node) => {
-        this.graph.setNodeAttribute(node, "hidden", true);
+  nodes.forEach((node) => {
+    if (!this.graph.hasNode(node.id) && this.visibleNodes.has(node.id)) {
+      let { color, baseSize, borderSize, borderColor } =
+        this.graphHelper.calculateBorder(node);
+
+      this.graph.addNode(node.id, {
+        label: node.label.replace("HLA_", ""),
+        full_label: node.label,
+        node_type: node.node_type,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        fixed: node.node_type === "category",
+        size: baseSize,
+        odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
+        allele_count: node.node_type === "disease" ? node.allele_count : null,
+        borderColor: node.node_type === "allele" ? borderColor : color,
+        borderSize: borderSize,
+        color: color,
+        expanded: false,
+        category: node.node_type === "disease" ? node.category : null,
+        forceLabel: node.node_type === "allele",
+        userForceLabel: false,
+        disease: node.node_type === "allele" ? node.disease : null,
       });
-      graphEdges.forEach((edge) => {
-        this.graph.setEdgeAttribute(edge, "hidden", true);
-      });
-
-      this.sigmaInstance.refresh();
     }
 
-    // Iterate over the nodes
-    nodes.forEach((node) => {
-      if (!this.graph.hasNode(node.id)) {
-        // Calculate the color, base size, border size, and border color
-        let { color, baseSize, borderSize, borderColor } =
-          this.graphHelper.calculateBorder(node);
-        // Add the node to the graph with the calculated attributes
-        this.graph.addNode(node.id, {
-          label: node.label.replace("HLA_", ""),
-          full_label: node.label,
-          node_type: node.node_type,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: baseSize,
-          odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
-          allele_count: node.node_type === "disease" ? node.allele_count : null,
-          borderColor: node.node_type === "allele" ? borderColor : color,
-          borderSize: borderSize,
-          color: color,
-          expanded: false,
-          forceLabel: node.node_type === "allele",
-          userForceLabel: false,
-        });
-      }
-      // Set the hidden attribute of the node based on the visible parameter
-      this.graph.setNodeAttribute(node.id, "hidden", visible.includes(node.id));
-    });
+    this.graph.setNodeAttribute(node.id, "hidden", !this.visibleNodes.has(node.id));
+  });
 
-    // Iterate over the edges and add them to the graph
-    edges.forEach((edge) => {
+  edges.forEach((edge) => {
+    if (this.visibleNodes.has(edge.source) && this.visibleNodes.has(edge.target)) {
       if (!this.graph.hasEdge(edge.id)) {
         this.graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
       }
-    });
+    }
+  });
 
-    // Apply forceAtlas2 layout to the graph
-    this.applyLayout();
-  }
+  this.applyLayout();
+}
+
 
   // Method to apply the layout to the graph
   applyLayout() {
@@ -224,7 +235,6 @@ class GraphManager {
   // Method to get the information table for an allele node
   getInfoTable(nodeData) {
     const infoContainer = document.getElementsByClassName("info-container")[0];
-    console.log("infoContainer:", infoContainer); // Debugging log
     const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`;
 
     // Get the edges connected to the selected node
@@ -234,7 +244,6 @@ class GraphManager {
       return source === selectedNode || target === selectedNode;
     });
 
-    console.log("edges:", edges); // Debugging log
 
     // Get the disease nodes connected to the selected node
     const diseaseNodes = edges.map((edge) => {
@@ -243,7 +252,6 @@ class GraphManager {
         : this.graph.source(edge);
     });
 
-    console.log("diseaseNodes:", diseaseNodes); // Debugging log
 
     // If there are no disease nodes, log an error and return
     if (diseaseNodes.length === 0) {
@@ -259,10 +267,11 @@ class GraphManager {
     const closeButton = document.createElement("button");
     closeButton.className = "btn btn-danger";
     closeButton.textContent = "X";
-    closeButton.onclick = closeInfoContainer( // Call the closeInfoContainer function
+    closeButton.onclick = closeInfoContainer(
+      // Call the closeInfoContainer function
       this.adjustSigmaContainerHeight,
       this.graph,
-        this.sigmaInstance
+      this.sigmaInstance,
     );
     infoContainer.appendChild(closeButton);
 
@@ -283,7 +292,8 @@ class GraphManager {
     filterButton.style.justifySelf = "center";
     filterButton.onclick = () => {
       if (window.filterManager) {
-        window.filterManager.tableSelectFilter({ // Call the tableSelectFilter function with the snp field
+        window.filterManager.tableSelectFilter({
+          // Call the tableSelectFilter function with the snp field
           field: "snp",
           value: nodeData.full_label,
         });
@@ -378,13 +388,13 @@ class GraphManager {
           pValueCell.textContent = odds.p.toString();
           row.appendChild(pValueCell);
           row.onclick = () => {
-              console.log(odds.phewas_string)
-              GraphHelper.simulateClickToNode( // Add the simulateClickToNode function to click to the disease node
-                this,
-                this.graph,
-                odds.phewas_string,
-                this.graphHelper
-              );
+            GraphHelper.simulateClickToNode(
+              // Add the simulateClickToNode function to click to the disease node
+              this,
+              this.graph,
+              odds.phewas_string,
+              this.graphHelper,
+            );
           };
           table.appendChild(row);
         });
@@ -559,7 +569,7 @@ class GraphManager {
     const encodedAllele = encodeURIComponent(nodeData.full_label);
     // Get the disease node
     const encodedDisease = encodeURIComponent(
-        // Get the full label of the disease node
+      // Get the full label of the disease node
       this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label,
     );
     // Fetch the data from the URL
@@ -573,7 +583,8 @@ class GraphManager {
         return response.json(); // Return the response as JSON
       })
       .then((data) => {
-        if (data.error) { // If there is an error in the data, log the error
+        if (data.error) {
+          // If there is an error in the data, log the error
           throw new Error(data.error); // Log the error
         }
 

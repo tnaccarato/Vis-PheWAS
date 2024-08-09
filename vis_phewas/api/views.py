@@ -60,7 +60,7 @@ def apply_filters(queryset, filters, category_id=None):
     """
     # If a category_id is provided, filter by that category
     if category_id:
-        category_string = category_id.replace('cat-', '').replace('_', ' ')
+        category_string = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
 
     # If no filters are provided, return the queryset filtered by p-value
@@ -173,11 +173,14 @@ def get_category_data(filters) -> tuple:
     filtered_queryset = apply_filters(queryset, filters)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["category-"+node['category_string'].replace(' ','_') for node in visible_nodes]
+    print(visible_nodes)
 
     # Sort the queryset by category_string
     filtered_queryset = filtered_queryset.order_by('category_string')
     # Create the nodes and edges
-    nodes = [{'id': f"cat-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
+    nodes = [{'id': f"category-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
               'node_type': 'category'} for category in filtered_queryset]
     edges = []
     # Return the nodes, edges, and visible nodes
@@ -193,20 +196,24 @@ def get_disease_data(category_id, filters) -> tuple:
     """
     # print(filters)
     # Get the disease data for the selected category
-    category_string = category_id.replace('cat-', '').replace('_', ' ')
+    category_string = category_id.replace('category-', '').replace('_', ' ')
     # Get the unique diseases for the selected category
-    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string').distinct()
+    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
+                                                                                       'category_string').distinct()
     # Apply filters before slicing
     filtered_queryset = apply_filters(queryset, filters)
     # Get the number of alleles associated with each disease and annotate the queryset
     filtered_queryset = filtered_queryset.annotate(allele_count=models.Count('snp'))
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["disease-"+node['phewas_string'].replace(' ','_') for node in visible_nodes]
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     # Create the nodes and edges
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
-              'node_type': 'disease', 'allele_count': disease['allele_count']} for disease in filtered_queryset]
+              'node_type': 'disease', 'allele_count': disease['allele_count'], 'category': disease['category_string']}
+             for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
              filtered_queryset]
     # Return the nodes, edges, and visible nodes
@@ -241,12 +248,15 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     filtered_queryset = apply_filters(queryset, filters)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
+    # Get visible nodes as a list of strings
+    visible_nodes = ["allele-"+node['snp'].replace(' ','_') for node in visible_nodes]
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     # Get the nodes and edges
     # Annotate node with odds_ratio for dynamic node colouring
     nodes = [
-        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele', **allele,
+        {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele',
+         'disease': disease_string, **allele,
          } for allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
@@ -391,7 +401,7 @@ class GetNodePathView(APIView):
             # Get the category from the database for the disease
             category = HlaPheWasCatalog.objects.filter(phewas_string=disease).values('category_string').distinct()[0][
                 'category_string']
-            category = f"cat-{category.replace(' ', '_')}"
+            category = f"category-{category.replace(' ', '_')}"
 
             disease = f"disease-{disease.replace(' ', '_')}"
             # Create the path
@@ -404,12 +414,15 @@ class GetNodePathView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class GetDiseasesForCategoryView(APIView):
     """
     API view to get the diseases for a specific category.
     """
 
     def get(self, request):
+        # Get filters from the request
+        filters = request.GET.get('filters')
         # Get the category from the request
         category = request.GET.get('category')
         # Replace underscores with spaces
@@ -418,15 +431,15 @@ class GetDiseasesForCategoryView(APIView):
             return Response({"error": "Category parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Get the diseases for the category
-            diseases = HlaPheWasCatalog.objects.filter(category_string=category, p__lte=0.05).values('phewas_string').distinct()
+            # Get the diseases for the category with the selected filters
+            diseases = HlaPheWasCatalog.objects.filter(category_string=category)
+            # Apply the filters
+            diseases = apply_filters(diseases, filters)
+            # Get the unique diseases
+            diseases = diseases.values('phewas_string').distinct()
             # Sort the diseases by phewas_string
             diseases = sorted([disease['phewas_string'] for disease in diseases])
-            print(type(diseases))
-
             # Return the diseases
             return Response({"diseases": diseases})
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-

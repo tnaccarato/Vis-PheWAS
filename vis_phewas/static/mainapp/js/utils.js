@@ -23,16 +23,18 @@ export function closeInfoContainer(
     // For each node in the graph, set forceLabel to userForceLabel
     graph.nodes().forEach((node) => {
       const nodeType = graph.getNodeAttribute(node, "node_type");
-      console.log(graph.getNodeAttributes(node))
-      console.log(nodeType);
       if (nodeType === "allele") {
         graph.setNodeAttribute(node, "forceLabel", true);
-      } else if (nodeType === "disease") {
-        console.log(node.userForceLabel);
+      } else if (
+        nodeType === "disease" &&
+        graph.getNodeAttribute(node, "expanded")
+      ) {
+        graph.setNodeAttribute(node, "forceLabel", true);
+        graph.setNodeAttribute(node, "borderSize", 0);
         graph.setNodeAttribute(
           node,
-          "forceLabel",
-          graph.getNodeAttribute(node, "userForceLabel"),
+          "borderColor",
+          graph.getNodeAttribute(node, "color"),
         );
       }
     });
@@ -43,7 +45,6 @@ export function closeInfoContainer(
 export function getExportData(showAlert) {
   // Push filters to the filters array to make sure the filters are applied
   filterManager.pushFilters();
-  console.log("Filters:", filterManager.filters); // Debugging log
 
   // If filters is empty, set it to an empty array
   if (!filterManager.filters) {
@@ -61,7 +62,6 @@ export function getExportData(showAlert) {
   fetch(url)
     // Get the response as a blob
     .then((response) => {
-      console.log(url);
       // Get the dataset length from the response headers
       const length = response.headers.get("Dataset-Length");
       if (length === "0") {
@@ -129,4 +129,88 @@ export const diseaseColor = scaleLog()
 // Function to clamp values within the domain range for the scale to avoid outlying values
 export function clamp(value, domain) {
   return Math.max(domain[0], Math.min(domain[domain.length - 1], value));
+}
+
+// Function to format the category string to be more readable
+export function formatCategoryString(string) {
+  return string
+    .split("_") // Split the string by underscores
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+    .join(" "); // Join the words back together with a space
+}
+
+// Simulate clicking every category on the graph
+export async function clickAllCategories(
+  graph,
+  sigmaInstance,
+  graphHelperInstance,
+  fetchGraphData,
+  adjustSigmaContainerHeight,
+  graphManager,
+) {
+  const categories = graph
+    .nodes()
+    .filter((node) => graph.getNodeAttribute(node, "node_type") === "category");
+
+  console.log(graphManager.visibleNodes);
+  if (categories.length > 0) {
+    for (const category of categories) {
+      if (graphManager.visibleNodes.has(category)) {
+        await triggerNodeClick(
+          graphHelperInstance,
+          graph,
+          category,
+          fetchGraphData,
+          adjustSigmaContainerHeight,
+          true,
+        );
+        // Wait for the graph to finish rendering before clicking the next category
+        await new Promise(resolve => setTimeout(resolve, 0));
+        sigmaInstance.refresh();
+      }
+    }
+  }
+
+  // After all categories have been clicked, display disease labels
+  await displayDiseaseLabels(graph, sigmaInstance);
+}
+
+// Display labels for all disease nodes
+async function displayDiseaseLabels(graph, sigmaInstance) {
+  const diseaseNodes = graph.nodes().filter(
+    (node) => graph.getNodeAttribute(node, "node_type") === "disease",
+  );
+  for (const diseaseNode of diseaseNodes) {
+    graph.setNodeAttribute(diseaseNode, "forceLabel", true);
+  }
+  sigmaInstance.refresh();
+}
+
+// Modified triggerNodeClick function
+async function triggerNodeClick(
+  graphHelperInstance,
+  graph,
+  nodeId,
+  fetchGraphData,
+  adjustSigmaContainerHeight,
+  allCategories = false,
+) {
+  console.log("Triggering click for node:", nodeId);
+  if (!graph || !nodeId) {
+    console.error("Graph or node ID is undefined.");
+    return;
+  }
+
+  try {
+    await graphHelperInstance.clickedNode(
+      graph,
+      nodeId,
+      fetchGraphData,
+      adjustSigmaContainerHeight,
+      undefined,
+      allCategories,
+    );
+  } catch (error) {
+    console.error("Error during clickedNode execution:", error);
+  }
 }
