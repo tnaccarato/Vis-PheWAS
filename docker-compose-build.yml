@@ -1,8 +1,9 @@
+# docker-compose-build.yml
 services:
   db:
     build:
       context: .
-      dockerfile: Dockerfile.postgres # Dockerfile for PostgreSQL
+      dockerfile: Dockerfile.postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -20,7 +21,6 @@ services:
       - ./vis_phewas:/app/vis_phewas
       - ./mainapp:/app/mainapp
       - ./api:/app/api
-      - ./static:/app/staticfiles
       - ./templates:/app/templates
       - ./package.json:/app/package.json
       - ./webpack.config.js:/app/webpack.config.js
