@@ -45,6 +45,8 @@ class GraphManager {
     // Initialize the event listeners
     this.initEventListeners();
     this.visibleNodes = new Set();
+    this.selectedAlleleNode = null;
+    this.selectedDiseaseNode = null;
   }
 
   // Method to initialize the event listeners
@@ -67,7 +69,7 @@ class GraphManager {
 
     // Add an event listener for leaving a node
     this.sigmaInstance.on("leaveNode", ({ node }) => {
-      this.graphHelper.hoverOffNode(node, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOffNode(node, this.graph, this.getActiveSelection());
     });
 
     // Add an event listener for right-clicking a node
@@ -112,7 +114,7 @@ class GraphManager {
       .then((data) => {
         // If the type parameter is set, update the graph
         if (params.type) {
-          console.log("Updating")
+          console.log("Updating");
           this.updateGraph(
             data.nodes,
             data.edges,
@@ -121,8 +123,8 @@ class GraphManager {
           );
           // Otherwise, initialize the graph
         } else {
-          console.log("Initializing")
-          console.log(data)
+          console.log("Initializing");
+          console.log(data);
           this.initializeGraph(data.nodes, data.edges, data.visible);
         }
       })
@@ -130,102 +132,106 @@ class GraphManager {
   }
 
   initializeGraph(nodes, edges, visible) {
-  const containerCenterX = this.container.offsetWidth / 2;
-  const containerCenterY = this.container.offsetHeight / 2;
-  this.graph.clear();
-  console.log(this.visibleNodes);
-  this.visibleNodes = new Set(visible); // Initialize the visible nodes set
-  console.log(this.visibleNodes);
+    const containerCenterX = this.container.offsetWidth / 2;
+    const containerCenterY = this.container.offsetHeight / 2;
+    this.graph.clear();
+    console.log(this.visibleNodes);
+    this.visibleNodes = new Set(visible); // Initialize the visible nodes set
+    console.log(this.visibleNodes);
 
-  const categoryRadius = 400; // Adjust this value as needed
-  const categoryNodes = nodes.filter(node => node.node_type === "category");
-  const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
+    const categoryRadius = 400; // Adjust this value as needed
+    const categoryNodes = nodes.filter((node) => node.node_type === "category");
+    const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
 
-  categoryNodes.forEach((node, index) => {
-    if (this.visibleNodes.has(node.id)) {
-      const angle = categoryAngleStep * index;
-      const x = containerCenterX + categoryRadius * Math.cos(angle);
-      const y = containerCenterY + categoryRadius * Math.sin(angle);
+    categoryNodes.forEach((node, index) => {
+      if (this.visibleNodes.has(node.id)) {
+        const angle = categoryAngleStep * index;
+        const x = containerCenterX + categoryRadius * Math.cos(angle);
+        const y = containerCenterY + categoryRadius * Math.sin(angle);
 
-      const color = this.graphHelper.calculateNodeColor(node);
+        const color = this.graphHelper.calculateNodeColor(node);
 
-      this.graph.addNode(node.id, {
-        label: node.label,
-        full_label: node.label,
-        node_type: node.node_type,
-        forceLabel: true,
-        x: x,
-        y: y,
-        fixed: true,
-        size: 10,
-        borderColor: color,
-        borderSize: 0,
-        hidden: false,
-        color: color,
-        userForceLabel: false,
-      });
-    }
-  });
+        this.graph.addNode(node.id, {
+          label: node.label,
+          full_label: node.label,
+          node_type: node.node_type,
+          forceLabel: true,
+          x: x,
+          y: y,
+          fixed: true,
+          size: 10,
+          borderColor: color,
+          borderSize: 0,
+          hidden: false,
+          color: color,
+          userForceLabel: false,
+        });
+      }
+    });
 
-  this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
-}
-
-
+    this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
+  }
 
   // Method to update the graph with the nodes, edges, visible, and clicked parameters
   updateGraph(nodes, edges, visible, clicked) {
-  if (!clicked) {
-    this.graph.nodes().forEach((node) => {
-      this.graph.setNodeAttribute(node, "hidden", true);
-    });
-    this.graph.edges().forEach((edge) => {
-      this.graph.setEdgeAttribute(edge, "hidden", true);
-    });
-    this.sigmaInstance.refresh();
-  }
-
-  visible.forEach((node) => this.visibleNodes.add(node)); // Add new visible nodes to the visibleNodes set
-
-  nodes.forEach((node) => {
-    if (!this.graph.hasNode(node.id) && this.visibleNodes.has(node.id)) {
-      let { color, baseSize, borderSize, borderColor } =
-        this.graphHelper.calculateBorder(node);
-
-      this.graph.addNode(node.id, {
-        label: node.label.replace("HLA_", ""),
-        full_label: node.label,
-        node_type: node.node_type,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        fixed: node.node_type === "category",
-        size: baseSize,
-        odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
-        allele_count: node.node_type === "disease" ? node.allele_count : null,
-        borderColor: node.node_type === "allele" ? borderColor : color,
-        borderSize: borderSize,
-        color: color,
-        expanded: false,
-        category: node.node_type === "disease" ? node.category : null,
-        forceLabel: node.node_type === "allele",
-        userForceLabel: false,
-        disease: node.node_type === "allele" ? node.disease : null,
+    if (!clicked) {
+      this.graph.nodes().forEach((node) => {
+        this.graph.setNodeAttribute(node, "hidden", true);
       });
+      this.graph.edges().forEach((edge) => {
+        this.graph.setEdgeAttribute(edge, "hidden", true);
+      });
+      this.sigmaInstance.refresh();
     }
 
-    this.graph.setNodeAttribute(node.id, "hidden", !this.visibleNodes.has(node.id));
-  });
+    visible.forEach((node) => this.visibleNodes.add(node)); // Add new visible nodes to the visibleNodes set
 
-  edges.forEach((edge) => {
-    if (this.visibleNodes.has(edge.source) && this.visibleNodes.has(edge.target)) {
-      if (!this.graph.hasEdge(edge.id)) {
-        this.graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
+    nodes.forEach((node) => {
+      if (!this.graph.hasNode(node.id) && this.visibleNodes.has(node.id)) {
+        let { color, baseSize, borderSize, borderColor } =
+          this.graphHelper.calculateBorder(node);
+
+        this.graph.addNode(node.id, {
+          label: node.label.replace("HLA_", ""),
+          full_label: node.label,
+          node_type: node.node_type,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          fixed: node.node_type === "category",
+          size: baseSize,
+          odds_ratio: node.node_type === "allele" ? node.odds_ratio : null,
+          allele_count: node.node_type === "disease" ? node.allele_count : null,
+          borderColor: node.node_type === "allele" ? borderColor : color,
+          borderSize: borderSize,
+          color: color,
+          expanded: false,
+          category: node.node_type === "disease" ? node.category : null,
+          forceLabel: node.node_type === "allele",
+          userForceLabel: false,
+          disease: node.node_type === "allele" ? node.disease : null,
+        });
       }
-    }
-  });
 
-  this.applyLayout();
-}
+      this.graph.setNodeAttribute(
+        node.id,
+        "hidden",
+        !this.visibleNodes.has(node.id),
+      );
+    });
 
+    edges.forEach((edge) => {
+      if (
+        this.visibleNodes.has(edge.source) &&
+        this.visibleNodes.has(edge.target)
+      ) {
+        if (!this.graph.hasEdge(edge.id)) {
+          this.graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
+        }
+      }
+    });
+
+    this.applyLayout();
+  }
 
   // Method to apply the layout to the graph
   applyLayout() {
@@ -244,14 +250,12 @@ class GraphManager {
       return source === selectedNode || target === selectedNode;
     });
 
-
     // Get the disease nodes connected to the selected node
     const diseaseNodes = edges.map((edge) => {
       return this.graph.source(edge) === selectedNode
         ? this.graph.target(edge)
         : this.graph.source(edge);
     });
-
 
     // If there are no disease nodes, log an error and return
     if (diseaseNodes.length === 0) {
@@ -408,6 +412,90 @@ class GraphManager {
       createOddsTable(lowest_odds, "Most Mitigated Diseases");
     };
 
+    // Function to update node styles
+    const updateNodeStyles = (nodeData, diseaseNode) => {
+      // Get the allele node
+      const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
+        window.showSubtypes === true ? "" + nodeData.subtype.toString() : ""
+      }`;
+
+      // Update allele node
+      const node = this.graph.getNodeAttributes(alleleNode);
+      node.node_type = "allele";
+      node.odds_ratio = nodeData.odds_ratio;
+      node.p = nodeData.p;
+
+      let { color, baseSize, borderSize, borderColor } =
+        this.graphHelper.calculateBorder(node);
+
+      this.graph.setNodeAttribute(alleleNode, "color", color);
+      this.graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
+      this.graph.setNodeAttribute(alleleNode, "borderSize", borderSize);
+      this.graph.setNodeAttribute(alleleNode, "size", baseSize);
+
+      // Reset other nodes
+      this.graph.nodes().forEach((node) => {
+        if (
+          node !== diseaseNode &&
+          this.graph.getNodeAttribute(node, "node_type") === "disease"
+        ) {
+          this.graph.setNodeAttribute(
+            node,
+            "borderColor",
+            this.graph.getNodeAttribute(node, "color"),
+          );
+          this.graph.setNodeAttribute(node, "borderSize", 0);
+          if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
+            this.graph.setNodeAttribute(node, "forceLabel", false);
+          }
+        }
+
+        if (
+          this.graph.getNodeAttribute(node, "node_type") === "allele" &&
+          node !== alleleNode
+        ) {
+          if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
+            this.graph.setNodeAttribute(node, "forceLabel", false);
+          } else {
+            this.graph.setNodeAttribute(node, "forceLabel", true);
+          }
+        }
+      });
+
+      // Update disease node
+  this.graph.setNodeAttribute(diseaseNode, "borderColor", "black");
+  this.graph.setNodeAttribute(diseaseNode, "borderSize", 0.1);
+  this.graph.setNodeAttribute(diseaseNode, "forceLabel", true);
+
+  // Find and update the edge connecting the disease and allele node
+  const edge = this.graph.edges().find((edge) => {
+    return (
+      this.graph.source(edge) === diseaseNode &&
+      this.graph.target(edge) === alleleNode
+    );
+  });
+
+  // Update the selected nodes
+  this.selectedAlleleNode = alleleNode;
+  this.selectedDiseaseNode = diseaseNode;
+
+  if (edge) {
+    this.graph.setEdgeAttribute(edge, "color", "black");
+  } else {
+    console.error("Edge from disease to allele not found");
+  }
+
+  // Set all other edges to default color and size
+  this.graph.edges().forEach((e) => {
+    if (e !== edge) {
+      this.graph.setEdgeAttribute(e, "color", "darkgrey");
+    }
+  });
+
+  // Refresh the Sigma instance
+  this.sigmaInstance.refresh();
+};
+
     // Function to display the node information
     const displayNodeInfo = (diseaseNode) => {
       // Get the existing disease info container
@@ -416,7 +504,7 @@ class GraphManager {
       // Get the disease name
       const disease = this.graph.getNodeAttributes(diseaseNode).full_label;
       if (!disease) {
-        console.error("Disease is null or undefined"); // Log an error if the disease is null or undefined
+        console.error("Disease is null or undefined");
         return;
       }
       // Encode the allele and disease names
@@ -424,68 +512,6 @@ class GraphManager {
       const encodedDisease = encodeURIComponent(disease);
       // Fetch the data from the URL
       const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
-
-      // Function to update the node style based on new table data
-      const updateNodeStyle = (nodeData) => {
-        // Get the allele node
-        const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
-          window.showSubtypes === true ? "" + nodeData.subtype.toString() : ""
-        }`;
-        // Get the node attributes
-        const node = this.graph.getNodeAttributes(alleleNode);
-
-        // Calculate the color, base size, border size, and border color
-        node.node_type = "allele";
-        node.odds_ratio = nodeData.odds_ratio;
-        node.p = nodeData.p;
-
-        // Update the node attributes
-        let { color, baseSize, borderSize, borderColor } =
-          this.graphHelper.calculateBorder(node);
-
-        // Set the node attributes
-        this.graph.setNodeAttribute(alleleNode, "color", color);
-        this.graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
-        this.graph.setNodeAttribute(alleleNode, "borderSize", borderSize);
-        this.graph.setNodeAttribute(alleleNode, "size", baseSize);
-
-        // Iterate over the nodes and update the style based on the node type
-        this.graph.nodes().forEach((node) => {
-          if (
-            node !== diseaseNode &&
-            this.graph.getNodeAttribute(node, "node_type") === "disease"
-          ) {
-            this.graph.setNodeAttribute(
-              node,
-              "borderColor",
-              this.graph.getNodeAttribute(node, "color"),
-            );
-            this.graph.setNodeAttribute(node, "borderSize", 0);
-            if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
-              this.graph.setNodeAttribute(node, "forceLabel", false);
-            }
-          }
-
-          if (
-            this.graph.getNodeAttribute(node, "node_type") === "allele" &&
-            node !== alleleNode
-          ) {
-            if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
-              this.graph.setNodeAttribute(node, "forceLabel", false);
-            } else {
-              this.graph.setNodeAttribute(node, "forceLabel", true);
-            }
-          }
-        });
-
-        // Set the node attributes for the disease node
-        this.graph.setNodeAttribute(diseaseNode, "borderColor", "black");
-        this.graph.setNodeAttribute(diseaseNode, "borderSize", 0.1);
-        this.graph.setNodeAttribute(diseaseNode, "forceLabel", true);
-
-        // Refresh the Sigma instance
-        this.sigmaInstance.refresh();
-      };
 
       fetch(url)
         .then((response) => {
@@ -549,8 +575,8 @@ class GraphManager {
             // Append the table to the info container
             infoContainer.appendChild(table);
           }
-          // Update the node style based on the new table data
-          updateNodeStyle(data);
+          // Update the node styles based on the new table data
+          updateNodeStyles(data, diseaseNode);
         })
         .catch((error) => {
           // Log an error if the data cannot be fetched
@@ -578,27 +604,31 @@ class GraphManager {
     fetch(url)
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`); // Log an error if the response is not ok
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json(); // Return the response as JSON
+        return response.json();
       })
       .then((data) => {
         if (data.error) {
-          // If there is an error in the data, log the error
-          throw new Error(data.error); // Log the error
+          throw new Error(data.error);
         }
 
         // Display the odds tables for the allele node
         displayOddsTables(data);
       })
       .catch((error) => {
-        console.error("Error loading allele info:", error); // Log an error if the allele info cannot be loaded
-        const errorMessage = document.createElement("div"); // Create an error message element
+        console.error("Error loading allele info:", error);
+        const errorMessage = document.createElement("div");
         errorMessage.className = "alert alert-danger";
         errorMessage.textContent = `Error loading allele info: ${error.message}`;
         infoContainer.appendChild(errorMessage);
       });
   }
+
+  // Getters for the active selection
+  getActiveSelection() {
+    return { allele: this.selectedAlleleNode, disease: this.selectedDiseaseNode };
+  }
 }
 
-export default GraphManager; // Export the GraphManager class for use in other modules
+export default GraphManager;
