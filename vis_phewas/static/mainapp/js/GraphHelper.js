@@ -415,7 +415,7 @@ hoverOffNode(node, graph, activeSelection=null) {
       iterations: 100,
       settings: {
         gravity: 0.005,
-        scalingRatio: 5,
+        scalingRatio: 3,
         strongGravityMode: true,
         edgeWeightInfluence: 1,
         slowDown: 10,
