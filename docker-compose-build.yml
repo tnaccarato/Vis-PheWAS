@@ -24,6 +24,7 @@ services:
       - ./templates:/app/templates
       - ./package.json:/app/package.json
       - ./webpack.config.js:/app/webpack.config.js
+      - ./LICENSE:/app/LICENSE
     ports:
       - "8000:8000"
     env_file:
