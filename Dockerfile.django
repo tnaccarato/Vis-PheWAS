@@ -41,12 +41,15 @@ RUN npm install
 # Build front-end assets with Webpack
 RUN npx webpack --mode=production
 
-# Create necessary directories and set permissions
+#Make sure that container has write permissions
 RUN mkdir -p /app/vis_phewas/staticfiles && \
     chmod -R 755 /app/vis_phewas/staticfiles
-
+	
 # Collect static files with WhiteNoise in mind
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput --verbosity 3
+
+# Ensure the static files are served correctly
+ENV STATIC_ROOT /app/vis_phewas/staticfiles
 
 # Gunicorn setup
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "vis_phewas.wsgi:application"]
