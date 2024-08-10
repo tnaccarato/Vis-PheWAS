@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 /vis_phewas/node_modules
 bundle.js
+/vis_phewas/staticfiles
