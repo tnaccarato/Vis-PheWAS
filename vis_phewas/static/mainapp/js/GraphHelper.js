@@ -26,7 +26,7 @@ class GraphHelper {
     fetchGraphData,
     adjustSigmaContainerHeight,
     getInfoTable = null,
-    allCategories = false,
+    simulated = false,
   ) {
     // Get the node data
     const nodeData = graph.getNodeAttributes(node);
@@ -76,7 +76,7 @@ class GraphHelper {
           clicked: true,
         });
         nodeData.expanded = true;
-        if (!allCategories) {
+        if (!simulated) {
           this.getDiseasesForCategory(node);
         }
       }
@@ -166,6 +166,7 @@ class GraphHelper {
               graphManagerInstance,
             ),
             graphManagerInstance.getInfoTable.bind(graphManagerInstance),
+            true, // Simulated click
           );
 
           setTimeout(() => {
@@ -285,36 +286,44 @@ class GraphHelper {
   }
 
   // Method for hovering off a node
-  hoverOffNode(node, graph) {
-    if (
-      !this.sigmaInstance ||
-      typeof this.sigmaInstance.refresh !== "function"
-    ) {
-      console.error(
-        "Sigma instance or refresh method not available in hoverOffNode",
-      );
-      return;
-    }
-
-    // Get the edges of the node
-    const nodeId = node;
-    const edges = graph.edges().filter((edge) => {
-      return graph.source(edge) === nodeId || graph.target(edge) === nodeId;
-    });
-
-    // Reset the color of the edges
-    edges.forEach((edge) => {
-      graph.setEdgeAttribute(edge, "color", "darkgrey");
-    });
-
-    // Hide the edge source on hover
-    edges.forEach((edge) => {
-      this.hoverOffEdge(edge, this.graphManager.graph);
-    });
-
-    // Refresh the sigma instance
-    this.sigmaInstance.refresh();
+hoverOffNode(node, graph, activeSelection=null) {
+  if (!this.sigmaInstance || typeof this.sigmaInstance.refresh !== "function") {
+    console.error("Sigma instance or refresh method not available in hoverOffNode");
+    return;
   }
+
+  console.log(activeSelection)
+    // Get the selected nodes
+    const selectedDiseaseNode = activeSelection.disease;
+    const selectedAlleleNode = activeSelection.allele;
+
+  // Get the edges of the node
+  const nodeId = node;
+  const edges = graph.edges().filter((edge) => {
+    return graph.source(edge) === nodeId || graph.target(edge) === nodeId;
+  });
+
+  // Reset the color of the edges, but not for the selected edge
+  edges.forEach((edge) => {
+    const source = graph.source(edge);
+    const target = graph.target(edge);
+    const isSelectedEdge =
+      (source === selectedDiseaseNode && target === selectedAlleleNode) ||
+      (source === selectedAlleleNode && target === selectedDiseaseNode);
+
+    if (!isSelectedEdge) {
+      graph.setEdgeAttribute(edge, "color", "darkgrey");
+    }
+  });
+
+  // Hide the edge source on hover
+  edges.forEach((edge) => {
+    this.hoverOffEdge(edge, this.graphManager.graph);
+  });
+
+  // Refresh the sigma instance
+  this.sigmaInstance.refresh();
+}
 
   // Method for updating the graph with layout
   applyLayout(graph) {
@@ -474,7 +483,6 @@ class GraphHelper {
 
   // Show the source of edge on a label on hover
   hoverOnEdge(edge, graph) {
-    console.log(graph)
     // Get the source of the edge and the label of the source
     const source = graph.source(edge);
     const sourceLabel = graph.getNodeAttribute(source, "label");

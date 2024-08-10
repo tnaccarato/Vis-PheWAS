@@ -193,7 +193,7 @@ async function triggerNodeClick(
   nodeId,
   fetchGraphData,
   adjustSigmaContainerHeight,
-  allCategories = false,
+  simulated = false,
 ) {
   console.log("Triggering click for node:", nodeId);
   if (!graph || !nodeId) {
@@ -208,7 +208,7 @@ async function triggerNodeClick(
       fetchGraphData,
       adjustSigmaContainerHeight,
       undefined,
-      allCategories,
+      simulated,
     );
   } catch (error) {
     console.error("Error during clickedNode execution:", error);
