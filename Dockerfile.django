@@ -21,12 +21,15 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y nodejs
 
+# Verify Node.js and npm installation
+RUN node -v && npm -v
+
 # Install Python dependencies
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files to the container
-COPY . /app/
+# Copy only necessary files
+COPY ./vis_phewas /app/vis_phewas
 
 # Change directory to where manage.py is located
 WORKDIR /app/vis_phewas
