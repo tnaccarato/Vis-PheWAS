@@ -15,16 +15,21 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile.django # Dockerfile for Django
-    command: gunicorn vis_phewas.wsgi:application --bind 0.0.0.0:8000
+      dockerfile: Dockerfile.django
     volumes:
-      - .:/app
+      - ./vis_phewas:/app/vis_phewas
+      - ./mainapp:/app/mainapp
+      - ./api:/app/api
+      - ./static:/app/staticfiles
+      - ./templates:/app/templates
+      - ./package.json:/app/package.json
+      - ./webpack.config.js:/app/webpack.config.js
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     env_file:
       - .env
+    depends_on:
+      - db
 
 volumes:
   postgres_data:

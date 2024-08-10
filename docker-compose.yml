@@ -14,7 +14,7 @@ services:
     image: tnaccarato/vis-phewas:web
     command: gunicorn vis_phewas.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - .:/app
+      - ./vis_phewas:/app/vis_phewas
     ports:
       - "8000:8000"
     depends_on:
