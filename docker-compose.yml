@@ -1,33 +1,30 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:13
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres # Dockerfile for PostgreSQL
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - vis_phewas_net
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.django # Dockerfile for Django
+    command: gunicorn vis_phewas.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - static_volume:/app/staticfiles
+      - .:/app
+    ports:
+      - "8000:8000"
     depends_on:
       - db
     env_file:
       - .env
-    ports:
-      - "8000:8000"
-    networks:
-      - vis_phewas_net
 
 volumes:
   postgres_data:
-  static_volume:
-
-networks:
-  vis_phewas_net:
