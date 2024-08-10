@@ -38,10 +38,14 @@ WORKDIR /app/vis_phewas
 # Install npm dependencies (if any)
 RUN npm install
 
-# Build front-end assets (if applicable)
-# Example: RUN npm run build
+# Build front-end assets
+RUN npm run build
 
-# Collect static files (with WhiteNoise in mind)
+# Create necessary directories and set permissions
+RUN mkdir -p /app/vis_phewas/staticfiles && \
+    chmod -R 755 /app/vis_phewas/staticfiles
+
+# Collect static files with WhiteNoise in mind
 RUN python manage.py collectstatic --noinput
 
 # Gunicorn setup
