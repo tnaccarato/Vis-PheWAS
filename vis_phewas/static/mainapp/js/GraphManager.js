@@ -86,12 +86,12 @@ class GraphManager {
 
     // Event listener for entering an edge
     this.sigmaInstance.on("enterEdge", ({ edge }) => {
-      this.graphHelper.hoverOnEdge(edge, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOnEdge(edge, this.graph);
     });
 
     // Event listener for leaving an edge
     this.sigmaInstance.on("leaveEdge", ({ edge }) => {
-      this.graphHelper.hoverOffEdge(edge, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOffEdge(edge, this.graph);
     });
   }
 
