@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import ast
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -29,7 +29,16 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+# Fetch the DJANGO_ALLOWED_HOSTS environment variable
+DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '')
+
+# Determine if it's a list of hosts or a wildcard for all hosts
+if DJANGO_ALLOWED_HOSTS.startswith("[") and DJANGO_ALLOWED_HOSTS.endswith("]"):
+    # It's a Python-style list (e.g., "['*']")
+    ALLOWED_HOSTS = ast.literal_eval(DJANGO_ALLOWED_HOSTS)
+else:
+    # It's a comma-separated string of hosts
+    ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS.split(",") if DJANGO_ALLOWED_HOSTS else []
 
 # Application definition
 
