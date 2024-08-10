@@ -60,13 +60,13 @@ class GraphHelper {
     if (nodeData.node_type === "category") {
       // If the node is expanded
       if (nodeData.expanded) {
-        this.getDiseasesForCategory(node);
+        // Remove children nodes
+        removeChildrenNodes(node);
+        /// Set expanded to false
+        nodeData.expanded = false;
       }
-      //   // Remove children nodes
-      //   removeChildrenNodes(node);
-      //   /// Set expanded to false
-      //   nodeData.expanded = false;
-      //   // If the node is not expanded
+
+      // If the node is not expanded
       else {
         // Fetch graph data for diseases
         fetchGraphData({
@@ -265,6 +265,11 @@ class GraphHelper {
       graph.setEdgeAttribute(edge, "color", "black");
     });
 
+    // Display the edge source on hover
+    edges.forEach((edge) => {
+      this.hoverOnEdge(edge, this.graphManager.graph);
+    });
+
     // Refresh the sigma instance
     if (
       this.sigmaInstance &&
@@ -302,65 +307,116 @@ class GraphHelper {
       graph.setEdgeAttribute(edge, "color", "darkgrey");
     });
 
+    // Hide the edge source on hover
+    edges.forEach((edge) => {
+      this.hoverOffEdge(edge, this.graphManager.graph);
+    });
+
     // Refresh the sigma instance
     this.sigmaInstance.refresh();
   }
 
-  // Method for updating the graph
+  // Method for updating the graph with layout
   applyLayout(graph) {
-  const nodes = graph.nodes();
-  const categoryNodes = nodes.filter(node => graph.getNodeAttribute(node, "node_type") === "category");
-  const centerX = 500; // Adjust based on your graph size
-  const centerY = 500; // Adjust based on your graph size
-  const categoryRadius = 400; // Radius for the category circle
-
-  // Step 1: Position category nodes in a circle
-  const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
-  categoryNodes.forEach((categoryNode, index) => {
-    const angle = categoryAngleStep * index;
-    const x = centerX + categoryRadius * Math.sin(angle);
-    const y = centerY + categoryRadius * Math.cos(angle);
-    graph.setNodeAttribute(categoryNode, "x", x);
-    graph.setNodeAttribute(categoryNode, "y", y);
-    graph.setNodeAttribute(categoryNode, "fixed", true);
-  });
-
-  // Step 2: Position disease nodes around their categories
-  const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
-  categoryNodes.forEach(categoryNode => {
-    const relatedDiseaseNodes = nodes.filter(
-      node => graph.getNodeAttribute(node, "category") === graph.getNodeAttribute(categoryNode, "label") &&
-               graph.getNodeAttribute(node, "node_type") === "disease"
+    const nodes = graph.nodes();
+    const categoryNodes = nodes.filter(
+      (node) => graph.getNodeAttribute(node, "node_type") === "category",
     );
+    const centerX = 500;
+    const centerY = 500;
+    const categoryRadius = 400; // Radius for the category circle
 
-    const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
-    relatedDiseaseNodes.forEach((diseaseNode, index) => {
-      const angle = diseaseAngleStep * index;
-      const diseaseX = graph.getNodeAttribute(categoryNode, "x") + diseaseRadius * Math.sin(angle);
-      const diseaseY = graph.getNodeAttribute(categoryNode, "y") + diseaseRadius * Math.cos(angle);
-
-      graph.setNodeAttribute(diseaseNode, "x", diseaseX);
-      graph.setNodeAttribute(diseaseNode, "y", diseaseY);
-      graph.setNodeAttribute(diseaseNode, "fixed", true);
-      graph.setNodeAttribute(diseaseNode, "size", 10);
+    // Step 1: Position category nodes in a circle
+    const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
+    categoryNodes.forEach((categoryNode, index) => {
+      const angle = categoryAngleStep * index;
+      const x = centerX + categoryRadius * Math.sin(angle);
+      const y = centerY + categoryRadius * Math.cos(angle);
+      graph.setNodeAttribute(categoryNode, "x", x);
+      graph.setNodeAttribute(categoryNode, "y", y);
+      graph.setNodeAttribute(categoryNode, "fixed", true);
     });
-  });
 
-  // Step 3: Apply Force Atlas 2 to non-fixed nodes (if any)
-  const settings = {
-    iterations: 100,
-    settings: {
-      gravity: 0.005,
-      scalingRatio: 5,
-      strongGravityMode: true,
-      slowDown: 10,
-    },
-    nodeUpdater: (node, attributes) => !attributes.fixed,
-  };
-  forceAtlas2.assign(graph, settings);
+    // Step 2: Position disease nodes around their categories
+    const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
+    categoryNodes.forEach((categoryNode) => {
+      const relatedDiseaseNodes = nodes.filter(
+        (node) =>
+          graph.getNodeAttribute(node, "category") ===
+            graph.getNodeAttribute(categoryNode, "label") &&
+          graph.getNodeAttribute(node, "node_type") === "disease",
+      );
 
-  this.sigmaInstance.refresh();
-}
+      const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
+      relatedDiseaseNodes.forEach((diseaseNode, index) => {
+        const angle = diseaseAngleStep * index;
+        const diseaseX =
+          graph.getNodeAttribute(categoryNode, "x") +
+          diseaseRadius * Math.sin(angle);
+        const diseaseY =
+          graph.getNodeAttribute(categoryNode, "y") +
+          diseaseRadius * Math.cos(angle);
+
+        graph.setNodeAttribute(diseaseNode, "x", diseaseX);
+        graph.setNodeAttribute(diseaseNode, "y", diseaseY);
+        graph.setNodeAttribute(diseaseNode, "fixed", true);
+        graph.setNodeAttribute(diseaseNode, "size", 10);
+      });
+    });
+
+    // Step 3: Position alleles around their disease nodes
+    const alleleRadius = 10; // Radius for positioning allele nodes around disease nodes
+    nodes.forEach((node) => {
+      if (graph.getNodeAttribute(node, "node_type") === "disease") {
+        const diseaseNode = node;
+        const diseaseX = graph.getNodeAttribute(diseaseNode, "x");
+        const diseaseY = graph.getNodeAttribute(diseaseNode, "y");
+        const diseaseSize = graph.getNodeAttribute(diseaseNode, "size");
+
+        // Get all allele nodes connected to this disease node
+        const alleleNodes = graph
+          .outNeighbors(diseaseNode)
+          .filter((n) => graph.getNodeAttribute(n, "node_type") === "allele");
+
+        // Sort allele nodes alphabetically by their label
+        alleleNodes.sort((a, b) => {
+          const labelA = graph.getNodeAttribute(a, "label").toLowerCase();
+          const labelB = graph.getNodeAttribute(b, "label").toLowerCase();
+          return labelA.localeCompare(labelB);
+        });
+
+        // Position sorted allele nodes around the disease node
+        const alleleAngleStep = (2 * Math.PI) / alleleNodes.length;
+        alleleNodes.forEach((alleleNode, index) => {
+          const angle = alleleAngleStep * index;
+          const alleleX =
+            diseaseX + (diseaseSize + alleleRadius) * Math.cos(angle);
+          const alleleY =
+            diseaseY + (diseaseSize + alleleRadius) * Math.sin(angle);
+
+          graph.setNodeAttribute(alleleNode, "x", alleleX);
+          graph.setNodeAttribute(alleleNode, "y", alleleY);
+          graph.setNodeAttribute(alleleNode, "fixed", false);
+        });
+      }
+    });
+
+    // Step 4: Apply Force Atlas 2 to non-fixed nodes
+    const settings = {
+      iterations: 100,
+      settings: {
+        gravity: 0.005,
+        scalingRatio: 5,
+        strongGravityMode: true,
+        edgeWeightInfluence: 1,
+        slowDown: 10,
+      },
+      nodeUpdater: (node, attributes) => !attributes.fixed,
+    };
+    forceAtlas2.assign(graph, settings);
+
+    this.sigmaInstance.refresh();
+  }
 
   // Method for calculating the color of a node
   calculateNodeColor(node) {
@@ -417,15 +473,22 @@ class GraphHelper {
   }
 
   // Show the source of edge on a label on hover
-  hoverOnEdge(edge, graph, sigmaInstance) {
-    const source = graph.getNodeAttribute(graph.source(edge), "label");
-    const edgeLabel = `${source}`;
-    graph.setEdgeAttribute(edge, "label", edgeLabel);
-    graph.setEdgeAttribute(edge, "forceLabel", true);
+  hoverOnEdge(edge, graph) {
+    console.log(graph)
+    // Get the source of the edge and the label of the source
+    const source = graph.source(edge);
+    const sourceLabel = graph.getNodeAttribute(source, "label");
+    console.log(source)
+    console.log(graph.getNodeAttribute(source, "node_type"))
+    if (graph.getNodeAttribute(source, "node_type") === "disease") {
+      const edgeLabel = `${sourceLabel}`;
+      graph.setEdgeAttribute(edge, "label", edgeLabel);
+      graph.setEdgeAttribute(edge, "forceLabel", true);
+    }
   }
 
   // Hide the source of edge on a label on hover
-  hoverOffEdge(edge, graph, sigmaInstance) {
+  hoverOffEdge(edge, graph) {
     graph.setEdgeAttribute(edge, "label", "");
   }
 }
