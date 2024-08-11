@@ -5,9 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: vis_phewas_db
     env_file:
       - docker.env
     volumes:
@@ -17,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.django
+
     volumes:
       - ./vis_phewas/vis_phewas:/app/vis_phewas/vis_phewas
       - ./vis_phewas/mainapp:/app/vis_phewas/mainapp
