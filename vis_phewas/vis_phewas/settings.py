@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import ast
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -39,6 +40,9 @@ if DJANGO_ALLOWED_HOSTS.startswith("[") and DJANGO_ALLOWED_HOSTS.endswith("]"):
 else:
     # It's a comma-separated string of hosts
     ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS.split(",") if DJANGO_ALLOWED_HOSTS else []
+
+# Determine if the application is running in a testing environment
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # Application definition
 
