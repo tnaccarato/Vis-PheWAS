@@ -21,24 +21,24 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PAT }}
           logout: true
 
-      - name: Create .env File
+      - name: Create docker.env File
         run: |
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASS=${{ secrets.DB_PASS }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
-          echo "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }}" >> .env
-          echo "DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> docker.env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> docker.env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> docker.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> docker.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> docker.env
+          echo "DB_PASS=${{ secrets.DB_PASS }}" >> docker.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> docker.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> docker.env
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> docker.env
+          echo "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }}" >> docker.env
+          echo "DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> docker.env
           cat .env
 
       - name: Build and Run with Docker Compose
         run: |
-          docker compose --env-file .env -f docker-compose-build.yml up -d --build
+          docker compose --env-file docker.env -f docker-compose-build.yml up -d --build
 
       - name: Health Check
         run: |
