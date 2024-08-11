@@ -31,6 +31,8 @@ jobs:
           echo "POSTGRES_PASSWORD=default_secure_password" >> docker.env
           echo "DB_PASS=default_secure_password" >> docker.env
           echo "DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1" >> docker.env
+          echo "POSTGRES_USER=postgres" >> docker.env
+          echo "DB_USER=postgres" >> docker.env
           cat docker.env
 
       - name: Build and Run with Docker Compose
@@ -48,7 +50,7 @@ jobs:
           sleep 20  # Give the DB some time to start
           docker compose -f docker-compose-build.yml logs db
           docker compose -f docker-compose-build.yml exec -T db pg_isready -U postgres
-          
+
 
       - name: Run Integration Tests
         run: |
