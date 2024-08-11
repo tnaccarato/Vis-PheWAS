@@ -31,7 +31,7 @@ jobs:
           --health-retries=5
 
     env:
-      DJANGO_SETTINGS_MODULE: myproject.settings
+      DJANGO_SETTINGS_MODULE: vis_phewas.settings
       DB_NAME: test_db
       DB_USER: postgres
       DB_PASS: postgres
