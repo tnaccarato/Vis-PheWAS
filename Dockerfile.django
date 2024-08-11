@@ -31,8 +31,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy only necessary files
 COPY ./vis_phewas /app/vis_phewas
 COPY ./LICENSE /app/LICENSE
-COPY ./cert.pem /app/cert.pem
-COPY ./key.pem /app/key.pem
 
 # Change directory to where manage.py is located
 WORKDIR /app/vis_phewas
