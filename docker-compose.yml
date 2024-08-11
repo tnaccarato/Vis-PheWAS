@@ -13,12 +13,22 @@ services:
   web:
     image: tnaccarato/vis-phewas:web
     command: gunicorn vis_phewas.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - "8000:8000"
     depends_on:
       - db
     env_file:
       - docker.env
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "443:443"  # HTTPS port
+      - "80:80"    # HTTP port (for redirecting to HTTPS)
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf  # Custom Nginx configuration
+      - ./cert.pem:/etc/nginx/ssl/cert.pem  # SSL certificate
+      - ./key.pem:/etc/nginx/ssl/key.pem    # SSL key
+    depends_on:
+      - web
 
 volumes:
   postgres_data:
