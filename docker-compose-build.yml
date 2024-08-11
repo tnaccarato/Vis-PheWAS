@@ -18,12 +18,12 @@ services:
       context: .
       dockerfile: Dockerfile.django
     volumes:
-      - ./vis_phewas:/app/vis_phewas
-      - ./mainapp:/app/mainapp
-      - ./api:/app/api
-      - ./templates:/app/templates
-      - ./package.json:/app/package.json
-      - ./webpack.config.js:/app/webpack.config.js
+      - ./vis_phewas/vis_phewas:/app/vis_phewas/vis_phewas
+      - ./vis_phewas/mainapp:/app/vis_phewas/mainapp
+      - ./vis_phewas/api:/app/vis_phewas/api
+      - ./vis_phewas/templates:/app/vis_phewas/templates
+      - ./vis_phewas/package.json:/app/vis_phewas/package.json
+      - ./vis_phewas/webpack.config.js:/app/vis_phewas/webpack.config.js
       - ./LICENSE:/app/LICENSE
     ports:
       - "8000:8000"
