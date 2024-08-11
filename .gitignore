@@ -165,3 +165,4 @@ bundle.js
 docker-compose-build.yml
 Dockerfile.django
 Dockerfile.postgres
+*.pem
