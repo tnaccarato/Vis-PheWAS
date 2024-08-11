@@ -1,0 +1,55 @@
+# Dockerfile for Django Application
+
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get install -y nodejs
+
+# Verify Node.js and npm installation
+RUN node -v && npm -v
+
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy only necessary files
+COPY ./vis_phewas /app/vis_phewas
+COPY ./LICENSE /app/LICENSE
+
+# Change directory to where manage.py is located
+WORKDIR /app/vis_phewas
+
+# Install npm dependencies (if any)
+RUN npm install
+
+# Build front-end assets with Webpack
+RUN npx webpack --mode=production
+
+#Make sure that container has write permissions
+RUN mkdir -p /app/vis_phewas/staticfiles && \
+    chmod -R 755 /app/vis_phewas/staticfiles
+	
+# Collect static files with WhiteNoise in mind
+RUN python manage.py collectstatic --noinput --verbosity 3
+
+# Ensure the static files are served correctly
+ENV STATIC_ROOT /app/vis_phewas/staticfiles
+
+# Gunicorn setup
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "vis_phewas.wsgi:application"]

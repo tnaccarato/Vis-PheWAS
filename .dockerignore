@@ -1,0 +1,71 @@
+# Ignore Python bytecode and cache
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Ignore environment variables files
+*.env
+
+# Ignore virtual environments
+venv/
+.env/
+.venv/
+env/
+
+# Ignore the local SQLite database (if applicable)
+db.sqlite3
+
+# Ignore Django media and static files that are generated at runtime
+media/
+staticfiles/
+
+# Ignore Node.js dependencies
+node_modules/
+
+# Ignore build directories for front-end assets
+build/
+dist/
+
+# Ignore logs and temp files
+logs/
+*.log
+tmp/
+*.tmp
+
+# Ignore editor and IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore backup files
+*.bak
+*.swp
+*.swo
+
+# Ignore Docker Compose override files (local development only)
+docker-compose.override.yml
+docker-compose.override.*
+docker-compose.local.yml
+docker-compose.local.*
+docker-compose.dev.yml
+docker-compose.dev.*
+docker-compose.prod.yml
+docker-compose.prod.*
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Git-related files
+.git/
+.gitignore
+
+# Ignore coverage files
+coverage/
+*.cover
+*.coverage
+
+# Ignore any compiled files
+*.out
+*.exe
