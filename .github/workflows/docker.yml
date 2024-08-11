@@ -68,3 +68,8 @@ jobs:
         run: |
           docker tag vis-phewas-db tnaccarato/vis-phewas:db
           docker push tnaccarato/vis-phewas:db
+
+      - name: Tag and Push Nginx Image to Docker Hub
+        run: |
+          docker tag vis-phewas-nginx tnaccarato/vis-phewas:nginx
+          docker push tnaccarato/vis-phewas:nginx
