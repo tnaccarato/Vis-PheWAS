@@ -171,19 +171,6 @@ export async function clickAllCategories(
     }
   }
 
-  // After all categories have been clicked, display disease labels
-  await displayDiseaseLabels(graph, sigmaInstance);
-}
-
-// Display labels for all disease nodes
-async function displayDiseaseLabels(graph, sigmaInstance) {
-  const diseaseNodes = graph.nodes().filter(
-    (node) => graph.getNodeAttribute(node, "node_type") === "disease",
-  );
-  for (const diseaseNode of diseaseNodes) {
-    graph.setNodeAttribute(diseaseNode, "forceLabel", true);
-  }
-  sigmaInstance.refresh();
 }
 
 // Modified triggerNodeClick function
