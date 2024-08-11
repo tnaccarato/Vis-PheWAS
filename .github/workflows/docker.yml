@@ -72,5 +72,5 @@ jobs:
 
       - name: Tag and Push Nginx Image to Docker Hub
         run: |
-          docker tag vis-phewas-nginx tnaccarato/vis-phewas:nginx
+          docker tag nginx:latest tnaccarato/vis-phewas:nginx
           docker push tnaccarato/vis-phewas:nginx
