@@ -5,7 +5,7 @@ import urllib.parse
 from io import StringIO
 
 import pandas as pd
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponse
 from mainapp.models import HlaPheWasCatalog
 from rest_framework import status
@@ -50,9 +50,11 @@ class GraphDataView(APIView):
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def apply_filters(queryset, filters, category_id=None, show_subtypes=False):
+def apply_filters(queryset, filters, category_id=None, show_subtypes=False, export=False, initial=False):
     """
     Apply the filters to the queryset.
+    :param initial:
+    :param export:
     :param queryset:
     :param filters:
     :param category_id:
@@ -63,12 +65,15 @@ def apply_filters(queryset, filters, category_id=None, show_subtypes=False):
     if category_id:
         category_string = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
-
-    # Handle show_subtypes logic
-    if not show_subtypes:
-        queryset = queryset.filter(subtype='00')
+    if not export and not initial:
+        # Handle show_subtypes logic
+        if not show_subtypes:
+            queryset = queryset.filter(subtype='00')
+        else:
+            queryset = queryset.exclude(subtype='00')
+    # Skip show_subtypes logic if exporting or initial
     else:
-        queryset = queryset.exclude(subtype='00')
+        queryset = queryset
 
     # If no filters are provided, return the queryset filtered by p-value
     if not filters:
@@ -176,7 +181,7 @@ def get_category_data(filters) -> tuple:
     # Get the unique category strings
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     # Apply filters before slicing
-    filtered_queryset = apply_filters(queryset, filters)
+    filtered_queryset = apply_filters(queryset, filters, initial=True)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('category_string').distinct())
     # Get visible nodes as a list of strings
@@ -205,6 +210,9 @@ def get_disease_data(category_id, filters, show_subtypes) -> tuple:
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
                                                                                        'category_string').distinct()
     filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
+
+    # Annotation for allele count
+    filtered_queryset = filtered_queryset.annotate(allele_count=Count('snp'))
 
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
@@ -299,7 +307,7 @@ class ExportDataView(APIView):
         filters = request.GET.get('filters', '')
         # Get the queryset and apply the filters
         queryset = HlaPheWasCatalog.objects.all()
-        filtered_queryset = apply_filters(queryset, filters)
+        filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
         # Create a DataFrame from the queryset
         df = pd.DataFrame(list(filtered_queryset.values()))
         # Drop the id column if it exists
@@ -423,7 +431,7 @@ class GetDiseasesForCategoryView(APIView):
 
         # Replace underscores with spaces in the category name
         category = category.replace('_', ' ')
-        show_subtypes = request.GET.get('show_subtypes') == 'false'
+        show_subtypes = request.GET.get('show_subtypes', 'false')
 
         try:
             # Get the diseases for the category with the selected filters
