@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class MainappConfig(AppConfig):
@@ -11,4 +12,6 @@ class MainappConfig(AppConfig):
             os.system('npm run build')
             print('Build completed')
 
-        run_build()
+        # Only run build if not testing
+        if not settings.TESTING:
+            run_build()
