@@ -3,10 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     env_file:
       - docker.env
     volumes:
