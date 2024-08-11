@@ -24,7 +24,7 @@ jobs:
       - name: Create docker.env File
         run: |
           echo "DJANGO_SECRET_KEY=test_secret_key" >> docker.env
-          echo "DJANGO_DEBUG="False" >> docker.env
+          echo "DJANGO_DEBUG=False" >> docker.env
           echo "DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1" >> docker.env
           cat docker.env
 
