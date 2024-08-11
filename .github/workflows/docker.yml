@@ -34,7 +34,7 @@ jobs:
           echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> docker.env
           echo "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }}" >> docker.env
           echo "DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> docker.env
-          cat .env
+          cat docker.env
 
       - name: Build and Run with Docker Compose
         run: |
