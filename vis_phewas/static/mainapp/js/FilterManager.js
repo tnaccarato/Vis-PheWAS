@@ -347,7 +347,7 @@ export class FilterManager {
     this.showAlert(message);
 
     // Fetch graph data with the filters
-    this.fetchGraphData({filters: this.filters.join(" ")});
+    this.fetchGraphData({filters: this.filters.join(" "), type: "categories"});
 
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display =
