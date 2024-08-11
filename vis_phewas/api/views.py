@@ -1,3 +1,4 @@
+import html
 import itertools
 import re
 import urllib.parse
@@ -174,7 +175,7 @@ def get_category_data(filters) -> tuple:
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('category_string').distinct())
     # Get visible nodes as a list of strings
-    visible_nodes = ["category-"+node['category_string'].replace(' ','_') for node in visible_nodes]
+    visible_nodes = ["category-" + node['category_string'].replace(' ', '_') for node in visible_nodes]
     print(visible_nodes)
 
     # Sort the queryset by category_string
@@ -207,7 +208,7 @@ def get_disease_data(category_id, filters) -> tuple:
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
     # Get visible nodes as a list of strings
-    visible_nodes = ["disease-"+node['phewas_string'].replace(' ','_') for node in visible_nodes]
+    visible_nodes = ["disease-" + node['phewas_string'].replace(' ', '_') for node in visible_nodes]
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
     # Create the nodes and edges
@@ -249,7 +250,7 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
     # Get visible nodes as a list of strings
-    visible_nodes = ["allele-"+node['snp'].replace(' ','_') for node in visible_nodes]
+    visible_nodes = ["allele-" + node['snp'].replace(' ', '_') for node in visible_nodes]
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
     # Get the nodes and edges
@@ -321,7 +322,8 @@ class ExportDataView(APIView):
 
         # Write the DataFrame to a CSV file
         buffer = StringIO()
-        buffer.write(f"Filters: {filters}\n\n")
+        decoded_filters = html.unescape(filters)  # Unescape filters so that they are human-readable in the CSV
+        buffer.write(f"Filters: {decoded_filters}\n\n")
         df.to_csv(buffer, index=False)
         csv_content = buffer.getvalue()
 
