@@ -39,6 +39,11 @@ jobs:
           curl --fail http://localhost:8000 || (docker compose -f docker-compose-build.yml logs web && \
           docker compose -f docker-compose-build.yml exec web cat /app/vis_phewas/debug.log && exit 1)
 
+      - name: Wait for DB to Start
+        run: |
+          sleep 20  # Give the DB some time to start
+          docker compose -f docker-compose-build.yml exec -T db pg_isready -U postgres 
+
       - name: Run Integration Tests
         run: |
           docker compose -f docker-compose-build.yml exec -T web python manage.py test
