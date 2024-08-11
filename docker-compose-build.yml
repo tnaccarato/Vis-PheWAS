@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.postgres
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust # Allow any connection to the DB
     env_file:
       - docker.env
     volumes:
