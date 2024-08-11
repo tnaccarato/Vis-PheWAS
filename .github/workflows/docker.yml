@@ -36,6 +36,11 @@ jobs:
           echo "DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> docker.env
           cat docker.env
 
+      - name: Save SSL Certificates
+        run: |
+          echo "${{ secrets.SSL_CERTIFICATE }}" > cert.pem
+          echo "${{ secrets.SSL_PRIVATE_KEY }}" > key.pem
+
       - name: Build and Run with Docker Compose
         run: |
           docker compose --env-file docker.env -f docker-compose-build.yml up -d --build
@@ -43,7 +48,8 @@ jobs:
       - name: Health Check
         run: |
           sleep 10  # Give the containers some time to start
-          curl --fail http://localhost:8000/ || (docker compose -f docker-compose-build.yml logs web && docker compose -f docker-compose-build.yml exec web cat /app/vis_phewas/debug.log && exit 1)
+          curl --fail https://localhost || (docker compose -f docker-compose-build.yml logs nginx && \
+          docker compose -f docker-compose-build.yml exec web cat /app/vis_phewas/debug.log && exit 1)
 
       - name: Run Integration Tests
         run: |
