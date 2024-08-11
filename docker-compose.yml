@@ -1,6 +1,9 @@
 services:
   db:
     image: tnaccarato/vis-phewas:db
+    environment:
+        POSTGRES_DB: vis_phewas_db
+        POSTGRES_USER: postgres
     env_file:
       - docker.env
     volumes:
@@ -9,6 +12,11 @@ services:
   web:
     image: tnaccarato/vis-phewas:web
     command: gunicorn vis_phewas.wsgi:application --bind 0.0.0.0:8000
+    environment:
+      DB_HOST: db
+      DB_NAME: vis_phewas_db
+      DB_USER: postgres
+      DB_PORT: 5432
     depends_on:
       - db
     env_file:
