@@ -5,7 +5,6 @@ import urllib.parse
 from io import StringIO
 
 import pandas as pd
-from django.db import models
 from django.db.models import Q
 from django.http import HttpResponse
 from mainapp.models import HlaPheWasCatalog
@@ -41,7 +40,7 @@ class GraphDataView(APIView):
             nodes, edges, visible = get_category_data(filters)
         elif data_type == 'diseases':
             category_id = request.GET.get('category_id')
-            nodes, edges, visible = get_disease_data(category_id, filters)
+            nodes, edges, visible = get_disease_data(category_id, filters, show_subtypes)
         elif data_type == 'alleles':
             disease_id = urllib.parse.unquote(request.GET.get('disease_id'))
             nodes, edges, visible = get_allele_data(disease_id, filters, show_subtypes)
@@ -51,18 +50,25 @@ class GraphDataView(APIView):
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def apply_filters(queryset, filters, category_id=None):
+def apply_filters(queryset, filters, category_id=None, show_subtypes=False):
     """
     Apply the filters to the queryset.
     :param queryset:
     :param filters:
     :param category_id:
-    :return:
+    :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
+    :return: Filtered queryset
     """
     # If a category_id is provided, filter by that category
     if category_id:
         category_string = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
+
+    # Handle show_subtypes logic
+    if not show_subtypes:
+        queryset = queryset.filter(subtype='00')
+    else:
+        queryset = queryset.exclude(subtype='00')
 
     # If no filters are provided, return the queryset filtered by p-value
     if not filters:
@@ -98,7 +104,6 @@ def apply_filters(queryset, filters, category_id=None):
             q = Q(**{f'{field}__gte': value})
         elif operator == '<=':
             q = Q(**{f'{field}__lte': value})
-
         else:
             continue
 
@@ -188,40 +193,37 @@ def get_category_data(filters) -> tuple:
     return nodes, edges, visible_nodes
 
 
-def get_disease_data(category_id, filters) -> tuple:
+def get_disease_data(category_id, filters, show_subtypes) -> tuple:
     """
     Get the disease data for the selected category.
+    :param show_subtypes:
     :param category_id:
     :param filters:
     :return:
     """
-    # print(filters)
-    # Get the disease data for the selected category
     category_string = category_id.replace('category-', '').replace('_', ' ')
-    # Get the unique diseases for the selected category
     queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
                                                                                        'category_string').distinct()
-    # Apply filters before slicing
-    filtered_queryset = apply_filters(queryset, filters)
-    # Get the number of alleles associated with each disease and annotate the queryset
-    filtered_queryset = filtered_queryset.annotate(allele_count=models.Count('snp'))
+    filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
+
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
-    # Get visible nodes as a list of strings
     visible_nodes = ["disease-" + node['phewas_string'].replace(' ', '_') for node in visible_nodes]
+
     # Sort the queryset by phewas_string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
+
     # Create the nodes and edges
     nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
               'node_type': 'disease', 'allele_count': disease['allele_count'], 'category': disease['category_string']}
              for disease in filtered_queryset]
     edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
              filtered_queryset]
-    # Return the nodes, edges, and visible nodes
+
     return nodes, edges, visible_nodes
 
 
-def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
+def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     """
     Get the allele data for the selected disease.
     :param disease_id:
@@ -229,31 +231,20 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return:
     """
-    # Get the allele data for the selected disease
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
-    # If show_subtypes is true, show all subtypes, otherwise only show the main groups
-    if show_subtypes:
-        # print("Showing subtypes")
-        queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
-            'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
-        ).exclude(subtype='00').distinct()
-    # Otherwise, only show the main groups
-    else:
-        # print("Showing only main groups")
-        queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string, subtype='00').values(
-            'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
-        ).distinct()
-    # Apply filters before slicing
-    # Remove snp from filters list so other snps are still shown
-    filters = ",".join([f for f in filters.split(',') if not f.startswith('snp')])
-    filtered_queryset = apply_filters(queryset, filters)
+    queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
+        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+    ).distinct()
+
+    filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
+
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
-    # Get visible nodes as a list of strings
     visible_nodes = ["allele-" + node['snp'].replace(' ', '_') for node in visible_nodes]
+
     # Order by odds_ratio and then slice
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
-    # Get the nodes and edges
+
     # Annotate node with odds_ratio for dynamic node colouring
     nodes = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele',
@@ -261,7 +252,7 @@ def get_allele_data(disease_id, filters, show_subtypes=True) -> tuple:
          } for allele in filtered_queryset]
     edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
              filtered_queryset]
-    # Return the nodes, edges, and visible nodes
+
     return nodes, edges, visible_nodes
 
 
@@ -424,19 +415,22 @@ class GetDiseasesForCategoryView(APIView):
 
     def get(self, request):
         # Get filters from the request
-        filters = request.GET.get('filters')
+        filters = request.GET.get('filters', '')
         # Get the category from the request
         category = request.GET.get('category')
-        # Replace underscores with spaces
-        category = category.replace('_', ' ')
         if not category:
             return Response({"error": "Category parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Replace underscores with spaces in the category name
+        category = category.replace('_', ' ')
+        show_subtypes = request.GET.get('show_subtypes') == 'false'
 
         try:
             # Get the diseases for the category with the selected filters
             diseases = HlaPheWasCatalog.objects.filter(category_string=category)
-            # Apply the filters
-            diseases = apply_filters(diseases, filters)
+            # Apply the filters, including the show_subtypes logic
+            diseases = apply_filters(diseases, filters, show_subtypes=show_subtypes)
+
             # Get the unique diseases
             diseases = diseases.values('phewas_string').distinct()
             # Sort the diseases by phewas_string
