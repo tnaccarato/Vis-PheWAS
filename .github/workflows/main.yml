@@ -1,0 +1,26 @@
+name: Check Secrets
+
+on:
+  workflow_dispatch:  # Allows you to manually trigger the workflow
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Secret Values
+        run: |
+          echo "Checking if secrets are set:"
+          if [ -z "${{ secrets.POSTGRES_DB }}" ]; then echo "POSTGRES_DB is empty"; else echo "POSTGRES_DB is set"; fi
+          if [ -z "${{ secrets.POSTGRES_USER }}" ]; then echo "POSTGRES_USER is empty"; else echo "POSTGRES_USER is set"; fi
+          if [ -z "${{ secrets.POSTGRES_PASSWORD }}" ]; then echo "POSTGRES_PASSWORD is empty"; else echo "POSTGRES_PASSWORD is set"; fi
+          if [ -z "${{ secrets.DB_NAME }}" ]; then echo "DB_NAME is empty"; else echo "DB_NAME is set"; fi
+          if [ -z "${{ secrets.DB_USER }}" ]; then echo "DB_USER is empty"; else echo "DB_USER is set"; fi
+          if [ -z "${{ secrets.DB_PASS }}" ]; then echo "DB_PASS is empty"; else echo "DB_PASS is set"; fi
+          if [ -z "${{ secrets.DB_HOST }}" ]; then echo "DB_HOST is empty"; else echo "DB_HOST is set"; fi
+          if [ -z "${{ secrets.DB_PORT }}" ]; then echo "DB_PORT is empty"; else echo "DB_PORT is set"; fi
+          if [ -z "${{ secrets.DJANGO_SECRET_KEY }}" ]; then echo "DJANGO_SECRET_KEY is empty"; else echo "DJANGO_SECRET_KEY is set"; fi
+          if [ -z "${{ secrets.DJANGO_DEBUG }}" ]; then echo "DJANGO_DEBUG is empty"; else echo "DJANGO_DEBUG is set"; fi
+          if [ -z "${{ secrets.DJANGO_ALLOWED_HOSTS }}" ]; then echo "DJANGO_ALLOWED_HOSTS is empty"; else echo "DJANGO_ALLOWED_HOSTS is set"; fi
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then echo "DOCKER_USERNAME is empty"; else echo "DOCKER_USERNAME is set"; fi
+          if [ -z "${{ secrets.DOCKERHUB_PAT }}" ]; then echo "DOCKERHUB_PAT is empty"; else echo "DOCKERHUB_PAT is set"; fi
