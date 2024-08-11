@@ -26,6 +26,7 @@ jobs:
           echo "DJANGO_SECRET_KEY=test_secret_key" >> docker.env
           echo "DB_HOST=db" >> docker.env
           echo "DJANGO_DEBUG=False" >> docker.env
+          echo "POSTGRES_PASSWORD=default_secure_password" >> docker.env
           echo "DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1" >> docker.env
           cat docker.env
 
