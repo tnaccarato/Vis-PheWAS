@@ -42,8 +42,9 @@ jobs:
       - name: Wait for DB to Start
         run: |
           sleep 100  # Give the DB some time to start
-          docker compose -f docker-compose-build.yml exec -T db pg_isready -U postgres
           docker compose -f docker-compose-build.yml logs db
+          docker compose -f docker-compose-build.yml exec -T db pg_isready -U postgres
+          
 
       - name: Run Integration Tests
         run: |
