@@ -32,8 +32,8 @@ class HlaPheWasCatalogTestCase(TestCase):
             maf=0.05,
             serotype='01',
             subtype='01',
-            chromosome=6,  # Add required field chromosome
-            nchrobs=300  # Add required field nchrobs
+            chromosome=6,
+            nchrobs=300
         )
 
     def test_index_view(self):
@@ -44,7 +44,7 @@ class HlaPheWasCatalogTestCase(TestCase):
 
     def test_graph_data_view_initial(self):
         url = reverse('graph_data')
-        response = self.client.get(url, {'type': 'initial'})
+        response = self.client.get(url, {'type': 'initial', 'show_subtypes': 'true'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('nodes', response.data)
         self.assertIn('edges', response.data)
@@ -68,7 +68,8 @@ class HlaPheWasCatalogTestCase(TestCase):
 
     def test_graph_data_view_diseases(self):
         url = reverse('graph_data')
-        response = self.client.get(url, {'type': 'diseases', 'category_id': 'category-neurological'})
+        response = self.client.get(url, {'type': 'diseases', 'category_id': 'category-neurological',
+                                         'show_subtypes': 'true'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('nodes', response.data)
         self.assertIn('edges', response.data)
@@ -257,7 +258,8 @@ class HlaPheWasCatalogTestCase(TestCase):
 
     def test_get_diseases_for_category_view(self):
         url = reverse('get_diseases_for_category')
-        response = self.client.get(url, {'category': 'neurological'})
+        response = self.client.get(url, {'category': 'neurological', 'show_subtypes': 'true'})
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('diseases', response.data)
         # Check that the diseases are a list
