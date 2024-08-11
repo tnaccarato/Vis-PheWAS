@@ -42,8 +42,10 @@ jobs:
 
       - name: Health Check
         run: |
+          - name: Health Check
+        run: |
           sleep 10  # Give the containers some time to start
-          curl --fail http://localhost:8000/ || (docker compose -f docker-compose-build.yml logs web && exit 1)
+          curl --fail http://localhost:8000/ || (docker compose -f docker-compose-build.yml logs web && docker compose -f docker-compose-build.yml exec web cat /app/vis_phewas/vis_phewas/debug.log && exit 1)
 
       - name: Run Integration Tests
         run: |
