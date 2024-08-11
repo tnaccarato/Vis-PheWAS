@@ -1,9 +1,0 @@
-# Dockerfile for PostgreSQL with Preloaded Data
-
-# Use the official PostgreSQL image as a base
-FROM postgres:13
-
-# Copy the SQL dump into the Docker image
-COPY db_backup.sql /docker-entrypoint-initdb.d/
-
-# PostgreSQL will automatically load the dump when the container starts
