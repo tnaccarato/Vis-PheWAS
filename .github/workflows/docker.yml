@@ -55,10 +55,10 @@ jobs:
 
       - name: Tag and Push Web Image to Docker Hub
         run: |
-          docker tag vis-phewas:web tnaccarato/vis-phewas:web
+          docker tag vis-phewas-web tnaccarato/vis-phewas:web
           docker push tnaccarato/vis-phewas:web
 
       - name: Tag and Push DB Image to Docker Hub
         run: |
-          docker tag vis-phewas:db tnaccarato/vis-phewas:db
+          docker tag vis-phewas-db tnaccarato/vis-phewas:db
           docker push tnaccarato/vis-phewas:db
