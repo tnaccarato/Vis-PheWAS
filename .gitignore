@@ -162,3 +162,4 @@ cython_debug/
 bundle.js
 /vis_phewas/staticfiles
 *.env
+vis_phewas/webpack.config.js
