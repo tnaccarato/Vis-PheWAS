@@ -161,3 +161,4 @@ cython_debug/
 /vis_phewas/node_modules
 bundle.js
 /vis_phewas/staticfiles
+*.env
