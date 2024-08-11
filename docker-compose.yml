@@ -19,7 +19,7 @@ services:
       - staticfiles:/app/vis_phewas/staticfiles  # Shared volume for static files
 
   nginx:
-    image: nginx:latest
+    image: tnaccarato/vis-phewas:nginx
     ports:
       - "443:443"  # HTTPS port
       - "80:80"    # HTTP port (for redirecting to HTTPS)
