@@ -2,7 +2,7 @@ name: CI/CD for Django with Docker Compose
 
 on:
   push:
-    branches: [ "working-deployment" ]
+    branches: [ "deployment" ]
 
 jobs:
   build-test-deploy:
