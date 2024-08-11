@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     build:
@@ -20,6 +22,7 @@ services:
       - ./vis_phewas/package.json:/app/vis_phewas/package.json
       - ./vis_phewas/webpack.config.js:/app/vis_phewas/webpack.config.js
       - ./LICENSE:/app/LICENSE
+      - staticfiles:/app/staticfiles  # Share static files
     ports:
       - "8000:8000"
     env_file:
@@ -36,8 +39,10 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./cert.pem:/etc/nginx/ssl/cert.pem
       - ./key.pem:/etc/nginx/ssl/key.pem
+      - staticfiles:/app/staticfiles  # Access static files from the shared volume
     depends_on:
       - web
 
 volumes:
   postgres_data:
+  staticfiles:  # Define the shared volume
