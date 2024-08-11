@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.postgres
+    environment:
+        POSTGRES_DB: vis_phewas_db
+        POSTGRES_USER: postgres
     env_file:
       - docker.env
     volumes:
