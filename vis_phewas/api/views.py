@@ -32,7 +32,9 @@ class GraphDataView(APIView):
         # Get the data type from the request
         data_type = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
-        show_subtypes = request.GET.get('show_subtypes') == 'false'
+        show_subtypes = request.GET.get('show_subtypes')
+        if show_subtypes == 'undefined':
+            show_subtypes = False
         if filters == ['']:
             filters = []
 
@@ -422,7 +424,6 @@ class GetDiseasesForCategoryView(APIView):
     def get(self, request):
         # Get filters from the request
         filters = request.GET.get('filters', '')
-        print(filters)
         # Get the category from the request
         category = request.GET.get('category')
         if not category:
@@ -430,8 +431,9 @@ class GetDiseasesForCategoryView(APIView):
 
         # Replace underscores with spaces in the category name
         category = category.replace('_', ' ')
-        print(category)
-        show_subtypes = request.GET.get('show_subtypes') == 'false'
+        show_subtypes = request.GET.get('show_subtypes')
+        if show_subtypes == 'undefined':
+            show_subtypes = False
 
         try:
             # Get the diseases for the category with the selected filters
