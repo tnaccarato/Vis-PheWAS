@@ -25,7 +25,7 @@ html, body, .container-fluid {
 
 .col-md-6.right-column {
     padding-right: 0;
-    padding-left: 1%;
+    padding-left: 0.5%;
     width: 0; /* Hidden initially */
     transition: width 0.5s ease; /* Smooth transition for width change */
 }
