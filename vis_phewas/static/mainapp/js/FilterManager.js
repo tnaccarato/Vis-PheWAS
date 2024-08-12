@@ -31,11 +31,7 @@ export class FilterManager {
   // Method to update button states
   updateButtonStates = () => {
     const addFilterButton = document.querySelector(".addFilter");
-    const applyFiltersButton = document.querySelector(".applyFilters");
-
     addFilterButton.disabled = this.filterCount >= 8;
-
-    applyFiltersButton.disabled = this.filterCount === 0;
   };
 
   // Method to push filters to the filters array
@@ -347,7 +343,7 @@ export class FilterManager {
     this.showAlert(message);
 
     // Fetch graph data with the filters
-    this.fetchGraphData({filters: this.filters.join(" ")});
+    this.fetchGraphData({filters: this.filters.join(" "), type: "categories"});
 
     const filterBody = document.querySelector(".toolbar");
     filterBody.style.display =
