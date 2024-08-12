@@ -269,8 +269,7 @@ class GraphManager {
 
     // Create a close button for the info container
     const closeButton = document.createElement("button");
-    closeButton.className = "btn btn-danger";
-    closeButton.textContent = "X";
+    closeButton.className = "btn-close";
     closeButton.onclick = closeInfoContainer(
       // Call the closeInfoContainer function
       this.adjustSigmaContainerHeight,
