@@ -259,7 +259,6 @@ class HlaPheWasCatalogTestCase(TestCase):
     def test_get_diseases_for_category_view(self):
         url = reverse('get_diseases_for_category')
         response = self.client.get(url, {'category': 'neurological', 'show_subtypes': 'true'})
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('diseases', response.data)
         # Check that the diseases are a list

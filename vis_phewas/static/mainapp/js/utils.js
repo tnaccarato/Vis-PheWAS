@@ -107,37 +107,21 @@ export function getShowAlert(message) {
     `;
 }
 
-// Function to adjust the size of the Sigma container based on the size of the filters container
+// Function to adjust the height of the Sigma container based on the page layout
 export function getAdjustSigmaContainer(container, sigmaInstance) {
   const filtersContainer = document.getElementById("filters-container");
-  const sidebarPanel = document.getElementsByClassName("info-container")[0];
-  const leftColumn = document.querySelector(".col-md-6.left-column"); // Left-hand column
 
-  let sidebarVisible = false; // Cache to track sidebar visibility
-
-  const updateLayout = () => {
-    const filtersHeight = filtersContainer ? filtersContainer.offsetHeight : 0;
-    container.style.height = `calc(100% - ${filtersHeight}px)`;
-
-    // Adjust the width of the left column based on the cached sidebar visibility
-    if (sidebarVisible) {
-      leftColumn.style.width = "70%"; // Shrink left column to 70%
-    } else {
-      leftColumn.style.width = "100%"; // Default to 100% when the sidebar is hidden
-    }
-
-    sigmaInstance.refresh();
-  };
-
+  // Using requestAnimationFrame to optimize resizing
   window.requestAnimationFrame(() => {
-    // Check sidebar visibility after a delay to account for animation
-    setTimeout(() => {
-      sidebarVisible = sidebarPanel && sidebarPanel.style.display !== "none";
-      console.log("Applying layout update");
-      updateLayout();
-    }, 300); // Adjust the timeout duration to match the length of your animation
+    const filtersHeight = filtersContainer.offsetHeight;
+    const filtersWidth = filtersContainer.offsetWidth;
+    container.style.offsetWidth = `${filtersWidth}`;
+    container.style.height = `calc(100% - ${filtersHeight}px)`;
+    sigmaInstance.refresh();
   });
 }
+
+
 
 // Create a scale for the size of the nodes
 export const sizeScale = scaleLog().domain([0.00001, 0.05]).range([8, 2]);

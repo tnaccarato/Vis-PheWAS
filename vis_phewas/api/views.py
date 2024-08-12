@@ -32,12 +32,16 @@ class GraphDataView(APIView):
         # Get the data type from the request
         data_type = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
-        show_subtypes = request.GET.get('show_subtypes') == 'true'
+        show_subtypes = request.GET.get('show_subtypes')
+        if show_subtypes == 'undefined':
+            show_subtypes = False
         if filters == ['']:
             filters = []
 
         if data_type == 'initial':
-            nodes, edges, visible = get_category_data(filters)
+            nodes, edges, visible = get_category_data(filters, show_subtypes, initial=True)
+        elif data_type == 'categories':
+            nodes, edges, visible = get_category_data(filters, initial=False, show_subtypes=show_subtypes)
         elif data_type == 'diseases':
             category_id = request.GET.get('category_id')
             nodes, edges, visible = get_disease_data(category_id, filters, show_subtypes)
@@ -87,7 +91,6 @@ def apply_filters(queryset, filters, category_id=None, show_subtypes=False, expo
 
     # Loop through the filters and apply them to the queryset
     for logical_operator, filter_str in filter_list:
-        print(f"Processing filter: {logical_operator} {filter_str}")
         parts = filter_str.split(':', 2)
         if len(parts) < 3:
             continue
@@ -121,13 +124,8 @@ def apply_filters(queryset, filters, category_id=None, show_subtypes=False, expo
     # Filter the queryset by the combined query
     queryset = queryset.filter(combined_query)
 
-    print("SQL Query:", queryset.query)
-    print("Count before p-value filter:", queryset.count())
-
     # Filter the queryset by p-value
     filtered_queryset = queryset.filter(p__lte=0.05)
-
-    print("Final filtered count:", filtered_queryset.count())
 
     # Return the filtered queryset
     return filtered_queryset
@@ -139,7 +137,6 @@ def parse_filters(filters):
     :param filters:
     :return:
     """
-    print("Parsing filters:", filters)
     # Split the filters string by AND or OR
     filter_list = []
     # Keep track of the current operator
@@ -167,26 +164,26 @@ def parse_filters(filters):
                 else:
                     filter_list.append(('AND', sub_part))
 
-    print("Parsed filter list:", filter_list)
     # Return the filter list
     return filter_list
 
 
-def get_category_data(filters) -> tuple:
+def get_category_data(filters, show_subtypes, initial=True, ) -> tuple:
     """
     Get the category data for the graph.
+    :param show_subtypes:
+    :param initial:
     :param filters:
     :return:
     """
     # Get the unique category strings
     queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
     # Apply filters before slicing
-    filtered_queryset = apply_filters(queryset, filters, initial=True)
+    filtered_queryset = apply_filters(queryset, filters, initial=initial, show_subtypes=show_subtypes)
     # Get the visible nodes
     visible_nodes = list(filtered_queryset.values('category_string').distinct())
     # Get visible nodes as a list of strings
     visible_nodes = ["category-" + node['category_string'].replace(' ', '_') for node in visible_nodes]
-    print(visible_nodes)
 
     # Sort the queryset by category_string
     filtered_queryset = filtered_queryset.order_by('category_string')
@@ -243,6 +240,9 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
         'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
     ).distinct()
+
+    # Remove snp from filters list so other snps are still shown
+    filters = ",".join([f for f in filters.split(',') if not f.startswith('snp')])
 
     filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
 
@@ -431,16 +431,20 @@ class GetDiseasesForCategoryView(APIView):
 
         # Replace underscores with spaces in the category name
         category = category.replace('_', ' ')
-        show_subtypes = request.GET.get('show_subtypes', 'false')
+        show_subtypes = request.GET.get('show_subtypes')
+        if show_subtypes == 'undefined':
+            show_subtypes = False
 
         try:
             # Get the diseases for the category with the selected filters
             diseases = HlaPheWasCatalog.objects.filter(category_string=category)
             # Apply the filters, including the show_subtypes logic
             diseases = apply_filters(diseases, filters, show_subtypes=show_subtypes)
+            print(diseases)
 
             # Get the unique diseases
             diseases = diseases.values('phewas_string').distinct()
+            print(diseases)
             # Sort the diseases by phewas_string
             diseases = sorted([disease['phewas_string'] for disease in diseases])
             # Return the diseases
