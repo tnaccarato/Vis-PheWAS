@@ -242,7 +242,8 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     ).distinct()
 
     # Remove snp from filters list so other snps are still shown
-    filters = ",".join([f for f in filters.split(',') if not f.startswith('snp')])
+    filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
+    print(filters)
 
     filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
 
