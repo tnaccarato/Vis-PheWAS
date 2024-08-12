@@ -217,15 +217,16 @@ class GraphHelper {
       .then((response) => response.json())
       .then((data) => {
         // Create a header for the diseases
+        const diseases = data.diseases;
+        const diseaseCount = diseases.length;
         const header = document.createElement("h3");
-        header.textContent = `Diseases for ${formatCategoryString(category)}`;
+        header.innerHTML = `<i>${diseaseCount}</i> Diseases for ${formatCategoryString(category)}`;
         header.style.alignSelf = "center";
         infoContainer.appendChild(header);
         // Create a table for the diseases for the category
         const table = document.createElement("table");
         table.className =
           "table table-striped table-bordered table-hover table-sm";
-        const diseases = data.diseases;
 
         const thead = document.createElement("thead");
         thead.innerHTML = `<tr><th>Disease</th></tr>`;
