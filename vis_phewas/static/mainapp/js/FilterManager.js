@@ -234,7 +234,12 @@ export class FilterManager {
     const filterContainer = document.querySelector(".toolbar-wrapper");
     filterContainer.style.display = "block";
     const filterBody = document.querySelector(".toolbar");
+    const chevron = document.querySelector(".toggle-button .fa-chevron-down");
     filterBody.style.display = "block";
+    // Ensure chevron is pointing down
+    const isFilterBodyVisible = filterBody.style.display === "block";
+    chevron.classList.toggle("up", !isFilterBodyVisible);
+    chevron.classList.toggle("down", isFilterBodyVisible);
     // Adjust the sigma container height
     this.adjustSigmaContainerHeight();
     // Check if the maximum number of filters has been reached
