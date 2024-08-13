@@ -352,3 +352,13 @@ input:checked + .slider:before {
 .toggle-button .down {
     transform: rotate(0deg);
 }
+
+.btn-info{
+    background-color: #a043e1 !important;
+    border-color: #a043e1 !important;
+}
+
+.btn-info:hover{
+    background-color: #7a2cbf !important;
+    border-color: #7a2cbf !important;
+}
