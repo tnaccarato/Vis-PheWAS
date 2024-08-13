@@ -357,9 +357,9 @@ class SendDataToSOMView(APIView):
         buffer = StringIO()
         df.to_csv(buffer, index=False)
         csv_content = buffer.getvalue()
-        # Save the CSV content in a file for debugging
-        with open('data.csv', 'w') as f:
-            f.write(csv_content)
+        # # Save the CSV content in a file for debugging
+        # with open('data.csv', 'w') as f:
+        #     f.write(csv_content)
 
 
         # Save the CSV content and SOM type to the temporary model
