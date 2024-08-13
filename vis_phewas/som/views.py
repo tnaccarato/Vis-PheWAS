@@ -18,6 +18,11 @@ from io import StringIO
 
 
 def cluster_results_to_csv(cluster_results):
+    """
+    Static method to save the cluster results to a CSV file.
+    :param cluster_results:
+    :return:
+    """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"cluster_results_{timestamp}.csv"
     file_path = os.path.join(settings.MEDIA_ROOT, file_name)
@@ -40,7 +45,7 @@ class SOMSNPView(APIView):
         csv_content = temp_data.csv_content
         df = pd.read_csv(StringIO(csv_content))
 
-        # Preprocessing as per your script
+        # Preprocessing
         filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
         filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
         filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
@@ -217,7 +222,7 @@ class SOMDiseaseView(APIView):
         csv_content = temp_data.csv_content
         df = pd.read_csv(StringIO(csv_content))
 
-        # Preprocessing as per your script
+        # Preprocessing
         filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
         filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
         filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
