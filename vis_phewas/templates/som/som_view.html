@@ -18,28 +18,38 @@
             display: block;
             margin-bottom: 5px;
         }
+
     </style>
 </head>
 <body>
 <h1>SOM Visualization</h1>
-<form id="filter-form" onsubmit="handleSubmit(event);">
+<form id="filter-form" style="display: flex; flex-direction: column" onclick="handleSubmit(event)">
     {% if type == 'disease' %}
-        <h2>Filter by Disease Category</h2>
-        <div class="checkbox-container">
-        {% for category in categories %}
-            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                    {% if category in filters %} checked {% endif %}>
-            <!-- Check the checkbox if it is in the selected filters -->
-            <label for="{{ category }}">{{ category }}</label>
-        {% endfor %}
+        <div class="disease-filters">
+            <h2>Filter by Disease Category</h2>
+            <div class="checkbox-container">
+                {% for category in categories %}
+                    <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                            {% if category in filters %} checked {% endif %}>
+                    <!-- Check the checkbox if it is in the selected filters -->
+                    <label for="{{ category }}">{{ category }}</label>
+                {% endfor %}
+            </div>
+        </div>
     {% endif %}
     <!-- Get a slider for number of clusters -->
-    <label for="clusters">Number of Clusters:</label>
-    <input type="range" id="clusters" name="clusters" min="2" max="10" value={{ num_clusters }}>
-    <!-- Add a tooltip showing the current value of the slider -->
-    <span id="clusters-value">{{ num_clusters }}</span>
+    <div style="display: flex;flex-direction: row;justify-content: space-around;margin-top: 10px;">
+        <div class="cluster-slider">
+            <label for="clusters">Number of Clusters:</label>
+            <input type="range" id="clusters" name="clusters" min="2" max="10" value="5">
+            <!-- Add a tooltip showing the current value of the slider -->
+            <span id="clusters-value">5</span>
+        </div>
+        <!-- Add a button to submit the form -->
+        <button type="submit" class="button btn btn-info updateSOM" style="align-self: normal;">
+            Generate SOM with Selection
+        </button>
     </div>
-    <button type="submit" class="button btn btn-info updateSOM">Generate SOM with Selection</button>
 </form>
 
 
