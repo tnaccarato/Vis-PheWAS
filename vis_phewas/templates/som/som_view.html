@@ -6,6 +6,16 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="{% static 'mainapp/js/som.js' %}"></script>
+    <style>
+        .checkbox-container {
+            column-count: 3;
+            column-gap: 20px;
+        }
+        .checkbox-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
 <h1>SOM Visualization</h1>
@@ -13,11 +23,12 @@
 {% if type == 'disease' %}
     <h2>Filter by Disease Category</h2>
     <form id="disease-filter-form" onsubmit="handleSubmit(event);">
-        {% for category in categories %}
-            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}">
-            <label for="{{ category }}">{{ category }}</label><br>
-        {% endfor %}
-
+        <div class="checkbox-container">
+            {% for category in categories %}
+                <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}">
+                <label for="{{ category }}">{{ category }}</label>
+            {% endfor %}
+        </div>
         <button type="submit" class="button btn btn-info updateSOM">Generate SOM with Selection</button>
     </form>
 {% endif %}
@@ -36,17 +47,38 @@
             selectedFilters.push(baseFilter + checkbox.value);
         });
 
-        // Join filters with " AND " to match the format
-        const joinedFilters = selectedFilters.join(' AND ');
+        // Store selected filters in localStorage
+        localStorage.setItem('selectedFilters', JSON.stringify(selectedFilters));
+
+        // Join filters with " OR " to match the format
+        const joinedFilters = selectedFilters.join(' OR ');
         // Encode the joined filters to be used in the URL
         return encodeURIComponent(joinedFilters);
     }
+
+    // Function to load selected filters from localStorage on page load
+    function loadSelectedFilters() {
+        const selectedFilters = JSON.parse(localStorage.getItem('selectedFilters'));
+        if (selectedFilters) {
+            selectedFilters.forEach((filter) => {
+                const category = filter.replace('category_string:==:', '');
+                const checkbox = document.getElementById(category);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+    }
+
+    // Call the function to load selected filters on page load
+    document.addEventListener('DOMContentLoaded', loadSelectedFilters);
 
     function handleSubmit(event) {
         event.preventDefault(); // Prevent form submission and page reload
         const filters = getSelectedFilters();
         generateSOM(filters, 'disease'); // Call the generateSOM function with the filters
     }
+
+
 </script>
 </body>
-</html>
