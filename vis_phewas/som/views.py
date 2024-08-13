@@ -3,7 +3,6 @@ from datetime import datetime
 
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
 import pandas as pd
 from collections import defaultdict
 from api.models import TemporaryCSVData
@@ -12,12 +11,11 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from minisom import MiniSom
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from io import StringIO
+
 
 def cluster_results_to_csv(cluster_results):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -361,7 +359,6 @@ class SOMDiseaseView(APIView):
             'graph_div': graph_div,
             'csv_path': f"{settings.MEDIA_URL}{file_name}",
         }
-
 
         # Return the rendered HTML
         return render(request, 'som/som_view.html', context)
