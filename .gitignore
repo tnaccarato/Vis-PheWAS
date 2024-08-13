@@ -163,6 +163,5 @@ bundle.js
 /vis_phewas/staticfiles
 *.env
 docker-compose.yml
-/cert.pem
-/key.pem
+*.pem
 /vis_phewas/media

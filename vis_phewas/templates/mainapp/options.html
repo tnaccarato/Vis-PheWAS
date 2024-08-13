@@ -1,17 +1,25 @@
+{% load static %}
+<script src={% static 'mainapp/js/som.js' %}></script>
 <div class="panel options_panel">
     <h3>Options</h3>
     <h4>Resolution</h4>
     <div class="resolutionSwitchContainer">
-    <span class="switch-label-left">2 digit</span>
-    <label class="switch">
-        <input
-                type="checkbox"
-                id="show-subtypes-switch"
-                onclick="updateShowSubtypes()"
-        />
-        <span class="slider round"></span>
-    </label>
-    <span class="switch-label-right">4 digit</span>
-        </div>
+        <span class="switch-label-left">2 digit</span>
+        <label class="switch">
+            <input
+                    type="checkbox"
+                    id="show-subtypes-switch"
+                    onclick="updateShowSubtypes()"
+            />
+            <span class="slider round"></span>
+        </label>
+        <span class="switch-label-right">4 digit</span>
+    </div>
+
+    <div id="som_options" style="align-items: center; display: flex; flex-direction: column">
+        <h4>Generate SOM for Disease Clustering</h4>
+        <button class="button btn btn-info exportQuery" onclick="generateSOM('', 'disease')">Generate Disease SOM</button>
+        <button class="button btn btn-info exportQuery" onclick="generateSOM('', 'allele')">Generate Allele SOM</button>
+    </div>
 </div>
 

@@ -2,17 +2,20 @@ import html
 import itertools
 import re
 import urllib.parse
+from datetime import timedelta
 from io import StringIO
 
 import pandas as pd
 from django.db.models import Q, Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
 from mainapp.models import HlaPheWasCatalog
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from scipy.stats import combine_pvalues
 
+from api.models import TemporaryCSVData
 
 class IndexView(APIView):
     """
@@ -242,7 +245,8 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     ).distinct()
 
     # Remove snp from filters list so other snps are still shown
-    filters = ",".join([f for f in filters.split(',') if not f.startswith('snp')])
+    filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
+    print(filters)
 
     filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
 
@@ -305,19 +309,12 @@ class ExportDataView(APIView):
     def get(self, request):
         # Get the filters from the request
         filters = request.GET.get('filters', '')
-        # Get the queryset and apply the filters
-        queryset = HlaPheWasCatalog.objects.all()
-        filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
-        # Create a DataFrame from the queryset
-        df = pd.DataFrame(list(filtered_queryset.values()))
-        # Drop the id column if it exists
-        if 'id' in df.columns:
-            df.drop(columns=['id'], inplace=True)
 
+        df = get_filtered_df(filters)
         # Create the response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="exported_data.csv"'
-        response['Dataset-Length'] = str(filtered_queryset.count())
+        response['Dataset-Length'] = str(df.shape[0])
 
         # Write the DataFrame to a CSV file
         buffer = StringIO()
@@ -330,6 +327,55 @@ class ExportDataView(APIView):
         response.write(csv_content)
         # Return the response
         return response
+
+
+def get_filtered_df(filters):
+    queryset = HlaPheWasCatalog.objects.all()
+    filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
+    # Create a DataFrame from the queryset
+    df = pd.DataFrame(list(filtered_queryset.values()))
+    # Drop the id column if it exists
+    if 'id' in df.columns:
+        df.drop(columns=['id'], inplace=True)
+    return df
+
+
+class SendDataToSOMView(APIView):
+    """
+    API view to send the data to the SOM.
+    """
+
+    def get(self, request):
+        # Get the filters from the request
+        filters = request.GET.get('filters', '')
+        print("Filters: ", filters)
+        # Decode the filters
+        filters = urllib.parse.unquote(filters)
+        # Get the SOM type from the request (disease or allele)
+        som_type = request.GET.get('type')
+        print("SOM Type: ", som_type)
+        # Get the queryset and apply the filters
+        df = get_filtered_df(filters)
+
+        # Create a CSV in memory
+        buffer = StringIO()
+        df.to_csv(buffer, index=False)
+        csv_content = buffer.getvalue()
+
+        # Perform clean-up only if it's been more than 24 hours since the last clean-up
+        last_cleanup_time = TemporaryCSVData.objects.order_by('-created_at').first()
+        if not last_cleanup_time or (timezone.now() - last_cleanup_time.created_at) > timedelta(days=1):
+            self.cleanup_old_data()
+
+        # Save the CSV content and SOM type to the temporary model
+        temp_data = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
+
+        # Return the ID of the temporary data in the response
+        return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id})
+
+    def cleanup_old_data(self):
+        threshold = timezone.now() - timedelta(days=1)
+        TemporaryCSVData.objects.filter(created_at__lt=threshold).delete()
 
 
 class CombinedAssociationsView(APIView):
