@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "mainapp.apps.MainappConfig",
+    "api.apps.ApiConfig",
+    "som.apps.SomConfig",
     "rest_framework",
     'whitenoise.runserver_nostatic',  # Disable Django's static file handling in favor of WhiteNoise
 ]

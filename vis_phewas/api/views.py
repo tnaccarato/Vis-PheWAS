@@ -6,13 +6,15 @@ from io import StringIO
 
 import pandas as pd
 from django.db.models import Q, Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from mainapp.models import HlaPheWasCatalog
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from scipy.stats import combine_pvalues
 
+from api.models import TemporaryCSVData
 
 class IndexView(APIView):
     """
@@ -331,6 +333,40 @@ class ExportDataView(APIView):
         response.write(csv_content)
         # Return the response
         return response
+
+class SendDataToSOMView(APIView):
+    """
+    API view to send the data to the SOM.
+    """
+
+    def get(self, request):
+        # Get the filters from the request
+        filters = request.GET.get('filters', '')
+        # Get the SOM type from the request (disease or allele)
+        som_type = request.GET.get('type')
+        # Get the queryset and apply the filters
+        queryset = HlaPheWasCatalog.objects.all()
+        filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
+        # Create a DataFrame from the queryset
+        df = pd.DataFrame(list(filtered_queryset.values()))
+        # Drop the id column if it exists
+        if 'id' in df.columns:
+            df.drop(columns=['id'], inplace=True)
+
+        # Create a CSV in memory
+        buffer = StringIO()
+        df.to_csv(buffer, index=False)
+        csv_content = buffer.getvalue()
+        # Save the CSV content in a file for debugging
+        with open('data.csv', 'w') as f:
+            f.write(csv_content)
+
+
+        # Save the CSV content and SOM type to the temporary model
+        temp_data = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
+
+        # Return the ID of the temporary data in the response
+        return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id})
 
 
 class CombinedAssociationsView(APIView):
