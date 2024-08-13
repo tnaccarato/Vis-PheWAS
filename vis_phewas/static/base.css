@@ -15,3 +15,8 @@
 .panel h4 {
     text-align: center;
 }
+
+button{
+  text-shadow: 1px 0 3px black;
+  color: white; !important;
+}

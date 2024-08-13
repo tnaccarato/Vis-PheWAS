@@ -351,8 +351,11 @@ class SendDataToSOMView(APIView):
         print("Filters: ", filters)
         # Decode the filters
         filters = urllib.parse.unquote(filters)
+
         # Get the SOM type from the request (disease or allele)
         som_type = request.GET.get('type')
+        num_clusters = request.GET.get('num_clusters') or 5 if som_type == 'disease' else 7
+        print("Num Clusters: ", num_clusters)
         print("SOM Type: ", som_type)
         # Get the queryset and apply the filters
         df = get_filtered_df(filters)
@@ -370,8 +373,9 @@ class SendDataToSOMView(APIView):
         # Save the CSV content and SOM type to the temporary model
         temp_data = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
 
-        # Return the ID of the temporary data in the response
-        return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id})
+        # Return the ID of the temporary data in the response as well as the number of clusters
+        return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id, 'num_clusters': num_clusters,
+                             'filters': filters})
 
     def cleanup_old_data(self):
         threshold = timezone.now() - timedelta(days=1)

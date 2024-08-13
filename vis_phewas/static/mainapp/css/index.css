@@ -193,7 +193,6 @@ body {
     background-color: #97e4f6;
     padding-top: 1%;
     padding-bottom: 1%;
-    border-bottom: 1px solid #ccc;
     margin: 0 auto;
 }
 
@@ -203,10 +202,6 @@ body {
     margin: 0 5px;
     text-align: center;
     border-radius: 20px;
-}
-
-.button.exportQuery{
-    background-color: #08d0d9;
 }
 
 .button:disabled {
