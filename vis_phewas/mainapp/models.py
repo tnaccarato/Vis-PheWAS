@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class HlaPheWasCatalog(models.Model):
     """
     Model representing a HLA PheWas Catalog entry.
@@ -41,12 +42,10 @@ class HlaPheWasCatalog(models.Model):
             models.Index(fields=['chromosome'], name='chromosome_idx'),
             models.Index(fields=['serotype'], name='serotype_idx'),
             models.Index(fields=['subtype'], name='subtype_idx'),
-        ]
-        index_together = [
-            ['category_string', 'phewas_string'],
-            ['phewas_string', 'snp'],
-            ['snp', 'p'],
-            ['snp', 'odds_ratio'],
+            models.Index(fields=['category_string', 'phewas_string']),
+            models.Index(fields=['phewas_string', 'snp']),
+            models.Index(fields=['snp', 'p']),
+            models.Index(fields=['snp', 'odds_ratio']),
         ]
 
     snp = models.CharField(max_length=50)
