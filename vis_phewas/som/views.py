@@ -1,22 +1,22 @@
 import os
-from datetime import datetime
-
-from django.conf import settings
-from django.shortcuts import render, get_object_or_404
-import pandas as pd
+import urllib.parse
 from collections import defaultdict
-from api.models import TemporaryCSVData
-from rest_framework.views import APIView
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from minisom import MiniSom
+from datetime import datetime
+from io import StringIO
+
 import numpy as np
-from sklearn.cluster import KMeans
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
-from io import StringIO
-
+from api.models import TemporaryCSVData
+from django.conf import settings
+from django.shortcuts import render, get_object_or_404
 from mainapp.models import HlaPheWasCatalog
+from minisom import MiniSom
+from rest_framework.views import APIView
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 
 def cluster_results_to_csv(cluster_results):
@@ -40,8 +40,12 @@ class SOMSNPView(APIView):
     def get(self, request):
         # Get the data_id from the request (passed as a query parameter)
         data_id = request.GET.get('data_id')
+        num_clusters = request.GET.get('num_clusters')
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
+
+        if num_clusters is None:
+            num_clusters = 7
 
         # Convert the CSV content to a DataFrame
         csv_content = temp_data.csv_content
@@ -107,7 +111,6 @@ class SOMSNPView(APIView):
 
         # Initialize and Train the SOM
         positions, som = initialise_som(x_normalized)
-        
 
         # Get Winning Positions for Each SNP
         positions = np.array([som.winner(x) for x in x_normalized])
@@ -123,7 +126,7 @@ class SOMSNPView(APIView):
         })
 
         # Clustering SNPs Using K-Means
-        n_clusters = 7  # Adjust the number of clusters as needed
+        n_clusters = int(num_clusters)
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         positions_df = pd.DataFrame(positions, columns=['x', 'y'])
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -183,7 +186,7 @@ class SOMSNPView(APIView):
             title='SOM Clusters of SNPs with Detailed Hover Information',
             xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
             yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
-            plot_bgcolor='black',
+            plot_bgcolor='rgba(0,0,0,0)',
             height=800,
             width=800,
             legend=dict(
@@ -232,10 +235,43 @@ def initialise_som(x_normalized):
     return positions, som
 
 
+def clean_filters(filters):
+    if not filters:
+        return "All Categories"
+
+    # Split the filters by " OR "
+    filters_list = filters.split(" OR ")
+
+    # Remove the "category_string:==:" part from each filter
+    cleaned_filters = [f.split(":==:")[-1] for f in filters_list]
+
+    # Create a list to hold the formatted lines
+    formatted_lines = []
+
+    # Group the filters in chunks of 3
+    for i in range(0, len(cleaned_filters), 3):
+        # Get the chunk of filters
+        chunk = cleaned_filters[i:i + 3]
+        # Join them with a comma and a space
+        line = ", ".join(chunk)
+        # Add a comma at the end of the line if it's not the last chunk
+        if i + 3 < len(cleaned_filters):
+            line += ","
+        formatted_lines.append(line)
+
+    # Join the lines with a <br> tag to create the final formatted string
+    return "<br>".join(formatted_lines)
+
+
 class SOMDiseaseView(APIView):
     def get(self, request):
         # Get the data_id from the request (passed as a query parameter)
         data_id = request.GET.get('data_id')
+        # Get the number of clusters from the request (passed as a query parameter)
+        num_clusters = request.GET.get('num_clusters')
+        filters = request.GET.get('filters')
+        if num_clusters is None:
+            num_clusters = 5
 
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
@@ -296,7 +332,7 @@ class SOMDiseaseView(APIView):
         })
 
         # Clustering Diseases Using K-Means
-        n_clusters = 5
+        n_clusters = int(num_clusters)
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         positions_df = pd.DataFrame(positions, columns=['x', 'y'])
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -350,18 +386,47 @@ class SOMDiseaseView(APIView):
                 hoverinfo='text'
             ))
 
+        # Decode and clean the filters
+        decoded_filters = urllib.parse.unquote(filters) if filters else "All Categories"
+        cleaned_filters = clean_filters(decoded_filters)
+
+        # Create the title for the visualization
+        title_text = (
+            f'SOM Clusters of Diseases with Detailed Hover Information<br>'
+            f'for {cleaned_filters} and {num_clusters} Clusters'
+        ).title()
+
+        # Update the layout with the formatted title
         fig.update_layout(
-            title='SOM Clusters of Diseases with Detailed Hover Information',
+            title=dict(
+                text=title_text,
+                x=0.5,  # Center the title horizontally
+                y=.93,  # Move the title higher up, closer to the top edge
+                xanchor='center',
+                yanchor='top',
+                font=dict(
+                    size=16,
+                    # Make the title bold
+                    family='Arial, sans-serif',
+                    color='black'
+                )
+            ),
+            margin=dict(
+                # Calculate margin based on length of the title
+                t=100 + 20 * (len(cleaned_filters.split("<br>")) - 1),
+            ),
+
             xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
             yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
-            plot_bgcolor='black',
+            plot_bgcolor='rgba(0,0,0,0)',
             height=800,
             width=800,
             legend=dict(
                 x=1.06,
                 y=0.7,
                 bgcolor='rgba(0,0,0,0)'
-            )
+            ),
+            paper_bgcolor='rgba(0,0,0,0)'
         )
 
         fig.data[0].colorbar.update(
@@ -383,7 +448,9 @@ class SOMDiseaseView(APIView):
             'graph_div': graph_div,
             'csv_path': f"{settings.MEDIA_URL}{file_name}",
             "type": "disease",
-            "categories": categories
+            "categories": categories,
+            "filters": filters if filters is not None else categories,
+            "num_clusters": num_clusters
         }
 
         # Return the rendered HTML
