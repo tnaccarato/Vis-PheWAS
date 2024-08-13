@@ -2,12 +2,13 @@ import html
 import itertools
 import re
 import urllib.parse
+from datetime import timedelta
 from io import StringIO
 
 import pandas as pd
 from django.db.models import Q, Count
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.utils import timezone
 from mainapp.models import HlaPheWasCatalog
 from rest_framework import status
 from rest_framework.response import Response
@@ -357,16 +358,21 @@ class SendDataToSOMView(APIView):
         buffer = StringIO()
         df.to_csv(buffer, index=False)
         csv_content = buffer.getvalue()
-        # # Save the CSV content in a file for debugging
-        # with open('data.csv', 'w') as f:
-        #     f.write(csv_content)
 
+        # Perform clean-up only if it's been more than 24 hours since the last clean-up
+        last_cleanup_time = TemporaryCSVData.objects.order_by('-created_at').first()
+        if not last_cleanup_time or (timezone.now() - last_cleanup_time.created_at) > timedelta(days=1):
+            self.cleanup_old_data()
 
         # Save the CSV content and SOM type to the temporary model
         temp_data = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
 
         # Return the ID of the temporary data in the response
         return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id})
+
+    def cleanup_old_data(self):
+        threshold = timezone.now() - timedelta(days=1)
+        TemporaryCSVData.objects.filter(created_at__lt=threshold).delete()
 
 
 class CombinedAssociationsView(APIView):
