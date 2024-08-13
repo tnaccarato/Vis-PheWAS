@@ -28,6 +28,15 @@ def som_button(request):
     """
     return render(request, 'som/som_test.html')
 
+
+def cluster_results_to_csv(cluster_results):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"cluster_results_{timestamp}.csv"
+    file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+    cluster_results.to_csv(file_path, index=False)
+    return file_name
+
+
 class SOMSNPView(APIView):
     """
     View to process SNPs data using SOM and return a Plotly visualization.
@@ -132,12 +141,9 @@ class SOMSNPView(APIView):
         results_df['cluster'] = positions_df['cluster']
 
         # Save the cluster results to a CSV file
-        cluster_results = results_df[['phewas_string', 'cluster', 'snp', 'p_values', 'odds_ratios']]
-        cluster_results = cluster_results.sort_values(by=['cluster', 'phewas_string'])
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"cluster_results_{timestamp}.csv"
-        file_path = os.path.join(settings.MEDIA_ROOT, file_name)
-        cluster_results.to_csv(file_path, index=False)
+        cluster_results = results_df[['snp', 'cluster', 'phenotypes', 'p_values', 'odds_ratios']]
+        cluster_results = cluster_results.sort_values(by=['cluster', 'snp'])
+        file_name = cluster_results_to_csv(cluster_results)
 
         # Visualize the Clusters on the SOM
         fig = go.Figure()
@@ -296,10 +302,7 @@ class SOMDiseaseView(APIView):
         cluster_results = results_df[['phewas_string', 'cluster', 'snps', 'p_values', 'odds_ratios']]
         # Sort the cluster results by cluster number and then by disease name
         cluster_results = cluster_results.sort_values(by=['cluster', 'phewas_string'])
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"cluster_results_{timestamp}.csv"
-        file_path = os.path.join(settings.MEDIA_ROOT,file_name)
-        cluster_results.to_csv(file_path, index=False)
+        file_name = cluster_results_to_csv(cluster_results)
 
         # Visualize the Clusters on the SOM
         fig = go.Figure()
