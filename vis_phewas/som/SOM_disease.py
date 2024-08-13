@@ -248,10 +248,4 @@ fig.data[0].colorbar.update(
 # Show the figure
 fig.show()
 
-# Save each cluster's disease information to a CSV file
-for cluster in range(n_clusters):
-    print(f"Saving cluster {cluster} to CSV...")
-    cluster_data = results_df[results_df['cluster'] == cluster]
-    cluster_data.to_csv(f'outputs/clusters/phenotype_cluster_{cluster}.csv', index=False)
-
 #%%
