@@ -19,16 +19,6 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from io import StringIO
 
-
-def som_button(request):
-    """
-    View function to render the SOM button test page
-    :param request:
-    :return:
-    """
-    return render(request, 'som/som_test.html')
-
-
 def cluster_results_to_csv(cluster_results):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"cluster_results_{timestamp}.csv"
