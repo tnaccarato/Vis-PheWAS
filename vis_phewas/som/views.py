@@ -99,20 +99,16 @@ class SOMSNPView(APIView):
             return np.hstack([phenotype_features, encoded_features[row.name]])
 
         features_matrix = grouped_df.apply(create_phenotype_features, phenotypes=all_phenotypes, axis=1)
-        X = np.array(features_matrix.tolist())
+        x = np.array(features_matrix.tolist())
         scaler = StandardScaler()
-        X_normalized = scaler.fit_transform(X)
+        x_normalized = scaler.fit_transform(x)
 
-        # Initialize and train the SOM
-        som_x = int(np.sqrt(5 * np.sqrt(X_normalized.shape[0])))
-        som_y = int(np.sqrt(5 * np.sqrt(X_normalized.shape[0])))
-        input_len = X_normalized.shape[1]
-        som = MiniSom(x=som_x, y=som_y, input_len=input_len, sigma=1.0, learning_rate=0.5)
-        som.random_weights_init(X_normalized)
-        som.train_random(X_normalized, 10000)
+        # Initialize and Train the SOM
+        positions, som = initialise_som(x_normalized)
+        
 
         # Get Winning Positions for Each SNP
-        positions = np.array([som.winner(x) for x in X_normalized])
+        positions = np.array([som.winner(x) for x in x_normalized])
 
         # Create a DataFrame with Results
         results_df = pd.DataFrame({
@@ -151,6 +147,7 @@ class SOMSNPView(APIView):
         )
         fig.add_trace(heatmap)
 
+        # Add scatter plots for each cluster
         for cluster in range(n_clusters):
             cluster_data = results_df[results_df['cluster'] == cluster]
             hover_texts = []
@@ -165,6 +162,7 @@ class SOMSNPView(APIView):
                 )
                 hover_texts.append(hover_text)
 
+            # Add a scatter plot for the cluster
             fig.add_trace(go.Scatter(
                 x=cluster_data['x'] + 0.5,
                 y=cluster_data['y'] + 0.5,
@@ -178,6 +176,7 @@ class SOMSNPView(APIView):
                 hoverinfo='text'
             ))
 
+        # Update the layout of the figure
         fig.update_layout(
             title='SOM Clusters of SNPs with Detailed Hover Information',
             xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
@@ -192,6 +191,7 @@ class SOMSNPView(APIView):
             )
         )
 
+        # Update the colorbar of the figure to improve visibility
         fig.data[0].colorbar.update(
             thickness=15,
             x=1.005,
@@ -201,6 +201,7 @@ class SOMSNPView(APIView):
         # Render the visualization
         graph_div = pio.to_html(fig, full_html=False)
 
+        # Prepare the context for the template
         context = {
             'graph_div': graph_div,
             'csv_path': settings.MEDIA_URL + file_name,
@@ -208,6 +209,24 @@ class SOMSNPView(APIView):
 
         # Return the rendered HTML
         return render(request, 'som/som_view.html', context)
+
+
+def initialise_som(x_normalized):
+    """
+    Static method to initialize and train the SOM.
+    :param x_normalized:
+    :return:
+    """
+    # Initialize and Train the SOM
+    som_x = int(np.sqrt(5 * np.sqrt(x_normalized.shape[0])))
+    som_y = int(np.sqrt(5 * np.sqrt(x_normalized.shape[0])))
+    input_len = x_normalized.shape[1]
+    som = MiniSom(x=som_x, y=som_y, input_len=input_len, sigma=1.0, learning_rate=0.5)
+    som.random_weights_init(x_normalized)
+    som.train_random(x_normalized, 10000)
+    # Get Winning Positions for Each Disease
+    positions = np.array([som.winner(x) for x in x_normalized])
+    return positions, som
 
 
 class SOMDiseaseView(APIView):
@@ -257,20 +276,11 @@ class SOMDiseaseView(APIView):
             return np.hstack([allele_features, encoded_features[row.name]])
 
         features_matrix = grouped_df.apply(create_allele_features, alleles=all_alleles, axis=1)
-        X = np.array(features_matrix.tolist())
+        x = np.array(features_matrix.tolist())
         scaler = StandardScaler()
-        X_normalized = scaler.fit_transform(X)
+        x_normalized = scaler.fit_transform(x)
 
-        # Initialize and Train the SOM
-        som_x = int(np.sqrt(5 * np.sqrt(X_normalized.shape[0])))
-        som_y = int(np.sqrt(5 * np.sqrt(X_normalized.shape[0])))
-        input_len = X_normalized.shape[1]
-        som = MiniSom(x=som_x, y=som_y, input_len=input_len, sigma=1.0, learning_rate=0.5)
-        som.random_weights_init(X_normalized)
-        som.train_random(X_normalized, 10000)
-
-        # Get Winning Positions for Each Disease
-        positions = np.array([som.winner(x) for x in X_normalized])
+        positions, som = initialise_som(x_normalized)
 
         # Create a DataFrame with Results
         results_df = pd.DataFrame({
