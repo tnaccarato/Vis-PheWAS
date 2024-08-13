@@ -23,7 +23,7 @@ services:
       - docker.env
     volumes:
       - staticfiles:/app/vis_phewas/staticfiles  # Shared volume for static files
-
+      - media:/app/vis_phewas/media  # Shared volume for media files
   nginx:
     image: tnaccarato/vis-phewas:nginx
     ports:
@@ -33,9 +33,11 @@ services:
       - ./cert.pem:/etc/nginx/ssl/cert.pem  # SSL certificate
       - ./key.pem:/etc/nginx/ssl/key.pem    # SSL key
       - staticfiles:/app/vis_phewas/staticfiles  # Access shared volume for static files
+      - media:/app/vis_phewas/media  # Access shared volume for media files
     depends_on:
       - web
 
 volumes:
   postgres_data:
   staticfiles:
+  media:
