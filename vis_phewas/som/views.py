@@ -40,8 +40,12 @@ class SOMSNPView(APIView):
     def get(self, request):
         # Get the data_id from the request (passed as a query parameter)
         data_id = request.GET.get('data_id')
+        num_clusters = request.GET.get('num_clusters')
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
+
+        if num_clusters is None:
+            num_clusters = 7
 
         # Convert the CSV content to a DataFrame
         csv_content = temp_data.csv_content
@@ -123,7 +127,7 @@ class SOMSNPView(APIView):
         })
 
         # Clustering SNPs Using K-Means
-        n_clusters = 7  # Adjust the number of clusters as needed
+        n_clusters = int(num_clusters)
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         positions_df = pd.DataFrame(positions, columns=['x', 'y'])
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -236,6 +240,11 @@ class SOMDiseaseView(APIView):
     def get(self, request):
         # Get the data_id from the request (passed as a query parameter)
         data_id = request.GET.get('data_id')
+        # Get the number of clusters from the request (passed as a query parameter)
+        num_clusters = request.GET.get('num_clusters')
+        filters = request.GET.get('filters')
+        if num_clusters is None:
+            num_clusters = 5
 
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
@@ -296,7 +305,7 @@ class SOMDiseaseView(APIView):
         })
 
         # Clustering Diseases Using K-Means
-        n_clusters = 5
+        n_clusters = int(num_clusters)
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         positions_df = pd.DataFrame(positions, columns=['x', 'y'])
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -383,7 +392,9 @@ class SOMDiseaseView(APIView):
             'graph_div': graph_div,
             'csv_path': f"{settings.MEDIA_URL}{file_name}",
             "type": "disease",
-            "categories": categories
+            "categories": categories,
+            "filters": filters if filters is not None else categories,
+            "num_clusters": num_clusters
         }
 
         # Return the rendered HTML

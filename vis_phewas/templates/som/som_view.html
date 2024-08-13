@@ -1,16 +1,19 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>SOM Visualization</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="{% static 'mainapp/js/som.js' %}"></script>
     <style>
         .checkbox-container {
             column-count: 3;
             column-gap: 20px;
         }
+
         .checkbox-container label {
             display: block;
             margin-bottom: 5px;
@@ -25,9 +28,15 @@
     <form id="disease-filter-form" onsubmit="handleSubmit(event);">
         <div class="checkbox-container">
             {% for category in categories %}
-                <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}">
+                <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                        {% if category in filters %} checked {% endif %}> <!-- Check the checkbox if it is in the selected filters -->
                 <label for="{{ category }}">{{ category }}</label>
             {% endfor %}
+            <!-- Get a slider for number of clusters -->
+            <label for="clusters">Number of Clusters:</label>
+            <input type="range" id="clusters" name="clusters" min="2" max="10" value={{ num_clusters }}>
+            <!-- Add a tooltip showing the current value of the slider -->
+            <span id="clusters-value">{{ num_clusters }}</span>
         </div>
         <button type="submit" class="button btn btn-info updateSOM">Generate SOM with Selection</button>
     </form>
@@ -46,9 +55,6 @@
         document.querySelectorAll('input[name="filters"]:checked').forEach((checkbox) => {
             selectedFilters.push(baseFilter + checkbox.value);
         });
-
-        // Store selected filters in localStorage
-        localStorage.setItem('selectedFilters', JSON.stringify(selectedFilters));
 
         // Join filters with " OR " to match the format
         const joinedFilters = selectedFilters.join(' OR ');
@@ -73,12 +79,22 @@
     // Call the function to load selected filters on page load
     document.addEventListener('DOMContentLoaded', loadSelectedFilters);
 
+    // Function to handle form submission
     function handleSubmit(event) {
         event.preventDefault(); // Prevent form submission and page reload
         const filters = getSelectedFilters();
-        generateSOM(filters, 'disease'); // Call the generateSOM function with the filters
+        const num_clusters = document.getElementById('clusters').value;
+        console.log("Number of clusters: ", num_clusters);
+        // Call the generateSOM function with the filters, type and number of clusters
+        generateSOM(filters, 'disease', num_clusters);
     }
 
+    // Function to update the displayed value of the slider
+    document.getElementById('clusters').addEventListener('input', function () {
+        document.getElementById('clusters-value').textContent = this.value;
+        console.log(this.value);
+    });
 
 </script>
 </body>
+</html>
