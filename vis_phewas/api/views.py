@@ -309,19 +309,12 @@ class ExportDataView(APIView):
     def get(self, request):
         # Get the filters from the request
         filters = request.GET.get('filters', '')
-        # Get the queryset and apply the filters
-        queryset = HlaPheWasCatalog.objects.all()
-        filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
-        # Create a DataFrame from the queryset
-        df = pd.DataFrame(list(filtered_queryset.values()))
-        # Drop the id column if it exists
-        if 'id' in df.columns:
-            df.drop(columns=['id'], inplace=True)
 
+        df = get_filtered_df(filters)
         # Create the response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="exported_data.csv"'
-        response['Dataset-Length'] = str(filtered_queryset.count())
+        response['Dataset-Length'] = str(df.shape[0])
 
         # Write the DataFrame to a CSV file
         buffer = StringIO()
@@ -335,6 +328,18 @@ class ExportDataView(APIView):
         # Return the response
         return response
 
+
+def get_filtered_df(filters):
+    queryset = HlaPheWasCatalog.objects.all()
+    filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
+    # Create a DataFrame from the queryset
+    df = pd.DataFrame(list(filtered_queryset.values()))
+    # Drop the id column if it exists
+    if 'id' in df.columns:
+        df.drop(columns=['id'], inplace=True)
+    return df
+
+
 class SendDataToSOMView(APIView):
     """
     API view to send the data to the SOM.
@@ -343,16 +348,14 @@ class SendDataToSOMView(APIView):
     def get(self, request):
         # Get the filters from the request
         filters = request.GET.get('filters', '')
+        print("Filters: ", filters)
+        # Decode the filters
+        filters = urllib.parse.unquote(filters)
         # Get the SOM type from the request (disease or allele)
         som_type = request.GET.get('type')
+        print("SOM Type: ", som_type)
         # Get the queryset and apply the filters
-        queryset = HlaPheWasCatalog.objects.all()
-        filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
-        # Create a DataFrame from the queryset
-        df = pd.DataFrame(list(filtered_queryset.values()))
-        # Drop the id column if it exists
-        if 'id' in df.columns:
-            df.drop(columns=['id'], inplace=True)
+        df = get_filtered_df(filters)
 
         # Create a CSV in memory
         buffer = StringIO()
