@@ -22,11 +22,13 @@ services:
       - ./vis_phewas/vis_phewas:/app/vis_phewas/vis_phewas
       - ./vis_phewas/mainapp:/app/vis_phewas/mainapp
       - ./vis_phewas/api:/app/vis_phewas/api
+      - ./vis_phewas/som:/app/vis_phewas/som
       - ./vis_phewas/templates:/app/vis_phewas/templates
       - ./vis_phewas/package.json:/app/vis_phewas/package.json
       - ./vis_phewas/webpack.config.js:/app/vis_phewas/webpack.config.js
       - ./LICENSE:/app/LICENSE
-      - staticfiles:/vis_phewas/staticfiles  # Share static files
+      - staticfiles:/app/vis_phewas/staticfiles  # Share static files
+      - media:/app/vis_phewas/media # Share media files
     ports:
       - "8000:8000"
     env_file:
@@ -34,19 +36,24 @@ services:
     depends_on:
       - db
 
-#  nginx:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.nginx
-#    ports:
-#      - "443:443"
-#      - "80:80"
-#    volumes:
-#      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-#      - staticfiles:/app/vis_phewas/staticfiles  # Access static files from the shared volume
-#    depends_on:
-#      - web
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - staticfiles:/app/vis_phewas/staticfiles  # Access static files from the shared volume
+      - media:/app/vis_phewas/media # Access media files from the shared volume
+      - ./cert.pem:/etc/nginx/ssl/cert.pem
+      - ./key.pem:/etc/nginx/ssl/key.pem
+
+    depends_on:
+      - web
 
 volumes:
   postgres_data:
   staticfiles:  # Define the shared volume
+  media:  # Define the shared volume
