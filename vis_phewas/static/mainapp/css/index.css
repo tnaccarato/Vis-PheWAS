@@ -205,10 +205,6 @@ body {
     border-radius: 20px;
 }
 
-.button.exportQuery{
-    background-color: #08d0d9;
-}
-
 .button:disabled {
     background-color: #ccc;
     opacity: 0.25;
