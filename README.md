@@ -2,7 +2,9 @@
 
 ## Prerequisites
 
-- Docker and Docker Compose installed on your system.
+- Docker and Docker Compose installed on your system. You can follow the official Docker documentation to install 
+Docker and Docker Compose on your system. 
+- - You can access the documentation here: [Get Docker](https://docs.docker.com/get-docker/).
 - SSL Certificates (cert.pem and key.pem) for HTTPS configuration.
 - `docker-compose.yml` file from the repository.
 
