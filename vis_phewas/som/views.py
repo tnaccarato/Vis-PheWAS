@@ -16,6 +16,8 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from io import StringIO
 
+from mainapp.models import HlaPheWasCatalog
+
 
 def cluster_results_to_csv(cluster_results):
     """
@@ -205,6 +207,7 @@ class SOMSNPView(APIView):
         context = {
             'graph_div': graph_div,
             'csv_path': settings.MEDIA_URL + file_name,
+            'type': 'allele'
         }
 
         # Return the rendered HTML
@@ -370,9 +373,17 @@ class SOMDiseaseView(APIView):
         # Render the visualization
         graph_div = pio.to_html(fig, full_html=False)
 
+        # Get categories
+        categories = HlaPheWasCatalog.objects.values('category_string').distinct()
+        # Sort the categories
+        categories = sorted([category['category_string'] for category in categories])
+
+        # Prepare the context for the template
         context = {
             'graph_div': graph_div,
             'csv_path': f"{settings.MEDIA_URL}{file_name}",
+            "type": "disease",
+            "categories": categories
         }
 
         # Return the rendered HTML

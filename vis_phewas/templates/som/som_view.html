@@ -1,14 +1,52 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>SOM Visualization</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="{% static 'mainapp/js/som.js' %}"></script>
 </head>
 <body>
-    <h1>SOM Visualization</h1>
-    <div id="plotly-div">
-        {{ graph_div|safe }}
-    </div>
- <a href="{{ csv_path }}" download="cluster_results.csv">Download Cluster Results CSV</a>
+<h1>SOM Visualization</h1>
+
+{% if type == 'disease' %}
+    <h2>Filter by Disease Category</h2>
+    <form id="disease-filter-form" onsubmit="handleSubmit(event);">
+        {% for category in categories %}
+            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}">
+            <label for="{{ category }}">{{ category }}</label><br>
+        {% endfor %}
+
+        <button type="submit" class="button btn btn-info updateSOM">Generate SOM with Selection</button>
+    </form>
+{% endif %}
+
+<div id="plotly-div">
+    {{ graph_div|safe }}
+</div>
+<a href="{{ csv_path }}" download="cluster_results.csv">Download Cluster Results CSV</a>
+
+<script>
+    function getSelectedFilters() {
+        const selectedFilters = [];
+        const baseFilter = 'category_string:==:';
+
+        document.querySelectorAll('input[name="filters"]:checked').forEach((checkbox) => {
+            selectedFilters.push(baseFilter + checkbox.value);
+        });
+
+        // Join filters with " AND " to match the format
+        const joinedFilters = selectedFilters.join(' AND ');
+        // Encode the joined filters to be used in the URL
+        return encodeURIComponent(joinedFilters);
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault(); // Prevent form submission and page reload
+        const filters = getSelectedFilters();
+        generateSOM(filters, 'disease'); // Call the generateSOM function with the filters
+    }
+</script>
 </body>
 </html>
