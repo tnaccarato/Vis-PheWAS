@@ -4,7 +4,7 @@
     <title>Generate SOM</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        function generateSOM() {
+        function generateAlleleSOM() {
             $.ajax({
                 url: "{% url 'send_data_to_som' %}",
                 type: 'GET',
@@ -14,7 +14,24 @@
                 },
                 success: function(response) {
                     // If successful, redirect to the SOM visualization page
-                    window.location.href = "/som/SOM/?data_id=" + response.data_id;
+                    window.location.href = "/som/SOMSNP/?data_id=" + response.data_id;
+                },
+                error: function(xhr, status, error) {
+                    alert('Failed to generate SOM: ' + error);
+                }
+            });
+        }
+        function generateDiseaseSOM() {
+            $.ajax({
+                url: "{% url 'send_data_to_som' %}",
+                type: 'GET',
+                data: {
+                    'filters': '',  // Add any filters you want to apply
+                    'type': 'disease'  // Or 'allele'
+                },
+                success: function(response) {
+                    // If successful, redirect to the SOM visualization page
+                    window.location.href = "/som/SOMDisease/?data_id=" + response.data_id;
                 },
                 error: function(xhr, status, error) {
                     alert('Failed to generate SOM: ' + error);
@@ -25,6 +42,7 @@
 </head>
 <body>
     <h1>Generate SOM for Disease Clustering</h1>
-    <button onclick="generateSOM()">Generate SOM</button>
+    <button onclick="generateAlleleSOM()">Generate Allele SOM</button>
+    <button onclick="generateDiseaseSOM()">Generate Disease SOM</button>
 </body>
 </html>
