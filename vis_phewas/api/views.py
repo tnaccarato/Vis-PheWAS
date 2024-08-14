@@ -246,8 +246,6 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
 
     # Remove snp from filters list so other snps are still shown
     filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
-    print(filters)
-
     filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
 
     # Get the visible nodes
@@ -348,15 +346,15 @@ class SendDataToSOMView(APIView):
     def get(self, request):
         # Get the filters from the request
         filters = request.GET.get('filters', '')
-        print("Filters: ", filters)
+        # print("Filters: ", filters)
         # Decode the filters
         filters = urllib.parse.unquote(filters)
 
         # Get the SOM type from the request (disease or allele)
         som_type = request.GET.get('type')
         num_clusters = request.GET.get('num_clusters') or 5 if som_type == 'disease' else 7
-        print("Num Clusters: ", num_clusters)
-        print("SOM Type: ", som_type)
+        # print("Num Clusters: ", num_clusters)
+        # print("SOM Type: ", som_type)
         # Get the queryset and apply the filters
         df = get_filtered_df(filters)
 
@@ -490,11 +488,11 @@ class GetDiseasesForCategoryView(APIView):
             diseases = HlaPheWasCatalog.objects.filter(category_string=category)
             # Apply the filters, including the show_subtypes logic
             diseases = apply_filters(diseases, filters, show_subtypes=show_subtypes)
-            print(diseases)
+            # print(diseases)
 
             # Get the unique diseases
             diseases = diseases.values('phewas_string').distinct()
-            print(diseases)
+            # print(diseases)
             # Sort the diseases by phewas_string
             diseases = sorted([disease['phewas_string'] for disease in diseases])
             # Return the diseases
