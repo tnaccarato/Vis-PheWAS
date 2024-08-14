@@ -1,5 +1,3 @@
-import UIManager, { filterManager } from "./UIManager";
-
-const uiManager = new UIManager();
+import { filterManager } from "./UIManager";
 
 export { filterManager };

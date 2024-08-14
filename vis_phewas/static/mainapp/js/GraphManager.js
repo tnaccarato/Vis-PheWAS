@@ -47,6 +47,8 @@ class GraphManager {
     this.visibleNodes = new Set();
     this.selectedAlleleNode = null;
     this.selectedDiseaseNode = null;
+    // Set the initial camera position of the sigma instance
+    this.cameraPosition = null;
   }
 
   // Method to initialize the event listeners
@@ -69,7 +71,11 @@ class GraphManager {
 
     // Add an event listener for leaving a node
     this.sigmaInstance.on("leaveNode", ({ node }) => {
-      this.graphHelper.hoverOffNode(node, this.graph, this.getActiveSelection());
+      this.graphHelper.hoverOffNode(
+        node,
+        this.graph,
+        this.getActiveSelection(),
+      );
     });
 
     // Add an event listener for right-clicking a node
@@ -138,6 +144,29 @@ class GraphManager {
     console.log(this.visibleNodes);
     this.visibleNodes = new Set(visible); // Initialize the visible nodes set
     console.log(this.visibleNodes);
+    // If the camera position is null, set cameraPosition to current camera position
+    if (this.cameraPosition === null) {
+      console.log("Setting camera position");
+      // Capture camera state
+      var camera = this.sigmaInstance.getCamera();
+      this.cameraPosition = {
+        x: camera.x,
+        y: camera.y,
+        ratio: camera.ratio,
+        angle: camera.angle,
+      };
+      console.log(this.cameraPosition);
+    } else {
+      console.log("Camera position already set");
+      console.log(this.cameraPosition);
+      // Restore camera state
+      this.sigmaInstance.getCamera().setState({
+        x: this.cameraPosition.x,
+        y: this.cameraPosition.y,
+        ratio: this.cameraPosition.ratio,
+        angle: this.cameraPosition.angle,
+      });
+    }
 
     const categoryRadius = 400; // Adjust this value as needed
     const categoryNodes = nodes.filter((node) => node.node_type === "category");
@@ -462,38 +491,38 @@ class GraphManager {
       });
 
       // Update disease node
-  this.graph.setNodeAttribute(diseaseNode, "borderColor", "black");
-  this.graph.setNodeAttribute(diseaseNode, "borderSize", 0.1);
-  this.graph.setNodeAttribute(diseaseNode, "forceLabel", true);
+      this.graph.setNodeAttribute(diseaseNode, "borderColor", "black");
+      this.graph.setNodeAttribute(diseaseNode, "borderSize", 0.1);
+      this.graph.setNodeAttribute(diseaseNode, "forceLabel", true);
 
-  // Find and update the edge connecting the disease and allele node
-  const edge = this.graph.edges().find((edge) => {
-    return (
-      this.graph.source(edge) === diseaseNode &&
-      this.graph.target(edge) === alleleNode
-    );
-  });
+      // Find and update the edge connecting the disease and allele node
+      const edge = this.graph.edges().find((edge) => {
+        return (
+          this.graph.source(edge) === diseaseNode &&
+          this.graph.target(edge) === alleleNode
+        );
+      });
 
-  // Update the selected nodes
-  this.selectedAlleleNode = alleleNode;
-  this.selectedDiseaseNode = diseaseNode;
+      // Update the selected nodes
+      this.selectedAlleleNode = alleleNode;
+      this.selectedDiseaseNode = diseaseNode;
 
-  if (edge) {
-    this.graph.setEdgeAttribute(edge, "color", "black");
-  } else {
-    console.error("Edge from disease to allele not found");
-  }
+      if (edge) {
+        this.graph.setEdgeAttribute(edge, "color", "black");
+      } else {
+        console.error("Edge from disease to allele not found");
+      }
 
-  // Set all other edges to default color and size
-  this.graph.edges().forEach((e) => {
-    if (e !== edge) {
-      this.graph.setEdgeAttribute(e, "color", "darkgrey");
-    }
-  });
+      // Set all other edges to default color and size
+      this.graph.edges().forEach((e) => {
+        if (e !== edge) {
+          this.graph.setEdgeAttribute(e, "color", "darkgrey");
+        }
+      });
 
-  // Refresh the Sigma instance
-  this.sigmaInstance.refresh();
-};
+      // Refresh the Sigma instance
+      this.sigmaInstance.refresh();
+    };
 
     // Function to display the node information
     const displayNodeInfo = (diseaseNode) => {
@@ -626,7 +655,10 @@ class GraphManager {
 
   // Getters for the active selection
   getActiveSelection() {
-    return { allele: this.selectedAlleleNode, disease: this.selectedDiseaseNode };
+    return {
+      allele: this.selectedAlleleNode,
+      disease: this.selectedDiseaseNode,
+    };
   }
 }
 
