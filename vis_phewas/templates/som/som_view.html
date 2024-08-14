@@ -36,7 +36,12 @@
                     <div class="checkbox-container">
                         {% for category in categories %}
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if category in cleaned_filters %} checked {% endif %}>
+                                    {% if not cleaned_filters %}
+                                   checked
+                                    {% else %}
+                                        {% if category in cleaned_filters %} checked {% endif %}
+                                    {% endif %}
+                            >
                             <!-- Check the checkbox if it is in the selected filters -->
                             <label for="{{ category }}">{{ category }}</label>
                         {% endfor %}
@@ -58,7 +63,8 @@
                 </button>
                 <!-- Add a button to download the cluster results CSV -->
                 <button class="btn btn-info dataAction" type="button">
-                    <a style="text-decoration: none;color: whitesmoke;text-shadow: 1px 0 3px black;" href="{{ csv_path }}" download="cluster_results.csv">Download Cluster Results CSV</a>
+                    <a style="text-decoration: none;color: whitesmoke;text-shadow: 1px 0 3px black;"
+                       href="{{ csv_path }}" download="cluster_results.csv">Download Cluster Results CSV</a>
                 </button>
             </div>
         </form>
