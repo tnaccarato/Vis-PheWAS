@@ -165,10 +165,10 @@ export class FilterManager {
       input.placeholder = "Enter value";
       input.className = "field-input";
       filterInputContainer.appendChild(input);
-      // If the selected field is gene_class, gene_name, a1, or a2
+      // If the selected field is gene_class, gene_name
     }
     else if (
-        ["gene_class", "gene_name", "a1", "a2"].includes(selectedField)
+        ["gene_class", "gene_name"].includes(selectedField)
     ) {
       // Add a select field for the operator
       const select = document.createElement("select");
@@ -191,13 +191,6 @@ export class FilterManager {
           <option value="DQA1">DQA1</option>
           <option value="DQB1">DQB1</option>
           <option value="DRB1">DRB1</option>
-        `);
-      }
-      else {
-        // Add a select field for the allele
-        select.innerHTML = DOMPurify.sanitize(`
-          <option value="A">A</option>
-          <option value="P">P</option>
         `);
       }
       // Append the operator to the filter input container
@@ -286,8 +279,6 @@ export class FilterManager {
         <option value="l95">95% CI Lower Bound</option>
         <option value="u95">95% CI Upper Bound</option>
         <option value="maf">Minor Allele Frequency</option>
-        <option value="a1">Allele 1</option>
-        <option value="a2">Allele 2</option>
       `);
       filterGroup.appendChild(select);
 

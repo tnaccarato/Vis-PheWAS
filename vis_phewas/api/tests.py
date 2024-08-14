@@ -124,8 +124,6 @@ class HlaPheWasCatalogTestCase(TestCase):
             'snp': 'HLA_DRB1_0101',
             'gene_class': 1,
             'gene_name': 'A',
-            'a1': 'A',
-            'a2': 'P',
             'cases': 100,
             'controls': 200,
             'p': 0.01,
