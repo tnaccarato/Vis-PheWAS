@@ -443,6 +443,12 @@ class SOMDiseaseView(APIView):
         # Sort the categories
         categories = sorted([category['category_string'] for category in categories])
 
+        # Decode filters to regular list
+        decoded_filters = urllib.parse.unquote(filters) if filters else None
+        decoded_filters = decoded_filters.split(" OR ") if decoded_filters else None
+        # Replace the "category_string:==:" part with empty string
+        cleaned_filters = [f.split(":==:")[-1] for f in decoded_filters] if decoded_filters else None
+
         # Prepare the context for the template
         context = {
             'graph_div': graph_div,
@@ -450,8 +456,12 @@ class SOMDiseaseView(APIView):
             "type": "disease",
             "categories": categories,
             "filters": filters if filters is not None else categories,
-            "num_clusters": num_clusters
+            "num_clusters": num_clusters,
+            "cleaned_filters": cleaned_filters
         }
+
+        for field in context:
+            print(f"{field}: {context[field]}") if field != "graph_div" else None
 
         # Return the rendered HTML
         return render(request, 'som/som_view.html', context)
