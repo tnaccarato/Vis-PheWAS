@@ -67,17 +67,21 @@
         <div id="options-tab" class="tab options" onclick="toggleSidePanel('options')">
             Options
         </div>
+        <div id="tools-tab" class="tab tools" onclick="toggleSidePanel('tools')">Tools</div>
         <div id="help-tab" class="tab help" onclick="toggleSidePanel('help')">Help</div>
     </div>
 
     <!-- Hidden content panels -->
     <div id="options-panel" style="display: none">
-        {% include "mainapp/tools.html" %}
+        {% include "mainapp/options.html" %}
     </div>
 
     <div id="help-panel" style="display: none">
         {% include "mainapp/help.html" %}
     </div>
+
+    <div id="tools-panel" style="display: none">
+        {% include "mainapp/tools.html" %}
 
     <script src="{% static 'mainapp/js/sidePanel.js' %}"></script>
     <script type="module" src="{% static 'mainapp/js/bundle.js' %}"></script>
