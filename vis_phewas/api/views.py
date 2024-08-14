@@ -241,7 +241,7 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     """
     disease_string = disease_id.replace('disease-', '').replace('_', ' ')
     queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
-        'snp', 'gene_class', 'gene_name', 'a1', 'a2', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
+        'snp', 'gene_class', 'gene_name', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
     ).distinct()
 
     # Remove snp from filters list so other snps are still shown
@@ -279,8 +279,8 @@ class InfoView(APIView):
         disease = request.GET.get('disease')
         # Get the allele data for the allele and disease
         allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
-            'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'category_string', 'a1', 'a2', 'cases',
-            'controls', 'odds_ratio', 'p', 'l95', 'u95', 'maf',
+            'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'phewas_code', 'category_string', 'cases',
+            'controls', 'odds_ratio', 'l95', 'u95', 'p', 'maf'
         ).distinct()[0]
         # Remove the subtype if it is the main group
         if allele_data['subtype'] == '00':
