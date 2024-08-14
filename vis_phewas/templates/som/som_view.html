@@ -36,7 +36,7 @@
                     <div class="checkbox-container">
                         {% for category in categories %}
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if category in filters %} checked {% endif %}>
+                                    {% if category in cleaned_filters %} checked {% endif %}>
                             <!-- Check the checkbox if it is in the selected filters -->
                             <label for="{{ category }}">{{ category }}</label>
                         {% endfor %}
@@ -53,11 +53,11 @@
             <div style="display: flex;flex-direction: row;justify-content: space-around;margin-top: 10px;">
 
                 <!-- Add a button to submit the form -->
-                <button type="submit" class="button btn btn-success" style="align-self: normal;">
+                <button type="submit" class="button btn btn-success" style="align-self: normal; border-radius: 20px">
                     Generate SOM with Selection
                 </button>
                 <!-- Add a button to download the cluster results CSV -->
-                <button class="button btn btn-info" type="button">
+                <button class="btn btn-info dataAction" type="button">
                     <a style="text-decoration: none;color: whitesmoke;text-shadow: 1px 0 3px black;" href="{{ csv_path }}" download="cluster_results.csv">Download Cluster Results CSV</a>
                 </button>
             </div>
@@ -86,22 +86,6 @@
             return encodeURIComponent(joinedFilters);
         }
 
-        // Function to load selected filters from localStorage on page load
-        function loadSelectedFilters() {
-            const selectedFilters = JSON.parse(localStorage.getItem('selectedFilters'));
-            if (selectedFilters) {
-                selectedFilters.forEach((filter) => {
-                    const category = filter.replace('category_string:==:', '');
-                    const checkbox = document.getElementById(category);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
-                });
-            }
-        }
-
-        // Call the function to load selected filters on page load
-        document.addEventListener('DOMContentLoaded', loadSelectedFilters);
 
         // Function to handle form submission
         function handleSubmit(event) {

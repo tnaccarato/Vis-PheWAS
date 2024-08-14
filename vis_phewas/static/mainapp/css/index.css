@@ -36,7 +36,7 @@ html, body, .container-fluid {
     height: 100%;
     z-index: 1; /* Set a lower z-index to ensure it's below the options tab */
     position: relative; /* Ensure it follows the stacking context */
-    background-color: aliceblue;
+    background-color: #d4e9fb;
 }
 
 .right-column {
