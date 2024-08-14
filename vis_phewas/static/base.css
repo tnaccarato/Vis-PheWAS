@@ -20,3 +20,14 @@ button{
   text-shadow: 1px 0 3px black;
   color: white; !important;
 }
+
+.btn-info.dataAction.btn {
+    background-color: #a043e1 !important;
+    border-color: #a043e1 !important;
+    border-radius: 20px !important;
+}
+
+.btn-info.dataAction.btn:hover {
+    background-color: #7a2cbf !important;
+    border-color: #7a2cbf !important;
+}
