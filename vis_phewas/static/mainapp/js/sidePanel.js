@@ -41,4 +41,8 @@ function updateSidebarContents(tab) {
     sidePanelContent.innerHTML =
       document.getElementById("help-panel").innerHTML;
   }
+  else if (tab === "tools"){
+    sidePanelContent.innerHTML =
+      document.getElementById("tools-panel").innerHTML;
+  }
 }
