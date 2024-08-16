@@ -7,19 +7,31 @@ import {
   formatCategoryString,
   sizeScale,
 } from "./utils";
-import { filterManager } from "./main"; // Helper class for
-// graph operations
+import { filterManager } from "./main";
 
 // Helper class for graph operations
 class GraphHelper {
-  // Constructor
+  /**
+   * Constructor for GraphHelper
+   * @param {Object} GraphManager - The graph manager instance
+   * @param {Object} sigmaInstance - The sigma instance for graph rendering
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   */
   constructor(GraphManager, sigmaInstance, adjustSigmaContainerHeight) {
     this.sigmaInstance = sigmaInstance;
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     this.graphManager = GraphManager;
   }
 
-  // Method for clicking on a node
+  /**
+   * Method for clicking on a node
+   * @param {Object} graph - The graph instance
+   * @param {string} node - The node ID
+   * @param {Function} fetchGraphData - Function to fetch graph data
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   * @param {Function} [getInfoTable=null] - Optional function to get the info table
+   * @param {boolean} [simulated=false] - Flag indicating if the click is simulated
+   */
   clickedNode(
     graph,
     node,
@@ -123,6 +135,10 @@ class GraphHelper {
     }
   }
 
+  /**
+   * Method to display the info container
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   */
   displayInfoContainer(adjustSigmaContainerHeight) {
     // Display the allele info in the info panel
     const leftColumn = document.getElementsByClassName(
@@ -139,7 +155,13 @@ class GraphHelper {
     infoPanel.style.display = "inline-block";
   }
 
-  // Method for simulating a click to a node in the graph
+  /**
+   * Static method to simulate a click to a node in the graph
+   * @param {Object} graphManagerInstance - The graph manager instance
+   * @param {Object} graph - The graph instance
+   * @param {string} diseaseName - The disease name
+   * @param {Object} graphHelperInstance - The graph helper instance
+   */
   static simulateClickToNode(
     graphManagerInstance,
     graph,
@@ -187,7 +209,10 @@ class GraphHelper {
       });
   }
 
-  // Method for getting diseases for a category
+  /**
+   * Method to get diseases for a category
+   * @param {string} category - The category ID
+   */
   getDiseasesForCategory(category) {
     // Display the info container
     this.displayInfoContainer(this.adjustSigmaContainerHeight);
@@ -260,7 +285,11 @@ class GraphHelper {
       );
   }
 
-  // Method for hovering on a node
+  /**
+   * Method for hovering on a node
+   * @param {string} node - The node ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOnNode(node, graph) {
     const nodeId = node;
     // Get the edges of the node
@@ -292,7 +321,12 @@ class GraphHelper {
     }
   }
 
-  // Method for hovering off a node
+  /**
+   * Method for hovering off a node
+   * @param {string} node - The node ID
+   * @param {Object} graph - The graph instance
+   * @param {Object} [activeSelection=null] - The active selection object
+   */
   hoverOffNode(node, graph, activeSelection = null) {
     if (
       !this.sigmaInstance ||
@@ -336,7 +370,10 @@ class GraphHelper {
     this.sigmaInstance.refresh();
   }
 
-  // Method for updating the graph with layout
+  /**
+   * Method for updating the graph with layout
+   * @param {Object} graph - The graph instance
+   */
   applyLayout(graph) {
     const nodes = graph.nodes();
     const categoryNodes = nodes.filter(
@@ -438,7 +475,11 @@ class GraphHelper {
     this.sigmaInstance.refresh();
   }
 
-  // Method for calculating the color of a node
+  /**
+   * Method for calculating the color of a node
+   * @param {Object} node - The node object
+   * @returns {string} - The color of the node
+   */
   calculateNodeColor(node) {
     if (node.hidden) {
       return rgbaToFloat(0, 0, 0, 0);
@@ -460,15 +501,16 @@ class GraphHelper {
     }
   }
 
-  // Method for calculating the border of a node
+  /**
+   * Method for calculating the border of a node
+   * @param {Object} node - The node object
+   * @returns {Object} - The border properties of the node
+   */
   calculateBorder(node) {
     // Set the color of the node based on the node type
     const color = this.calculateNodeColor(node);
-    //  Set the size of the node based on the node type
-    const baseSize =
-      node.node_type === "allele"
-        ? sizeScale(clamp(node.p, sizeScale.domain()))
-        : 6;
+    // Set the size of the node based on the node type
+    const baseSize = sizeScale(node);
 
     // Set the border size and color based on the odds ratio
     let borderScaleFactor = 0.5;
@@ -478,21 +520,25 @@ class GraphHelper {
 
     // If the odds ratio is greater than or equal to 1
     if (oddsRatio >= 1) {
-      // Set the scaled border size
-      scaledBorderSize = clamp(oddsRatioDeviation / 8, [0, 1]);
+      scaledBorderSize = 1 + oddsRatioDeviation;
     } else {
-      // Set the scaled border size
-      scaledBorderSize = clamp(1 / oddsRatio - 1, [0, 1]);
+      scaledBorderSize = 1 / (1 + oddsRatioDeviation);
     }
+
     // Set the border size and color
     let finalBorderSize = baseSize * borderScaleFactor * scaledBorderSize;
     let borderSize = clamp(finalBorderSize, [0.5, baseSize * 0.5]);
     let borderColor = node.odds_ratio >= 1 ? "red" : "blue";
+
     // Return the border size and color
     return { color, baseSize, borderSize, borderColor };
   }
 
-  // Show the source of edge on a label on hover
+  /**
+   * Show the source of edge on a label on hover
+   * @param {string} edge - The edge ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOnEdge(edge, graph) {
     // Get the source of the edge and the label of the source
     const source = graph.source(edge);
@@ -504,7 +550,11 @@ class GraphHelper {
     }
   }
 
-  // Hide the source of edge on a label on hover
+  /**
+   * Hide the source of edge on a label on hover
+   * @param {string} edge - The edge ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOffEdge(edge, graph) {
     graph.setEdgeAttribute(edge, "label", "");
   }

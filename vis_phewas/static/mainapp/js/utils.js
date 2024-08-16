@@ -2,7 +2,13 @@ import { filterManager } from "./main.js";
 import { scaleLog } from "d3-scale";
 import * as d3 from "d3";
 
-// Function to toggle the visibility of the info container
+/**
+ * Function to toggle the visibility of the info container.
+ * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the Sigma container.
+ * @param {Object} graph - The graph instance.
+ * @param {Object} sigmaInstance - The Sigma instance.
+ * @returns {Function} - A function to close the info container.
+ */
 export function closeInfoContainer(
   adjustSigmaContainerHeight,
   graph,
@@ -45,6 +51,10 @@ export function closeInfoContainer(
   };
 }
 
+/**
+ * Function to export the current query data.
+ * @param {Function} showAlert - Function to display an alert with a given message.
+ */
 export function getExportData(showAlert) {
   // Push filters to the filters array to make sure the filters are applied
   filterManager.pushFilters();
@@ -95,6 +105,10 @@ export function getExportData(showAlert) {
     .catch((error) => console.error("Error:", error));
 }
 
+/**
+ * Function to display an alert with a given message.
+ * @param {string} message - The message to display in the alert.
+ */
 export function getShowAlert(message) {
   // Get the alert container
   const alertContainer = document.getElementById("alert-container");
@@ -107,7 +121,11 @@ export function getShowAlert(message) {
     `;
 }
 
-// Function to adjust the height of the Sigma container based on the page layout
+/**
+ * Function to adjust the height of the Sigma container based on the page layout.
+ * @param {HTMLElement} container - The Sigma container element.
+ * @param {Object} sigmaInstance - The Sigma instance.
+ */
 export function getAdjustSigmaContainer(container, sigmaInstance) {
   const filtersContainer = document.getElementById("filters-container");
 
@@ -121,8 +139,6 @@ export function getAdjustSigmaContainer(container, sigmaInstance) {
   });
 }
 
-
-
 // Create a scale for the size of the nodes
 export const sizeScale = scaleLog().domain([0.00001, 0.05]).range([8, 2]);
 
@@ -131,12 +147,21 @@ export const diseaseColor = scaleLog()
   .domain([1, 38])
   .range([d3.rgb("#eafa05"), d3.rgb("#fa6011")]); // Range from yellow to orange
 
-// Function to clamp values within the domain range for the scale to avoid outlying values
+/**
+ * Function to clamp values within the domain range for the scale to avoid outlying values.
+ * @param {number} value - The value to clamp.
+ * @param {Array<number>} domain - The domain range for the scale.
+ * @returns {number} - The clamped value.
+ */
 export function clamp(value, domain) {
   return Math.max(domain[0], Math.min(domain[domain.length - 1], value));
 }
 
-// Function to format the category string to be more readable
+/**
+ * Function to format the category string to be more readable.
+ * @param {string} string - The category string to format.
+ * @returns {string} - The formatted category string.
+ */
 export function formatCategoryString(string) {
   return string
     .split("_") // Split the string by underscores
@@ -144,7 +169,15 @@ export function formatCategoryString(string) {
     .join(" "); // Join the words back together with a space
 }
 
-// Simulate clicking every category on the graph
+/**
+ * Function to simulate clicking every category on the graph.
+ * @param {Object} graph - The graph instance.
+ * @param {Object} sigmaInstance - The Sigma instance.
+ * @param {Object} graphHelperInstance - The GraphHelper instance.
+ * @param {Function} fetchGraphData - Function to fetch the graph data.
+ * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the Sigma container.
+ * @param {Object} graphManager - The GraphManager instance.
+ */
 export async function clickAllCategories(
   graph,
   sigmaInstance,
@@ -177,7 +210,15 @@ export async function clickAllCategories(
   }
 }
 
-// Modified triggerNodeClick function
+/**
+ * Function to trigger a node click event.
+ * @param {Object} graphHelperInstance - The GraphHelper instance.
+ * @param {Object} graph - The graph instance.
+ * @param {string} nodeId - The ID of the node to click.
+ * @param {Function} fetchGraphData - Function to fetch the graph data.
+ * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the Sigma container.
+ * @param {boolean} [simulated=false] - Whether the click is simulated.
+ */
 async function triggerNodeClick(
   graphHelperInstance,
   graph,
