@@ -2,27 +2,69 @@
     <h3>Help</h3>
     <h4>Controls</h4>
     <p>Use the mouse to pan and the scroll-wheel to zoom the plot.</p>
+    <p>Click on a node to expand it to the next level. Clicking on an expanded node again will collapse it back.</p>
+    <p>Right-click a node to force the label to be displayed persistently.</p>
+    <p>Hover over a node to display the node’s label and relevant details.</p>
+    <p>Click on a node to view detailed information about the node in the sidebar.</p>
+    <h4>Node Appearance and Meaning</h4>
     <p>
-        Click on a node to unfold it to the next level. If a node is unfolded, click
-        it again to refold it.
+        Nodes represent different categories, diseases, or alleles and are visually distinct based on various factors:
     </p>
-    <p>Right-click a node to force the label to be displayed.</p>
-    <p>Click on a node to display a table with detailed information about the node.</p>
+    <ul>
+        <li>
+            <strong>Color:</strong> Disease nodes are colored on a yellow-orange gradient based on the number of associated alleles. Allele nodes are colored according to whether they are protective (cool colors) or risk factors (warm colors).
+        </li>
+        <li>
+            <strong>Node Size:</strong> The size of allele nodes indicates the statistical significance (p-value) of the association. Larger nodes represent more significant results.
+        </li>
+        <li>
+            <strong>Border Thickness:</strong> The thickness of an allele node's border indicates the magnitude of the odds ratio, with thicker borders showing a greater deviation from 1.
+        </li>
+        <li>
+            <strong>Shared Alleles:</strong> If an allele is associated with multiple diseases, lines will connect the relevant nodes, displaying links between the diseases.
+        </li>
+    </ul>
     <h4>Allele Details</h4>
+    <p>Click on an allele node to display detailed information in the sidebar.</p>
     <p>
-        Click on an allele node to display a table with detailed information about
-        the node.
+        The sidebar will show the odds ratio, p-value, and confidence bounds for the allele in the selected disease.
+        You can also view all other diseases associated with the allele and the most protected and most affected diseases.
     </p>
     <p>
-        From the table you can click to display other diseases that are associated with the allele as well as view the
-        highest associated odds ratio and p-value for that allele.
-
-        By clicking on a disease in the table, you can add the disease to the filter list.
+        Clicking on a disease in the sidebar will add it to the filter panel, allowing you to refine your exploration further.
     </p>
     <h4>Filters</h4>
     <p>
-        Use the add filter button to add a filter. You can filter by gene,
-        chromosome, or p-value. You can also filter by the number of SNPs in a gene.
-        You can add multiple filters which will be combined with an AND operator.
+        Use the "Add Filter" button at the bottom of the screen to apply filters to the visualized data.
+        Filters can be applied to allele type, disease category, p-value, odds ratio, and more.
+    </p>
+    <p>
+        Select the field to filter by and choose from options like "contains," "exactly," "greater than," "less than," etc., depending on the data type.
+    </p>
+    <p>
+        You can apply up to 8 filters and combine them using AND or OR logical operators for more precise queries.
+    </p>
+    <p>
+        Once filters are applied, a notification will appear showing the applied filters, and the network graph will update to display only relevant nodes.
+    </p>
+    <h4>Exporting Data</h4>
+    <p>
+        After applying filters, you can export the filtered data to a CSV file for further analysis by clicking the "Export" button.
+        The CSV file will include the filtered dataset along with a summary of the filters used.
+    </p>
+    <h4>Self-Organizing Map (SOM) Clustering</h4>
+    <p>
+        Use the "Tools" tab on the left sidebar to generate a Self-Organizing Map (SOM) visualization.
+        You can choose whether to cluster diseases or alleles.
+    </p>
+    <p>
+        You can further refine the clustering by selecting specific disease categories and number of clusters. The updated SOM will display as a heatmap, showing clusters with their relationships.
+    </p>
+    <p>
+        The clustered data can also be exported as a CSV file for further analysis.
+    </p>
+    <h4>Additional Options</h4>
+    <p>
+        In the "Options" tab, you can filter HLA alleles by 2- or 4-digit resolution to display serotypes or subtypes.
     </p>
 </div>
