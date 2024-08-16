@@ -1,7 +1,10 @@
 let showSubtypes = false;
 let activeTab = null;
 
-// Function to toggle the side panel
+/**
+ * Function to toggle the side panel.
+ * @param {string} tab - The tab to toggle.
+ */
 function toggleSidePanel(tab) {
   const sidePanel = document.getElementById("side-panel");
   const isOpen = sidePanel.classList.contains("open");
@@ -27,7 +30,10 @@ function toggleSidePanel(tab) {
   activeTab = tab;
 }
 
-// Function to update the sidebar contents
+/**
+ * Function to update the sidebar contents.
+ * @param {string} tab - The tab to update the contents for.
+ */
 function updateSidebarContents(tab) {
   const sidePanelContent = document.querySelector(".side-panel-content");
   // Clear the sidebar content

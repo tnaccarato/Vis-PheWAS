@@ -1,15 +1,24 @@
+/**
+ * Function to generate a Self-Organizing Map (SOM) based on the provided filters, type, and number of clusters.
+ * @param {string} filters - The filters to apply to the data.
+ * @param {string} type - The type of SOM to generate ('allele' or 'disease').
+ * @param {number} [num_clusters] - The number of clusters to generate. Defaults to 5 for 'disease' and 7 for 'allele'.
+ */
 function generateSOM(filters, type, num_clusters) {
   // Validate the type parameter
   if (type !== "allele" && type !== "disease") {
     alert("Invalid SOM type specified. Must be 'allele' or 'disease'.");
     return;
   }
+
+  // If num_clusters is not provided, set default values based on the type
   if (num_clusters == null) {
     num_clusters = type === "disease" ? 5 : 7;
   }
 
   console.log("Generating SOM with filters: " + filters + ", type: " + type + ", num_clusters: " + num_clusters);
 
+  // Send the data to the server to generate the SOM
   $.ajax({
     url: "/api/send_data_to_som/",
     type: "GET",
@@ -18,6 +27,8 @@ function generateSOM(filters, type, num_clusters) {
       type: type,
       num_clusters: num_clusters
     },
+
+    // Handle the response from the server
     success: function (response) {
       // Determine the correct SOM visualization page based on the type
       let url = type === "allele" ? "/som/SOMSNP/" : "/som/SOMDisease/";
@@ -38,6 +49,7 @@ function generateSOM(filters, type, num_clusters) {
 
       }
     },
+    // Handle any errors that occur during the request
     error: function (xhr, status, error) {
       alert("Failed to generate SOM: " + error);
     },
