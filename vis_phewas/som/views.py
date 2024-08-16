@@ -35,26 +35,32 @@ def cluster_results_to_csv(cluster_results):
 class SOMSNPView(APIView):
     """
     View to process SNPs data using SOM and return a Plotly visualization.
+
+    :param APIView: Django REST Framework APIView class
+    :type APIView:
+
+    :return: Rendered HTML page with the SOM visualization
     """
 
     def get(self, request):
+        """
+        Method to process the SNPs data using SOM and return a Plotly visualization.
+
+        :param request: Django request object with the data_id and num_clusters query parameters
+        :return: Rendered HTML page with the SOM visualization
+        """
         # Get the data_id from the request (passed as a query parameter)
         data_id = request.GET.get('data_id')
         num_clusters = request.GET.get('num_clusters')
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
 
+        # Get the number of clusters from the request (passed as a query parameter)
         if num_clusters is None:
             num_clusters = 7
 
         # Convert the CSV content to a DataFrame
-        csv_content = temp_data.csv_content
-        df = pd.read_csv(StringIO(csv_content))
-
-        # Preprocessing
-        filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
-        filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
-        filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
+        filtered_df = temp_data.csv_content = preprocess_temp_data(temp_data)
 
         # Group by SNP
         grouped_df = filtered_df.groupby('snp').agg({
@@ -263,6 +269,21 @@ def clean_filters(filters):
     return "<br>".join(formatted_lines)
 
 
+def preprocess_temp_data(temp_data):
+    """
+    Static method to preprocess the temporary data in the database.
+    :param temp_data: TemporaryCSVData object
+    :return: Preprocessed DataFrame
+    """
+    csv_content = temp_data.csv_content
+    df = pd.read_csv(StringIO(csv_content))
+    # Preprocessing
+    filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
+    filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
+    filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
+    return filtered_df
+
+
 class SOMDiseaseView(APIView):
     def get(self, request):
         # Get the data_id from the request (passed as a query parameter)
@@ -277,13 +298,7 @@ class SOMDiseaseView(APIView):
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
 
         # Convert the CSV content to a DataFrame
-        csv_content = temp_data.csv_content
-        df = pd.read_csv(StringIO(csv_content))
-
-        # Preprocessing
-        filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
-        filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
-        filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
+        filtered_df = preprocess_temp_data(temp_data)
 
         # Group by Disease
         grouped_df = filtered_df.groupby('phewas_string').agg({

@@ -1,7 +1,7 @@
-from django.core.management.base import BaseCommand
 import csv
+
+from django.core.management.base import BaseCommand
 from mainapp.models import HlaPheWasCatalog
-from mainapp.cleaning import clean_data
 
 
 class Command(BaseCommand):

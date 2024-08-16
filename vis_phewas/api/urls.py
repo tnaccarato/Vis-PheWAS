@@ -1,5 +1,6 @@
 # urls.py
 from django.urls import path
+
 from .views import IndexView, GraphDataView, InfoView, ExportDataView, CombinedAssociationsView, GetNodePathView, \
     GetDiseasesForCategoryView, SendDataToSOMView
 
