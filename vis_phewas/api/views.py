@@ -113,6 +113,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return: Filtered queryset
     """
+    print("Filters: ", filters)
     # If the category_id is provided, filter the queryset by the category
     if category_id:
         category_string: str = category_id.replace('category-', '').replace('_', ' ')
@@ -136,6 +137,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
     filters = normalise_snp_filter(filters)
+    filters = html.unescape(filters) # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
     if not show_subtypes:
@@ -379,6 +381,7 @@ class ExportDataView(APIView):
         """
         # Get the filters from the request
         filters: str = request.GET.get('filters', '')
+        filters:str = html.unescape(filters)
         # Get the filtered data
         df: pd.DataFrame = get_filtered_df(filters)
         # Create the response object
@@ -389,8 +392,8 @@ class ExportDataView(APIView):
         response['Dataset-Length'] = str(df.shape[0])
         # Write the data to the response
         buffer: StringIO = StringIO()
-        decoded_filters: str = html.unescape(filters)
-        buffer.write(f"Filters: {decoded_filters}\n\n")
+
+        buffer.write(f"Filters: {filters}\n\n")
         # Write the data to the buffer
         df.to_csv(buffer, index=False)
         # Get the CSV content
