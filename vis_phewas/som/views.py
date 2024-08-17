@@ -9,9 +9,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+# noinspection PyUnresolvedReferences
 from api.models import TemporaryCSVData
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
+# noinspection PyUnresolvedReferences
 from mainapp.models import HlaPheWasCatalog
 from minisom import MiniSom
 from rest_framework.views import APIView
@@ -149,6 +151,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
     :param title_text: Title text for the visualisation
     :return: None
     """
+    # Style the visualisation layout
     fig.update_layout(
         title=dict(
             text=title_text,
@@ -167,15 +170,15 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         ),
         xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
         yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
-        plot_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)', # Transparent background
         height=800,
         width=800,
         legend=dict(
             x=1.06,
             y=0.7,
-            bgcolor='rgba(0,0,0,0)'
+            bgcolor='rgba(0,0,0,0)' # Transparent background
         ),
-        paper_bgcolor='rgba(0,0,0,0)'
+        paper_bgcolor='rgba(0,0,0,0)' # Transparent background
     )
     fig.data[0].colorbar.update(
         thickness=15,
@@ -184,6 +187,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
     )
 
 
+# noinspection PyShadowingNames
 def process_and_visualise_som(data_id, num_clusters, filters, som_type):
     """
     Shared method to process data and generate SOM visualisation.
@@ -402,6 +406,7 @@ def process_and_visualise_som(data_id, num_clusters, filters, som_type):
     }
 
 
+# noinspection PyMethodMayBeStatic
 class SOMSNPView(APIView):
     """
     View to generate and display the SOM visualisation for SNPs.
@@ -422,6 +427,7 @@ class SOMSNPView(APIView):
         return render(request, 'som/som_view.html', context)
 
 
+# noinspection PyMethodMayBeStatic
 class SOMDiseaseView(APIView):
     """
     View to generate and display the SOM visualisation for diseases.
