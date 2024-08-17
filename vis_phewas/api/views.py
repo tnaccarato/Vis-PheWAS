@@ -47,7 +47,8 @@ class GraphDataView(APIView):
         """
         data_type: str = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
-        show_subtypes = request.GET.get('show_subtypes')
+        show_subtypes = request.GET.get('showSubtypes')
+        print("Show subtypes: ", show_subtypes)
         if show_subtypes == 'undefined':
             show_subtypes = False
         if filters == ['']:
@@ -117,7 +118,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
         category_string: str = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
     # If the export flag is set, return the queryset without any filters
-    print("Show subtypes: ", show_subtypes)
     if not export and not initial:
         # If the show_subtypes flag is set, filter the queryset to show only the main groups
         if show_subtypes == 'false':
@@ -579,7 +579,7 @@ class GetDiseasesForCategoryView(APIView):
         # Get the diseases for the category and return the response
         category = category.replace('_', ' ')
         # Get the show_subtypes parameter from the request
-        show_subtypes = request.GET.get('show_subtypes')
+        show_subtypes = request.GET.get('showSubtypes')
         # If the show_subtypes parameter is not provided, set it to False
         if show_subtypes == 'undefined':
             show_subtypes = False

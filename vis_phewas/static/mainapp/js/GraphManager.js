@@ -114,16 +114,16 @@ class GraphManager {
    * @param {Object} [params={}] - Parameters for fetching the graph data
    */
   fetchGraphData(params = {}) {
-    console.log(params);
-    console.log(params.type);
     // Set the default parameters
-    params.show_subtypes = window.showSubtypes;
+    params.showSubtypes = localStorage.getItem("showSubtypes") === "true" ? "true" : "false";
+    console.log("Show subtypes parameter:", params.showSubtypes);
 
     // Create a new URLSearchParams object
     const query = new URLSearchParams(params).toString();
     const url = "/api/graph-data/" + (
         query ? "?" + query : ""
     );
+    console.log("URL:", url);
 
     // Fetch the data from the URL
     fetch(url)
@@ -131,7 +131,7 @@ class GraphManager {
         .then((data) => {
           // If the type parameter is set, update the graph
           if (params.type) {
-            console.log("Updating");
+            // console.log("Updating");
             this.updateGraph(
                 data.nodes,
                 data.edges,
@@ -141,8 +141,8 @@ class GraphManager {
             // Otherwise, initialize the graph
           }
           else {
-            console.log("Initializing");
-            console.log(data);
+            // console.log("Initializing");
+            // console.log(data);
             this.initializeGraph(data.nodes, data.edges, data.visible);
           }
         })
@@ -159,39 +159,36 @@ class GraphManager {
     const containerCenterX = this.container.offsetWidth / 2;
     const containerCenterY = this.container.offsetHeight / 2;
     this.graph.clear();
-    console.log(this.visibleNodes);
+    // console.log(this.visibleNodes);
     this.visibleNodes = new Set(visible); // Initialize the visible nodes set
-    console.log(this.visibleNodes);
+    // console.log(this.visibleNodes);
     // If the camera position is null, set cameraPosition to current camera position
     if (this.cameraPosition === null) {
-      console.log("Setting camera position");
+      // console.log("Setting camera position");
       // Capture camera state
-      var camera = this.sigmaInstance.getCamera();
+      let camera = this.sigmaInstance.getCamera();
       this.cameraPosition = {
         x: camera.x,
         y: camera.y,
         ratio: camera.ratio,
         angle: camera.angle,
       };
-      console.log(this.cameraPosition);
-    }
-    else {
-      console.log("Camera position already set");
-      console.log(this.cameraPosition);
+      // console.log(this.cameraPosition);
+    } else {
+      // console.log("Camera position already set");
+      // console.log(this.cameraPosition);
       // Restore camera state
       this.sigmaInstance.getCamera().setState({
-                                                x: this.cameraPosition.x,
-                                                y: this.cameraPosition.y,
-                                                ratio: this.cameraPosition.ratio,
-                                                angle: this.cameraPosition.angle,
-                                              });
+        x: this.cameraPosition.x,
+        y: this.cameraPosition.y,
+        ratio: this.cameraPosition.ratio,
+        angle: this.cameraPosition.angle,
+      });
     }
 
     const categoryRadius = 400; // Adjust this value as needed
     const categoryNodes = nodes.filter((node) => node.node_type === "category");
-    const categoryAngleStep = (
-        2 * Math.PI
-    ) / categoryNodes.length;
+    const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
 
     categoryNodes.forEach((node, index) => {
       if (this.visibleNodes.has(node.id)) {
@@ -500,7 +497,7 @@ class GraphManager {
     const updateNodeStyles = (nodeData, diseaseNode) => {
       // Get the allele node
       const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
-          window.showSubtypes === true ? "" + nodeData.subtype.toString() : ""
+          localStorage.getItem("showSubtypes") === true ? "" + nodeData.subtype.toString() : ""
       }`;
 
       // Update allele node
@@ -646,8 +643,10 @@ class GraphManager {
                   const button = document.createElement("button");
                   button.className = "btn btn-primary";
                   button.textContent = "Show Combinational Associations";
+                  // Get the showSubtypes value from local storage
+                  const showSubtypes = localStorage.getItem("showSubtypes") === "true";
                   button.onclick = () => {
-                    fetchAndShowAssociations(value, window.showSubtypes);
+                    fetchAndShowAssociations(value, showSubtypes);
                   };
                   cell3.appendChild(button);
                   row.appendChild(cell3);

@@ -295,7 +295,7 @@ export class FilterManager {
         <option value="gene_name">Gene Name</option>
         <option value="serotype">Serotype</option>
 <!-- If showSubtypes is true, add an option for the subtype-->
-        ${window.showSubtypes ? `<option value="subtype">Subtype</option>` : ""}
+        ${localStorage.getItem("showSubtypes") === "true" ? `<option value="subtype">Subtype</option>` : ""}
         <option value="phewas_code">Phecode</option>
         <option value="phewas_string">Phenotype</option>
         <option value="category_string">Disease Category</option>
