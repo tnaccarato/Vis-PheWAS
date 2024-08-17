@@ -1,4 +1,3 @@
-import forceAtlas2 from "graphology-layout-forceatlas2";
 import { rgbaToFloat } from "sigma/utils";
 import {
   clamp,
@@ -8,6 +7,7 @@ import {
   sizeScale,
 } from "./utils";
 import { filterManager } from "./main";
+import forceAtlas2 from "graphology-layout-forceatlas2";
 
 // Helper class for graph operations
 class GraphHelper {
@@ -371,7 +371,7 @@ class GraphHelper {
   }
 
   /**
-   * Method for updating the graph with layout
+   * Method for updating the graph with layout and handling interactions
    * @param {Object} graph - The graph instance
    */
   applyLayout(graph) {
@@ -381,9 +381,9 @@ class GraphHelper {
     );
     const centerX = 500;
     const centerY = 500;
-    const categoryRadius = 400; // Radius for the category circle
+    const categoryRadius = Math.max(400, categoryNodes.length * 20);
 
-    // Step 1: Position category nodes in a circle
+    // Position category nodes in a circle
     const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
     categoryNodes.forEach((categoryNode, index) => {
       const angle = categoryAngleStep * index;
@@ -394,8 +394,11 @@ class GraphHelper {
       graph.setNodeAttribute(categoryNode, "fixed", true);
     });
 
-    // Step 2: Position disease nodes around their categories
-    const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
+    // Calculate the distance between adjacent categories
+    const distanceBetweenCategories =
+      2 * categoryRadius * Math.sin(categoryAngleStep / 2);
+    const diseaseNodeRadius = 0.4 * distanceBetweenCategories;
+
     categoryNodes.forEach((categoryNode) => {
       const relatedDiseaseNodes = nodes.filter(
         (node) =>
@@ -405,60 +408,61 @@ class GraphHelper {
       );
 
       const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
+
       relatedDiseaseNodes.forEach((diseaseNode, index) => {
         const angle = diseaseAngleStep * index;
         const diseaseX =
           graph.getNodeAttribute(categoryNode, "x") +
-          diseaseRadius * Math.sin(angle);
+          diseaseNodeRadius * Math.sin(angle);
         const diseaseY =
           graph.getNodeAttribute(categoryNode, "y") +
-          diseaseRadius * Math.cos(angle);
+          diseaseNodeRadius * Math.cos(angle);
 
         graph.setNodeAttribute(diseaseNode, "x", diseaseX);
         graph.setNodeAttribute(diseaseNode, "y", diseaseY);
         graph.setNodeAttribute(diseaseNode, "fixed", true);
-        graph.setNodeAttribute(diseaseNode, "size", 10);
-      });
-    });
 
-    // Step 3: Position alleles around their disease nodes
-    const alleleRadius = 10; // Radius for positioning allele nodes around disease nodes
-    nodes.forEach((node) => {
-      if (graph.getNodeAttribute(node, "node_type") === "disease") {
-        const diseaseNode = node;
-        const diseaseX = graph.getNodeAttribute(diseaseNode, "x");
-        const diseaseY = graph.getNodeAttribute(diseaseNode, "y");
-        const diseaseSize = graph.getNodeAttribute(diseaseNode, "size");
-
-        // Get all allele nodes connected to this disease node
+        // Position allele nodes around their disease node, only outward-facing
         const alleleNodes = graph
           .outNeighbors(diseaseNode)
           .filter((n) => graph.getNodeAttribute(n, "node_type") === "allele");
 
-        // Sort allele nodes alphabetically by their label
-        alleleNodes.sort((a, b) => {
-          const labelA = graph.getNodeAttribute(a, "label").toLowerCase();
-          const labelB = graph.getNodeAttribute(b, "label").toLowerCase();
-          return labelA.localeCompare(labelB);
-        });
+        const alleleRadius = Math.max(20, diseaseNodeRadius * 0.4);
+        const baseAngle = Math.atan2(
+          diseaseY - graph.getNodeAttribute(categoryNode, "y"),
+          diseaseX - graph.getNodeAttribute(categoryNode, "x"),
+        );
+        const startAngle = baseAngle - Math.PI / 6; // 30 degrees left of the outward direction
+        const endAngle = baseAngle + Math.PI / 6; // 30 degrees right of the outward direction
+        const alleleAngleStep = (endAngle - startAngle) / alleleNodes.length;
 
-        // Position sorted allele nodes around the disease node
-        const alleleAngleStep = (2 * Math.PI) / alleleNodes.length;
         alleleNodes.forEach((alleleNode, index) => {
-          const angle = alleleAngleStep * index;
-          const alleleX =
-            diseaseX + (diseaseSize + alleleRadius) * Math.cos(angle);
-          const alleleY =
-            diseaseY + (diseaseSize + alleleRadius) * Math.sin(angle);
+          const alleleAngle = startAngle + alleleAngleStep * index;
 
-          graph.setNodeAttribute(alleleNode, "x", alleleX);
-          graph.setNodeAttribute(alleleNode, "y", alleleY);
-          graph.setNodeAttribute(alleleNode, "fixed", false);
+          // Check if the allele node is connected to multiple diseases
+          const connectedDiseases = graph
+            .inNeighbors(alleleNode)
+            .filter(
+              (n) => graph.getNodeAttribute(n, "node_type") === "disease",
+            );
+
+          if (connectedDiseases.length > 1) {
+            // If connected to multiple diseases, make it flexible (unfixed)
+            graph.setNodeAttribute(alleleNode, "fixed", false);
+          } else {
+            // Otherwise, fix it in place with a specific position
+            const alleleX = diseaseX + alleleRadius * Math.cos(alleleAngle);
+            const alleleY = diseaseY + alleleRadius * Math.sin(alleleAngle);
+
+            graph.setNodeAttribute(alleleNode, "x", alleleX);
+            graph.setNodeAttribute(alleleNode, "y", alleleY);
+            graph.setNodeAttribute(alleleNode, "fixed", true);
+          }
         });
-      }
+      });
     });
 
-    // Step 4: Apply Force Atlas 2 to non-fixed nodes
+    // Apply force layout to flexible nodes
     const settings = {
       iterations: 100,
       settings: {
@@ -478,7 +482,7 @@ class GraphHelper {
   /**
    * Method for calculating the color of a node
    * @param {Object} node - The node object
-   * @returns {string} - The color of the node
+   * @returns {number} - The color of the node
    */
   calculateNodeColor(node) {
     if (node.hidden) {
