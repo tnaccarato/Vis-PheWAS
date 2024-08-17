@@ -181,6 +181,17 @@ export class FilterManager {
       input.type = "number";
       input.placeholder = "Enter value";
       input.className = "field-input";
+      input.min = "0"; // Set a min value of 0 for number inputs
+
+      // If p-value is selected, set a max value of 0.05 and step of 0.005
+        if (selectedField === "p") {
+            input.max = "0.05";
+            input.step = "0.005";
+        }
+        if (selectedField === "odds_ratio") {
+            input.step = "0.25";
+        }
+
       filterInputContainer.appendChild(input);
       // If the selected field is gene_class, gene_name
     } else if (["gene_class", "gene_name"].includes(selectedField)) {
