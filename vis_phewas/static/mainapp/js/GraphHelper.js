@@ -395,8 +395,9 @@ class GraphHelper {
     });
 
     // Calculate the distance between adjacent categories
+    const angleDiff = categoryAngleStep;
     const distanceBetweenCategories =
-      2 * categoryRadius * Math.sin(categoryAngleStep / 2);
+      2 * categoryRadius * Math.sin(angleDiff / 2);
     const diseaseNodeRadius = 0.4 * distanceBetweenCategories;
 
     categoryNodes.forEach((categoryNode) => {
@@ -436,8 +437,15 @@ class GraphHelper {
         const endAngle = baseAngle + Math.PI / 6; // 30 degrees right of the outward direction
         const alleleAngleStep = (endAngle - startAngle) / alleleNodes.length;
 
+        // Calculate the stagger offset (alternates up and down)
+        const staggerOffset = (index % 2 === 0 ? 1 : -1) * (alleleRadius / 2);
+
         alleleNodes.forEach((alleleNode, index) => {
           const alleleAngle = startAngle + alleleAngleStep * index;
+          const staggeredY =
+            staggerOffset + diseaseY + alleleRadius * Math.sin(alleleAngle);
+          const alleleX = diseaseX + alleleRadius * Math.cos(alleleAngle);
+          const alleleY = staggeredY;
 
           // Check if the allele node is connected to multiple diseases
           const connectedDiseases = graph
@@ -451,9 +459,6 @@ class GraphHelper {
             graph.setNodeAttribute(alleleNode, "fixed", false);
           } else {
             // Otherwise, fix it in place with a specific position
-            const alleleX = diseaseX + alleleRadius * Math.cos(alleleAngle);
-            const alleleY = diseaseY + alleleRadius * Math.sin(alleleAngle);
-
             graph.setNodeAttribute(alleleNode, "x", alleleX);
             graph.setNodeAttribute(alleleNode, "y", alleleY);
             graph.setNodeAttribute(alleleNode, "fixed", true);
@@ -506,37 +511,56 @@ class GraphHelper {
   }
 
   /**
-   * Method for calculating the border of a node
-   * @param {Object} node - The node object
-   * @returns {Object} - The border properties of the node
-   */
-  calculateBorder(node) {
-    // Set the color of the node based on the node type
-    const color = this.calculateNodeColor(node);
-    // Set the size of the node based on the node type
-    const baseSize = sizeScale(node);
+ * Method for calculating the border and size of a node.
+ * @param {Object} node - The node object.
+ * @returns {Object} - The border properties of the node.
+ */
+calculateBorder(node) {
+  console.log("Node:", node);
+  let baseSize;
+  let borderSize;
+  let borderColor;
+  let color;
 
-    // Set the border size and color based on the odds ratio
-    let borderScaleFactor = 0.5;
-    let oddsRatio = node.odds_ratio;
-    let oddsRatioDeviation = Math.abs(oddsRatio - 1);
-    let scaledBorderSize;
+  // Get the color of the node
+  color = this.calculateNodeColor(node);
+  // Handle category nodes
+  if (node.node_type === "category") {
+    baseSize = 10; // Constant size
+    borderSize = 0; // No border
+    borderColor = color;
+  } else if (node.node_type === "disease") {
+    baseSize = 10; // Constant size for diseases
+    color = diseaseColor(node.allele_count); // Color based on the number of alleles
+    borderSize = 0; // No border needed for diseases
+    borderColor = color;
+  } else if (node.node_type === "allele") {
+    console.log("OR:", node.odds_ratio);
+    console.log("P-Value:", node.p);
+    const pValue = node.p || 0.05; // Use p-value for sizing alleles
+    baseSize = sizeScale(clamp(pValue, sizeScale.domain())); // Scale size based on clamped p-value
 
-    // If the odds ratio is greater than or equal to 1
-    if (oddsRatio >= 1) {
-      scaledBorderSize = 1 + oddsRatioDeviation;
-    } else {
-      scaledBorderSize = 1 / (1 + oddsRatioDeviation);
-    }
+    // Determine border color based on odds ratio
+    const oddsRatio = node.odds_ratio || 1; // Default to 1 if odds ratio is not defined
+    borderColor = oddsRatio >= 1 ? "red" : "blue";
 
-    // Set the border size and color
-    let finalBorderSize = baseSize * borderScaleFactor * scaledBorderSize;
-    let borderSize = clamp(finalBorderSize, [0.5, baseSize * 0.5]);
-    let borderColor = node.odds_ratio >= 1 ? "red" : "blue";
+    // Calculate border thickness based on deviation from OR = 1
+    const oddsRatioDeviation = Math.abs(oddsRatio - 1);
+    const borderScaleFactor = 0.5; // Factor to adjust border size relative to base size
+    borderSize = baseSize * borderScaleFactor * oddsRatioDeviation; // Thickness proportional to deviation
 
-    // Return the border size and color
-    return { color, baseSize, borderSize, borderColor };
+    // Clamp border size to avoid excessive or minimal borders
+    borderSize = clamp(borderSize, [0.25, baseSize * 0.75]);
   }
+
+  console.log("Border Size:", borderSize);
+  console.log("Border Color:", borderColor);
+  console.log("Color:", color);
+  console.log("Base Size:", baseSize);
+
+  // Return the border size and color
+  return { color, baseSize, borderSize, borderColor };
+}
 
   /**
    * Show the source of edge on a label on hover
