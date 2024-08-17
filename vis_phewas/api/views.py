@@ -4,9 +4,11 @@ import re
 import urllib.parse
 from datetime import timedelta
 from io import StringIO
+from typing import List
 
 import pandas as pd
-from django.db.models import Q, Count
+from api.models import TemporaryCSVData
+from django.db.models import Q, Count, QuerySet
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from mainapp.models import HlaPheWasCatalog
@@ -15,41 +17,54 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from scipy.stats import combine_pvalues
 
-from api.models import TemporaryCSVData
 
 class IndexView(APIView):
     """
     API view to get the index page.
     """
 
-    def get(self, request):
+    def get(self, request) -> Response:
+        """
+        Get the index page.
+        :param request: Request object from the client
+        :return: Response object with the index page
+        """
         return Response({"message": "Welcome to the HLA PheWAS Catalog API"}, status=status.HTTP_200_OK)
 
 
 class GraphDataView(APIView):
     """
     API view to get the data for the graph.
+    :return: Response object with the graph data for the specified type
     """
 
-    def get(self, request):
-        # Get the data type from the request
-        data_type = request.GET.get('type', 'initial')
+    def get(self, request) -> Response:
+        """
+        Get the data for the graph.
+
+        :param request: Request object from the client with the type, filters, and category_id parameters
+        :return: Response object with the graph data for the specified type
+        """
+        data_type: str = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
-        show_subtypes = request.GET.get('show_subtypes')
+        show_subtypes = request.GET.get('showSubtypes')
+        print("Show subtypes: ", show_subtypes)
         if show_subtypes == 'undefined':
             show_subtypes = False
         if filters == ['']:
             filters = []
 
+        # Get the data based on the type
         if data_type == 'initial':
             nodes, edges, visible = get_category_data(filters, show_subtypes, initial=True)
         elif data_type == 'categories':
             nodes, edges, visible = get_category_data(filters, initial=False, show_subtypes=show_subtypes)
         elif data_type == 'diseases':
-            category_id = request.GET.get('category_id')
+            category_id: str = request.GET.get('category_id')
             nodes, edges, visible = get_disease_data(category_id, filters, show_subtypes)
         elif data_type == 'alleles':
-            disease_id = urllib.parse.unquote(request.GET.get('disease_id'))
+            # Get the disease ID from the request escaped with urllib.parse.unquote
+            disease_id: str = urllib.parse.unquote(request.GET.get('disease_id'))
             nodes, edges, visible = get_allele_data(disease_id, filters, show_subtypes)
         else:
             return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
@@ -57,7 +72,37 @@ class GraphDataView(APIView):
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def apply_filters(queryset, filters, category_id=None, show_subtypes=False, export=False, initial=False):
+def normalise_snp_filter(filters):
+    """
+    Normalise the SNP filter to be case-insensitive, handle different delimiters,
+    and ensure HLA_A_01 format is used.
+    :param filters: The filter string containing SNP conditions.
+    :return: The normalised filter string.
+    """
+
+    # Define a function to normalise the SNP value
+    def normalize_snp(match):
+        snp_value = match.group(2).strip()
+        # Remove any existing HLA prefix and delimiter
+        snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
+        # Remove all delimiters and spaces
+        snp_value = re.sub(r'[-_\s]+', '', snp_value)
+        # Format as HLA_A_01
+        if len(snp_value) >= 2:
+            snp_value = f"HLA_{snp_value[0].upper()}_{snp_value[1:].zfill(2)}"
+        return f"snp:==:{snp_value}"
+
+    # Normalize the entire filter string
+    filters = re.sub(r'((?:^|,\s*)snp\s*[:_-]?(?:==|:==:)?\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
+                     normalize_snp,
+                     filters,
+                     flags=re.IGNORECASE)
+
+    return filters
+
+
+def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
+                  export: bool = False, initial: bool = False) -> QuerySet:
     """
     Apply the filters to the queryset.
     :param initial:
@@ -68,43 +113,52 @@ def apply_filters(queryset, filters, category_id=None, show_subtypes=False, expo
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return: Filtered queryset
     """
-    # If a category_id is provided, filter by that category
+    print("Filters: ", filters)
+    # If the category_id is provided, filter the queryset by the category
     if category_id:
-        category_string = category_id.replace('category-', '').replace('_', ' ')
+        category_string: str = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
+    # If the export flag is set, return the queryset without any filters
     if not export and not initial:
-        # Handle show_subtypes logic
-        if not show_subtypes:
+        # If the show_subtypes flag is set, filter the queryset to show only the main groups
+        if show_subtypes == 'false':
+            print("Filtering subtypes")
             queryset = queryset.filter(subtype='00')
+            # If show_subtypes is not set, filter the queryset to show only the subtypes
         else:
+            print("Not filtering subtypes")
             queryset = queryset.exclude(subtype='00')
-    # Skip show_subtypes logic if exporting or initial
     else:
         queryset = queryset
 
-    # If no filters are provided, return the queryset filtered by p-value
+    # If no filters are provided, return the queryset filtered to show only the significant results
     if not filters:
         return queryset.filter(p__lte=0.05)
 
-    # Parse the filters
-    filter_list = parse_filters(filters)
+    # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
+    filters = normalise_snp_filter(filters)
+    filters = html.unescape(filters) # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
-    # Apply the filters
-    combined_query = Q()
+    # If show_subtypes is false, remove the last two digits of the SNP filter
+    if not show_subtypes:
+        # Match HLA_[letter]_[four digits] and capture only the first two digits
+        filters = re.sub(r'(HLA_[A-Z]_\d{2})\d{2}', r'\1', filters)
 
-    # Loop through the filters and apply them to the queryset
+    # Parse the filters and apply them to the queryset
+    filter_list: list = parse_filters(filters)
+    combined_query: Q = Q()
+
+    # Loop through the filter list and apply the filters to the queryset
     for logical_operator, filter_str in filter_list:
-        parts = filter_str.split(':', 2)
+        parts: list = filter_str.split(':', 2)
         if len(parts) < 3:
             continue
         field, operator, value = parts
-
-        # Remove any trailing commas from the value
         value = value.rstrip(',')
 
-        # Check if the field is a valid field
+        # Apply the filter based on the operator
         if operator == '==':
-            q = Q(**{f'{field}__iexact': value})
+            q: Q = Q(**{f'{field}__iexact': value})
         elif operator == 'contains':
             q = Q(**{f'{field}__icontains': value})
         elif operator == '>':
@@ -118,60 +172,55 @@ def apply_filters(queryset, filters, category_id=None, show_subtypes=False, expo
         else:
             continue
 
-        # Combine the query with the previous queries based on the logical operator
+        # Combine the queries based on the logical operator
         if logical_operator == 'AND':
             combined_query &= q
         elif logical_operator == 'OR':
             combined_query |= q
 
-    # Filter the queryset by the combined query
+    # Filter the queryset based on the combined query
     queryset = queryset.filter(combined_query)
-
-    # Filter the queryset by p-value
-    filtered_queryset = queryset.filter(p__lte=0.05)
-
-    # Return the filtered queryset
+    # Filter the queryset to show only the significant results
+    filtered_queryset: QuerySet = queryset.filter(p__lte=0.05)
     return filtered_queryset
 
 
-def parse_filters(filters):
+def parse_filters(filters: str) -> list:
     """
     Parse the filters string into a list of tuples.
     :param filters:
     :return:
     """
-    # Split the filters string by AND or OR
-    filter_list = []
-    # Keep track of the current operator
+    # Initialise the filter list and the current operator
+    filter_list: list = []
+    # Initialise the pattern to match the logical operators
     current_operator = None
-    # Split by AND or OR, but only if not inside quotes
+    # Initialise the pattern to match the logical operators
     pattern = re.compile(r'\s*(AND|OR)\s*')
-    parts = pattern.split(filters)
+    # Split the filters string into parts based on the logical operators
+    parts: list = pattern.split(filters)
 
-    # Filter out empty strings
+    # Loop through the parts and add them to the filter list
     for part in parts:
         part = part.strip()
-        # Skip empty strings
+        # If the part is a logical operator, set the current operator
         if part in ('AND', 'OR'):
             current_operator = part
+        # If the part is not a logical operator, add it to the filter list
         elif part:
-            # Split by comma, but only if not inside quotes
-            sub_parts = re.findall(r'([^,]+|"[^"]*")+', part)
+            sub_parts: list = re.findall(r'([^,]+|"[^"]*")+', part)
             for sub_part in sub_parts:
                 sub_part = sub_part.strip().strip('"')
-                # If there is a current operator, add it to the filter list
                 if current_operator:
                     filter_list.append((current_operator, sub_part))
                     current_operator = None
-                # If there is no current operator, default to AND
                 else:
                     filter_list.append(('AND', sub_part))
-
     # Return the filter list
     return filter_list
 
 
-def get_category_data(filters, show_subtypes, initial=True, ) -> tuple:
+def get_category_data(filters: str, show_subtypes: bool, initial: bool = True) -> tuple:
     """
     Get the category data for the graph.
     :param show_subtypes:
@@ -179,26 +228,27 @@ def get_category_data(filters, show_subtypes, initial=True, ) -> tuple:
     :param filters:
     :return:
     """
-    # Get the unique category strings
-    queryset = HlaPheWasCatalog.objects.values('category_string').distinct()
-    # Apply filters before slicing
-    filtered_queryset = apply_filters(queryset, filters, initial=initial, show_subtypes=show_subtypes)
+    # Get the distinct categories from the database
+    queryset: QuerySet = HlaPheWasCatalog.objects.values('category_string').distinct()
+    # Apply the filters to the queryset
+    filtered_queryset: QuerySet = apply_filters(queryset, filters, initial=initial, show_subtypes=show_subtypes)
     # Get the visible nodes
-    visible_nodes = list(filtered_queryset.values('category_string').distinct())
-    # Get visible nodes as a list of strings
+    visible_nodes: list = list(filtered_queryset.values('category_string').distinct())
+    # Format the visible nodes
     visible_nodes = ["category-" + node['category_string'].replace(' ', '_') for node in visible_nodes]
-
-    # Sort the queryset by category_string
+    # Order the queryset by the category string
     filtered_queryset = filtered_queryset.order_by('category_string')
-    # Create the nodes and edges
-    nodes = [{'id': f"category-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
-              'node_type': 'category'} for category in filtered_queryset]
-    edges = []
+    # Format the nodes
+    nodes: list = [
+        {'id': f"category-{category['category_string'].replace(' ', '_')}", 'label': category['category_string'],
+         'node_type': 'category'} for category in filtered_queryset]
+    # Format the edges
+    edges: list = []
     # Return the nodes, edges, and visible nodes
     return nodes, edges, visible_nodes
 
 
-def get_disease_data(category_id, filters, show_subtypes) -> tuple:
+def get_disease_data(category_id: str, filters: str, show_subtypes: bool) -> tuple:
     """
     Get the disease data for the selected category.
     :param show_subtypes:
@@ -206,32 +256,35 @@ def get_disease_data(category_id, filters, show_subtypes) -> tuple:
     :param filters:
     :return:
     """
-    category_string = category_id.replace('category-', '').replace('_', ' ')
-    queryset = HlaPheWasCatalog.objects.filter(category_string=category_string).values('phewas_string',
-                                                                                       'category_string').distinct()
-    filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
-
-    # Annotation for allele count
-    filtered_queryset = filtered_queryset.annotate(allele_count=Count('snp'))
-
+    # Get the category string from the category ID
+    category_string: str = category_id.replace('category-', '').replace('_', ' ')
+    # Get the distinct diseases for the selected category
+    queryset: QuerySet = (HlaPheWasCatalog.objects.filter(category_string=category_string)
+                          .values('phewas_string', 'category_string').distinct())
+    # Apply the filters to the queryset
+    filtered_queryset: QuerySet = apply_filters(queryset, filters, show_subtypes=show_subtypes)
     # Get the visible nodes
-    visible_nodes = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
+    filtered_queryset = filtered_queryset.annotate(allele_count=Count('snp'))
+    # Get the visible nodes
+    visible_nodes: list = list(filtered_queryset.values('phewas_string', 'category_string').distinct())
+    # Format the visible nodes
     visible_nodes = ["disease-" + node['phewas_string'].replace(' ', '_') for node in visible_nodes]
-
-    # Sort the queryset by phewas_string
+    # Order the queryset by the disease string
     filtered_queryset = filtered_queryset.order_by('phewas_string')
-
-    # Create the nodes and edges
-    nodes = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
-              'node_type': 'disease', 'allele_count': disease['allele_count'], 'category': disease['category_string']}
-             for disease in filtered_queryset]
-    edges = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for disease in
-             filtered_queryset]
-
+    # Format the nodes
+    nodes: list = [{'id': f"disease-{disease['phewas_string'].replace(' ', '_')}", 'label': disease['phewas_string'],
+                    'node_type': 'disease', 'allele_count': disease['allele_count'],
+                    'category': disease['category_string']}
+                   for disease in filtered_queryset]
+    # Format the edges
+    edges: list = [{'source': category_id, 'target': f"disease-{disease['phewas_string'].replace(' ', '_')}"} for
+                   disease in
+                   filtered_queryset]
+    # Return the nodes, edges, and visible nodes
     return nodes, edges, visible_nodes
 
 
-def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
+def get_allele_data(disease_id: str, filters: str, show_subtypes: bool = False) -> tuple:
     """
     Get the allele data for the selected disease.
     :param disease_id:
@@ -239,45 +292,53 @@ def get_allele_data(disease_id, filters, show_subtypes=False) -> tuple:
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return:
     """
-    disease_string = disease_id.replace('disease-', '').replace('_', ' ')
-    queryset = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
+    # Get the disease string from the disease ID
+    disease_string: str = disease_id.replace('disease-', '').replace('_', ' ')
+    # Get the distinct alleles for the selected disease
+    queryset: QuerySet = HlaPheWasCatalog.objects.filter(phewas_string=disease_string).values(
         'snp', 'gene_class', 'gene_name', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
     ).distinct()
-
-    # Remove snp from filters list so other snps are still shown
+    # Apply the filters to the queryset
     filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
-    filtered_queryset = apply_filters(queryset, filters, show_subtypes=show_subtypes)
-
+    # Apply the filters to the queryset
+    filtered_queryset: QuerySet = apply_filters(queryset, filters, show_subtypes=show_subtypes)
     # Get the visible nodes
-    visible_nodes = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
+    visible_nodes: list = list(filtered_queryset.values('snp', 'phewas_string', 'category_string').distinct())
     visible_nodes = ["allele-" + node['snp'].replace(' ', '_') for node in visible_nodes]
-
-    # Order by odds_ratio and then slice
+    # Order the queryset by the odds ratio
     filtered_queryset = filtered_queryset.order_by('-odds_ratio')
-
-    # Annotate node with odds_ratio for dynamic node colouring
-    nodes = [
+    nodes: list = [
         {'id': f"allele-{allele['snp'].replace(' ', '_')}", 'label': allele['snp'], 'node_type': 'allele',
          'disease': disease_string, **allele,
          } for allele in filtered_queryset]
-    edges = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
-             filtered_queryset]
-
+    # Format the edges
+    edges: list = [{'source': disease_id, 'target': f"allele-{allele['snp'].replace(' ', '_')}"} for allele in
+                   filtered_queryset]
+    # Return the nodes, edges, and visible nodes
     return nodes, edges, visible_nodes
 
 
 class InfoView(APIView):
     """
     API view to get the information for a specific allele.
+
+    :param request: Request object from the client with the allele and disease parameters
+    :return: Response object with the information for the allele
     """
 
-    def get(self, request):
+    def get(self, request) -> Response:
+        """
+        Get the information for a specific allele.
+        :param request: Request object from the client with the allele and disease parameters
+        :return: Response object with the information for the allele
+        """
         # Get the allele and disease from the request
-        allele = request.GET.get('allele')
-        disease = request.GET.get('disease')
-        # Get the allele data for the allele and disease
-        allele_data = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
-            'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'phewas_code', 'category_string', 'cases',
+        allele: str = request.GET.get('allele')
+        disease: str = request.GET.get('disease')
+        # Get the data for the allele
+        allele_data: dict = HlaPheWasCatalog.objects.filter(snp=allele, phewas_string=disease).values(
+            'gene_class', 'gene_name', 'serotype', 'subtype', 'phewas_string', 'phewas_code', 'category_string',
+            'cases',
             'controls', 'odds_ratio', 'l95', 'u95', 'p', 'maf'
         ).distinct()[0]
         # Remove the subtype if it is the main group
@@ -285,139 +346,163 @@ class InfoView(APIView):
             allele_data.pop('subtype')
 
         # Get the top and lowest odds ratios for the allele
-        top_odds = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string', 'odds_ratio',
-                                                                                   'p').order_by(
+        top_odds: QuerySet = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string',
+                                                                                             'odds_ratio',
+                                                                                             'p').order_by(
             '-odds_ratio')[:5]
-        lowest_odds = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values('phewas_string',
-                                                                                                        'odds_ratio',
-                                                                                                        'p').order_by(
+        # Get the lowest odds ratios for the allele
+        lowest_odds: QuerySet = HlaPheWasCatalog.objects.filter(snp=allele, odds_ratio__gt=0, p__lte=0.05).values(
+            'phewas_string',
+            'odds_ratio',
+            'p').order_by(
             'odds_ratio', 'p')[:5]
 
-        # Return the allele data
+        # Format the data for the response
         allele_data['top_odds'] = list(top_odds)
         allele_data['lowest_odds'] = list(lowest_odds)
+        # Return the allele data
         return Response(allele_data)
 
 
 class ExportDataView(APIView):
     """
     API view to export the data to a CSV file.
+
+    :param request: Request object from the client with the filters parameter
+    :return: HttpResponse object with the exported data as a CSV file
     """
 
-    def get(self, request):
+    def get(self, request) -> HttpResponse:
+        """
+        Export the data to a CSV file.
+
+        :param request: Request object from the client with the filters parameter
+        :return: HttpResponse object with the exported data as a CSV file
+        """
         # Get the filters from the request
-        filters = request.GET.get('filters', '')
-
-        df = get_filtered_df(filters)
-        # Create the response
-        response = HttpResponse(content_type='text/csv')
+        filters: str = request.GET.get('filters', '')
+        filters:str = html.unescape(filters)
+        # Get the filtered data
+        df: pd.DataFrame = get_filtered_df(filters)
+        # Create the response object
+        response: HttpResponse = HttpResponse(content_type='text/csv')
+        # Set the headers for the response
         response['Content-Disposition'] = 'attachment; filename="exported_data.csv"'
+        # Set the dataset length header
         response['Dataset-Length'] = str(df.shape[0])
+        # Write the data to the response
+        buffer: StringIO = StringIO()
 
-        # Write the DataFrame to a CSV file
-        buffer = StringIO()
-        decoded_filters = html.unescape(filters)  # Unescape filters so that they are human-readable in the CSV
-        buffer.write(f"Filters: {decoded_filters}\n\n")
+        buffer.write(f"Filters: {filters}\n\n")
+        # Write the data to the buffer
         df.to_csv(buffer, index=False)
-        csv_content = buffer.getvalue()
-
-        # Write the CSV content to the response
+        # Get the CSV content
+        csv_content: str = buffer.getvalue()
         response.write(csv_content)
         # Return the response
         return response
 
 
-def get_filtered_df(filters):
-    queryset = HlaPheWasCatalog.objects.all()
-    filtered_queryset = apply_filters(queryset, filters, show_subtypes=True, export=True)
-    # Create a DataFrame from the queryset
-    df = pd.DataFrame(list(filtered_queryset.values()))
-    # Drop the id column if it exists
+def get_filtered_df(filters: str) -> pd.DataFrame:
+    """
+    Get the filtered data as a DataFrame.
+    :param filters: The filters to apply to the data
+    :return: df: The filtered data as a DataFrame
+    """
+    # Get the filtered data
+    queryset: QuerySet = HlaPheWasCatalog.objects.all()
+    filtered_queryset: QuerySet = apply_filters(queryset, filters, show_subtypes=True, export=True)
+    # Get the data as a DataFrame
+    df: pd.DataFrame = pd.DataFrame(list(filtered_queryset.values()))
+    # Drop the ID column
     if 'id' in df.columns:
         df.drop(columns=['id'], inplace=True)
+        # Return the filtered DataFrame
     return df
 
 
 class SendDataToSOMView(APIView):
     """
     API view to send the data to the SOM.
+
+    :param request: Request object from the client with the filters, type, and num_clusters parameters
+    :return: JsonResponse object with the status of the request, data ID, number of clusters, and filters
     """
 
-    def get(self, request):
+    def get(self, request) -> JsonResponse:
+        """
+        Get the data from the client and store it in the database.
+        :param request: Request object from the client
+        :return: JsonResponse object with the status of the request, data ID, number of clusters, and filters
+        """
         # Get the filters from the request
-        filters = request.GET.get('filters', '')
-        # print("Filters: ", filters)
-        # Decode the filters
+        filters: str = request.GET.get('filters', '')
+        # Get the type of the SOM
         filters = urllib.parse.unquote(filters)
-
-        # Get the SOM type from the request (disease or allele)
-        som_type = request.GET.get('type')
-        num_clusters = request.GET.get('num_clusters') or 5 if som_type == 'disease' else 7
-        # print("Num Clusters: ", num_clusters)
-        # print("SOM Type: ", som_type)
-        # Get the queryset and apply the filters
-        df = get_filtered_df(filters)
-
-        # Create a CSV in memory
-        buffer = StringIO()
+        # Get the type of the SOM
+        som_type: str = request.GET.get('type')
+        # Get the number of clusters with a default of 5 for the disease SOM and 7 for the allele SOM
+        num_clusters: int = int(request.GET.get('num_clusters') or 5 if som_type == 'disease' else 7)
+        # Get the filtered data as a DataFrame
+        df: pd.DataFrame = get_filtered_df(filters)
+        # Write the data to a buffer
+        buffer: StringIO = StringIO()
         df.to_csv(buffer, index=False)
-        csv_content = buffer.getvalue()
-
-        # Perform clean-up only if it's been more than 24 hours since the last clean-up
-        last_cleanup_time = TemporaryCSVData.objects.order_by('-created_at').first()
+        csv_content: str = buffer.getvalue()
+        # Cleanup the old data if necessary
+        last_cleanup_time: TemporaryCSVData = TemporaryCSVData.objects.order_by('-created_at').first()
+        # If the last cleanup time is not set or more than a day has passed since the last cleanup, cleanup the old data
         if not last_cleanup_time or (timezone.now() - last_cleanup_time.created_at) > timedelta(days=1):
             self.cleanup_old_data()
-
-        # Save the CSV content and SOM type to the temporary model
-        temp_data = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
-
-        # Return the ID of the temporary data in the response as well as the number of clusters
+        # Store the data in the database
+        temp_data: TemporaryCSVData = TemporaryCSVData.objects.create(csv_content=csv_content, som_type=som_type)
+        # Return the response with the status of the request, data ID, number of clusters, and filters
         return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id, 'num_clusters': num_clusters,
                              'filters': filters})
 
-    def cleanup_old_data(self):
-        threshold = timezone.now() - timedelta(days=1)
+    def cleanup_old_data(self) -> None:
+        """
+        Cleanup the old data from the database.
+        :return:
+        """
+        threshold: timezone = timezone.now() - timedelta(days=1)
         TemporaryCSVData.objects.filter(created_at__lt=threshold).delete()
 
 
 class CombinedAssociationsView(APIView):
     """
     API view to get the combined associations for a disease.
+
+    :param request: Request object from the client with the disease and show_subtypes parameters
+    :return: Response object with the combined associations for the disease
     """
 
-    def get(self, request):
-        # Get the disease and show_subtypes from the request
-        disease = request.GET.get('disease')
-        show_subtypes = request.GET.get('show_subtypes')
-
+    def get(self, request) -> Response:
+        # Get the disease and show_subtypes parameters from the request
+        disease: str = request.GET.get('disease')
+        show_subtypes: str = request.GET.get('show_subtypes')
         # Get the allele data for the disease
-        allele_data = HlaPheWasCatalog.objects.filter(phewas_string=disease).values(
+        allele_data: QuerySet = HlaPheWasCatalog.objects.filter(phewas_string=disease).values(
             'snp', 'gene_name', 'serotype', 'subtype', 'odds_ratio', 'p'
         )
-        # Filter out the main groups if show_subtypes is true
+        # Filter the allele data based on the show_subtypes parameter
         if show_subtypes == 'true':
             allele_data = allele_data.exclude(subtype='00')
-        # Otherwise, only show the main groups
         else:
             allele_data = allele_data.filter(subtype='00')
-
-        # Get all possible combinations of alleles
-        allele_combinations = list(itertools.combinations(allele_data, 2))
-
-        # Combine the p-values and calculate the combined odds ratio
-        result = []
+        # Get the combinations of alleles and calculate the combined odds ratio and p-value
+        allele_combinations: list = list(itertools.combinations(allele_data, 2))
+        # Initialise the result list
+        result: list = []
+        # Loop through the allele combinations and calculate the combined odds ratio and p-value
         for allele1, allele2 in allele_combinations:
-            combined_odds_ratio = allele1['odds_ratio'] * allele2['odds_ratio']
-            # Skip if the combined odds ratio is 0
+            combined_odds_ratio: float = allele1['odds_ratio'] * allele2['odds_ratio']
             if combined_odds_ratio == 0:
                 continue
-
             _, combined_p_value = combine_pvalues([allele1['p'], allele2['p']])
-            # Skip if the combined p-value is greater than 0.05
             if combined_p_value >= 0.05:
                 continue
-
-            # Add the combined association to the result
+            # Append the result to the result list
             result.append({
                 'gene1': allele1['snp'].replace('HLA_', ''),
                 'gene1_name': allele1['gene_name'],
@@ -430,36 +515,45 @@ class CombinedAssociationsView(APIView):
                 'combined_odds_ratio': combined_odds_ratio,
                 'combined_p_value': combined_p_value
             })
-
-        # Return the combined associations
+        # Return the response with the combined associations for the disease
         return Response(result)
 
 
 class GetNodePathView(APIView):
     """
     API view to get the node path from outer level to inner level.
+
+    :param request: Request object from the client with the disease parameter
+    :return: Response object with the path from the outer level to the inner level
     """
 
-    def get(self, request):
-        # Get the disease from the request
-        disease = request.GET.get('disease')
+    def get(self, request) -> Response:
+        """
+        Get the node path from the outer level to the inner level.
+        :param request: Request object from the client with the disease parameter
+        :return: Response object with the path from the outer level to the inner level
+        """
+        # Get the disease parameter from the request or return an error if it is not provided
+        disease: str = request.GET.get('disease')
         if not disease:
             return Response({"error": "Disease parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Get the category for the disease and return the path
         try:
-            # Get the category from the database for the disease
-            category = HlaPheWasCatalog.objects.filter(phewas_string=disease).values('category_string').distinct()[0][
-                'category_string']
+            # Get the category for the disease
+            category: str = \
+                HlaPheWasCatalog.objects.filter(phewas_string=disease).values('category_string').distinct()[0][
+                    'category_string']
             category = f"category-{category.replace(' ', '_')}"
-
+            # Format the path
             disease = f"disease-{disease.replace(' ', '_')}"
-            # Create the path
-            path = [category, disease]
-
+            path: list = [category, disease]
             # Return the path
             return Response({"path": path})
+        # Return an error if the disease is not found
         except IndexError:
             return Response({"error": "Disease not found"}, status=status.HTTP_404_NOT_FOUND)
+        # Return an error if an exception occurs
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -467,35 +561,41 @@ class GetNodePathView(APIView):
 class GetDiseasesForCategoryView(APIView):
     """
     API view to get the diseases for a specific category.
+
+    :param request: Request object from the client with the category parameter
+    :return: Response object with the diseases for the category
     """
 
-    def get(self, request):
-        # Get filters from the request
-        filters = request.GET.get('filters', '')
-        # Get the category from the request
-        category = request.GET.get('category')
+    def get(self, request) -> Response:
+
+        """
+        Get the diseases for a specific category.
+        :param request: Request object from the client with the category parameter and optional filters and show_subtypes parameters
+        :return: Response object with the diseases for the category
+        """
+        # Get the filters parameter from the request
+        filters: str = request.GET.get('filters', '')
+        # Get the category parameter from the request or return an error if it is not provided
+        category: str = request.GET.get('category')
         if not category:
             return Response({"error": "Category parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Replace underscores with spaces in the category name
+        # Get the diseases for the category and return the response
         category = category.replace('_', ' ')
-        show_subtypes = request.GET.get('show_subtypes')
+        # Get the show_subtypes parameter from the request
+        show_subtypes = request.GET.get('showSubtypes')
+        # If the show_subtypes parameter is not provided, set it to False
         if show_subtypes == 'undefined':
             show_subtypes = False
 
+        # Get the diseases for the category and return the response
         try:
-            # Get the diseases for the category with the selected filters
-            diseases = HlaPheWasCatalog.objects.filter(category_string=category)
-            # Apply the filters, including the show_subtypes logic
+            # Get the diseases for the category and apply the filters
+            diseases: QuerySet = HlaPheWasCatalog.objects.filter(category_string=category)
             diseases = apply_filters(diseases, filters, show_subtypes=show_subtypes)
-            # print(diseases)
-
-            # Get the unique diseases
             diseases = diseases.values('phewas_string').distinct()
-            # print(diseases)
-            # Sort the diseases by phewas_string
-            diseases = sorted([disease['phewas_string'] for disease in diseases])
-            # Return the diseases
+            # Format the diseases and return the response
+            diseases: List = sorted([disease['phewas_string'] for disease in diseases])
             return Response({"diseases": diseases})
+        # Return an error if an exception occurs
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

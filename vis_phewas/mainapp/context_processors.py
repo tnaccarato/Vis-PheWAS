@@ -1,5 +1,7 @@
-from typing import Dict, List, Any
+from typing import Any
+
 from mainapp.models import HlaPheWasCatalog
+
 
 def model_fields(request) -> dict[str, list[Any]]:
     """

@@ -7,7 +7,11 @@ import { closeInfoContainer } from "./utils";
 
 // Main class for managing the graph
 class GraphManager {
-  // Constructor for the GraphManager class
+  /**
+   * Constructor for the GraphManager class
+   * @param {string} containerId - The ID of the container element
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   */
   constructor(containerId, adjustSigmaContainerHeight) {
     // Get the container element
     this.container = document.getElementById(containerId);
@@ -51,7 +55,9 @@ class GraphManager {
     this.cameraPosition = null;
   }
 
-  // Method to initialize the event listeners
+  /**
+   * Method to initialize the event listeners
+   */
   initEventListeners() {
     // Add an event listener for the clickNode event
     this.sigmaInstance.on("clickNode", ({ node }) => {
@@ -66,7 +72,7 @@ class GraphManager {
 
     // Add an event listener for hovering over a node
     this.sigmaInstance.on("enterNode", ({ node }) => {
-      this.graphHelper.hoverOnNode(node, this.graph, this.sigmaInstance);
+      this.graphHelper.hoverOnNode(node, this.graph);
     });
 
     // Add an event listener for leaving a node
@@ -103,16 +109,20 @@ class GraphManager {
     });
   }
 
-  // Method to fetch the graph data
+  /**
+   * Method to fetch the graph data
+   * @param {Object} [params={}] - Parameters for fetching the graph data
+   */
   fetchGraphData(params = {}) {
-    console.log(params);
-    console.log(params.type);
     // Set the default parameters
-    params.show_subtypes = window.showSubtypes;
+    params.showSubtypes =
+      localStorage.getItem("showSubtypes") === "true" ? "true" : "false";
+    console.log("Show subtypes parameter:", params.showSubtypes);
 
     // Create a new URLSearchParams object
     const query = new URLSearchParams(params).toString();
     const url = "/api/graph-data/" + (query ? "?" + query : "");
+    console.log("URL:", url);
 
     // Fetch the data from the URL
     fetch(url)
@@ -120,7 +130,7 @@ class GraphManager {
       .then((data) => {
         // If the type parameter is set, update the graph
         if (params.type) {
-          console.log("Updating");
+          // console.log("Updating");
           this.updateGraph(
             data.nodes,
             data.edges,
@@ -129,36 +139,42 @@ class GraphManager {
           );
           // Otherwise, initialize the graph
         } else {
-          console.log("Initializing");
-          console.log(data);
+          // console.log("Initializing");
+          // console.log(data);
           this.initializeGraph(data.nodes, data.edges, data.visible);
         }
       })
       .catch((error) => console.error("Error loading graph data:", error));
   }
 
+  /**
+   * Method to initialize the graph
+   * @param {Array} nodes - Array of nodes to initialize
+   * @param {Array} edges - Array of edges to initialize
+   * @param {Array} visible - Array of visible nodes
+   */
   initializeGraph(nodes, edges, visible) {
     const containerCenterX = this.container.offsetWidth / 2;
     const containerCenterY = this.container.offsetHeight / 2;
     this.graph.clear();
-    console.log(this.visibleNodes);
+    // console.log(this.visibleNodes);
     this.visibleNodes = new Set(visible); // Initialize the visible nodes set
-    console.log(this.visibleNodes);
+    // console.log(this.visibleNodes);
     // If the camera position is null, set cameraPosition to current camera position
     if (this.cameraPosition === null) {
-      console.log("Setting camera position");
+      // console.log("Setting camera position");
       // Capture camera state
-      var camera = this.sigmaInstance.getCamera();
+      let camera = this.sigmaInstance.getCamera();
       this.cameraPosition = {
         x: camera.x,
         y: camera.y,
         ratio: camera.ratio,
         angle: camera.angle,
       };
-      console.log(this.cameraPosition);
+      // console.log(this.cameraPosition);
     } else {
-      console.log("Camera position already set");
-      console.log(this.cameraPosition);
+      // console.log("Camera position already set");
+      // console.log(this.cameraPosition);
       // Restore camera state
       this.sigmaInstance.getCamera().setState({
         x: this.cameraPosition.x,
@@ -201,7 +217,13 @@ class GraphManager {
     this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
   }
 
-  // Method to update the graph with the nodes, edges, visible, and clicked parameters
+  /**
+   * Method to update the graph with the nodes, edges, visible, and clicked parameters
+   * @param {Array} nodes - Array of nodes to update
+   * @param {Array} edges - Array of edges to update
+   * @param {Array} visible - Array of visible nodes
+   * @param {boolean} clicked - Flag indicating if the update was triggered by a click
+   */
   updateGraph(nodes, edges, visible, clicked) {
     if (!clicked) {
       this.graph.nodes().forEach((node) => {
@@ -215,6 +237,7 @@ class GraphManager {
 
     visible.forEach((node) => this.visibleNodes.add(node)); // Add new visible nodes to the visibleNodes set
 
+    // Update the nodes and edges in the graph
     nodes.forEach((node) => {
       if (!this.graph.hasNode(node.id) && this.visibleNodes.has(node.id)) {
         let { color, baseSize, borderSize, borderColor } =
@@ -241,6 +264,7 @@ class GraphManager {
         });
       }
 
+      // Update the node attributes
       this.graph.setNodeAttribute(
         node.id,
         "hidden",
@@ -248,6 +272,7 @@ class GraphManager {
       );
     });
 
+    // Update the edges in the graph
     edges.forEach((edge) => {
       if (
         this.visibleNodes.has(edge.source) &&
@@ -259,15 +284,22 @@ class GraphManager {
       }
     });
 
+    // Apply the layout to the graph
     this.applyLayout();
   }
 
-  // Method to apply the layout to the graph
+  /**
+   * Method to apply the layout to the graph
+   */
   applyLayout() {
-    this.graphHelper.applyLayout(this.graph, this.sigmaInstance);
+    this.graphHelper.applyLayout(this.graph);
   }
 
   // Method to get the information table for an allele node
+  /**
+   * Get the information table for an allele node.
+   * @param {Object} nodeData - The data of the node.
+   */
   getInfoTable(nodeData) {
     const infoContainer = document.getElementsByClassName("info-container")[0];
     const selectedNode = `${nodeData.node_type}-${nodeData.full_label}`;
@@ -379,10 +411,19 @@ class GraphManager {
     infoContainer.appendChild(navContainer);
 
     // Function to display the odds tables for the allele node
+    /**
+     * Display the odds tables for the allele node.
+     * @param {Object} data - The data containing the odds information.
+     */
     const displayOddsTables = (data) => {
       const { top_odds, lowest_odds } = data;
 
       // Function to create the odds table
+      /**
+       * Create the odds table.
+       * @param {Array} oddsData - The data for the odds table.
+       * @param {string} heading - The heading for the odds table.
+       */
       const createOddsTable = (oddsData, heading) => {
         const oddsHead = document.createElement("h4");
         oddsHead.textContent = heading;
@@ -441,10 +482,17 @@ class GraphManager {
     };
 
     // Function to update node styles
+    /**
+     * Update the node styles.
+     * @param {Object} nodeData - The data of the node.
+     * @param {string} diseaseNode - The disease node ID.
+     */
     const updateNodeStyles = (nodeData, diseaseNode) => {
       // Get the allele node
       const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
-        window.showSubtypes === true ? "" + nodeData.subtype.toString() : ""
+        localStorage.getItem("showSubtypes") === "true"
+          ? "" + nodeData.subtype.toString()
+          : ""
       }`;
 
       // Update allele node
@@ -525,6 +573,10 @@ class GraphManager {
     };
 
     // Function to display the node information
+    /**
+     * Display the node information.
+     * @param {string} diseaseNode - The disease node ID.
+     */
     const displayNodeInfo = (diseaseNode) => {
       // Get the existing disease info container
       const existingDiseaseInfo = infoContainer.querySelector(".disease-info");
@@ -584,8 +636,11 @@ class GraphManager {
                 const button = document.createElement("button");
                 button.className = "btn btn-primary";
                 button.textContent = "Show Combinational Associations";
+                // Get the showSubtypes value from local storage
+                const showSubtypes =
+                  localStorage.getItem("showSubtypes") === "true";
                 button.onclick = () => {
-                  fetchAndShowAssociations(value, window.showSubtypes);
+                  fetchAndShowAssociations(value, showSubtypes);
                 };
                 cell3.appendChild(button);
                 row.appendChild(cell3);
@@ -654,6 +709,10 @@ class GraphManager {
   }
 
   // Getters for the active selection
+  /**
+   * Get the active selection.
+   * @returns {Object} The active selection containing allele and disease nodes.
+   */
   getActiveSelection() {
     return {
       allele: this.selectedAlleleNode,

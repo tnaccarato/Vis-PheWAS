@@ -1,5 +1,3 @@
-import forceAtlas2 from "graphology-layout-forceatlas2";
-import { rgbaToFloat } from "sigma/utils";
 import {
   clamp,
   closeInfoContainer,
@@ -7,19 +5,32 @@ import {
   formatCategoryString,
   sizeScale,
 } from "./utils";
-import { filterManager } from "./main"; // Helper class for
-// graph operations
+import { filterManager } from "./main";
+import forceAtlas2 from "graphology-layout-forceatlas2";
 
 // Helper class for graph operations
 class GraphHelper {
-  // Constructor
+  /**
+   * Constructor for GraphHelper
+   * @param {Object} GraphManager - The graph manager instance
+   * @param {Object} sigmaInstance - The sigma instance for graph rendering
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   */
   constructor(GraphManager, sigmaInstance, adjustSigmaContainerHeight) {
     this.sigmaInstance = sigmaInstance;
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     this.graphManager = GraphManager;
   }
 
-  // Method for clicking on a node
+  /**
+   * Method for clicking on a node
+   * @param {Object} graph - The graph instance
+   * @param {string} node - The node ID
+   * @param {Function} fetchGraphData - Function to fetch graph data
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   * @param {Function} [getInfoTable=null] - Optional function to get the info table
+   * @param {boolean} [simulated=false] - Flag indicating if the click is simulated
+   */
   clickedNode(
     graph,
     node,
@@ -123,6 +134,10 @@ class GraphHelper {
     }
   }
 
+  /**
+   * Method to display the info container
+   * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
+   */
   displayInfoContainer(adjustSigmaContainerHeight) {
     // Display the allele info in the info panel
     const leftColumn = document.getElementsByClassName(
@@ -139,7 +154,13 @@ class GraphHelper {
     infoPanel.style.display = "inline-block";
   }
 
-  // Method for simulating a click to a node in the graph
+  /**
+   * Static method to simulate a click to a node in the graph
+   * @param {Object} graphManagerInstance - The graph manager instance
+   * @param {Object} graph - The graph instance
+   * @param {string} diseaseName - The disease name
+   * @param {Object} graphHelperInstance - The graph helper instance
+   */
   static simulateClickToNode(
     graphManagerInstance,
     graph,
@@ -187,7 +208,10 @@ class GraphHelper {
       });
   }
 
-  // Method for getting diseases for a category
+  /**
+   * Method to get diseases for a category
+   * @param {string} category - The category ID
+   */
   getDiseasesForCategory(category) {
     // Display the info container
     this.displayInfoContainer(this.adjustSigmaContainerHeight);
@@ -260,7 +284,11 @@ class GraphHelper {
       );
   }
 
-  // Method for hovering on a node
+  /**
+   * Method for hovering on a node
+   * @param {string} node - The node ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOnNode(node, graph) {
     const nodeId = node;
     // Get the edges of the node
@@ -292,7 +320,12 @@ class GraphHelper {
     }
   }
 
-  // Method for hovering off a node
+  /**
+   * Method for hovering off a node
+   * @param {string} node - The node ID
+   * @param {Object} graph - The graph instance
+   * @param {Object} [activeSelection=null] - The active selection object
+   */
   hoverOffNode(node, graph, activeSelection = null) {
     if (
       !this.sigmaInstance ||
@@ -336,7 +369,13 @@ class GraphHelper {
     this.sigmaInstance.refresh();
   }
 
-  // Method for updating the graph with layout
+  /**
+   * Method for updating the graph layout, focusing on staggered arcs for allele nodes.
+   * Alleles with multiple parents are unfixed and dynamically adjusted using ForceAtlas2.
+   * Single-parent alleles are fixed in place, with their position based on the disease node angle relative to its
+   * category. The layout also considers the size of allele nodes.
+   * @param {Object} graph - The graph instance
+   */
   applyLayout(graph) {
     const nodes = graph.nodes();
     const categoryNodes = nodes.filter(
@@ -346,7 +385,7 @@ class GraphHelper {
     const centerY = 500;
     const categoryRadius = 400; // Radius for the category circle
 
-    // Step 1: Position category nodes in a circle
+    // Position category nodes in a circle
     const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
     categoryNodes.forEach((categoryNode, index) => {
       const angle = categoryAngleStep * index;
@@ -357,7 +396,7 @@ class GraphHelper {
       graph.setNodeAttribute(categoryNode, "fixed", true);
     });
 
-    // Step 2: Position disease nodes around their categories
+    // Position disease nodes around their categories
     const diseaseRadius = 50; // Radius for positioning disease nodes around category nodes
     categoryNodes.forEach((categoryNode) => {
       const relatedDiseaseNodes = nodes.filter(
@@ -367,6 +406,7 @@ class GraphHelper {
           graph.getNodeAttribute(node, "node_type") === "disease",
       );
 
+      // Calculate the angle step for each disease node around the category node based on the number of diseases
       const diseaseAngleStep = (2 * Math.PI) / relatedDiseaseNodes.length;
       relatedDiseaseNodes.forEach((diseaseNode, index) => {
         const angle = diseaseAngleStep * index;
@@ -377,21 +417,23 @@ class GraphHelper {
           graph.getNodeAttribute(categoryNode, "y") +
           diseaseRadius * Math.cos(angle);
 
+        // Set the position of the disease node and fix it in place
         graph.setNodeAttribute(diseaseNode, "x", diseaseX);
         graph.setNodeAttribute(diseaseNode, "y", diseaseY);
         graph.setNodeAttribute(diseaseNode, "fixed", true);
-        graph.setNodeAttribute(diseaseNode, "size", 10);
-      });
-    });
 
-    // Step 3: Position alleles around their disease nodes
-    const alleleRadius = 10; // Radius for positioning allele nodes around disease nodes
-    nodes.forEach((node) => {
-      if (graph.getNodeAttribute(node, "node_type") === "disease") {
-        const diseaseNode = node;
-        const diseaseX = graph.getNodeAttribute(diseaseNode, "x");
-        const diseaseY = graph.getNodeAttribute(diseaseNode, "y");
-        const diseaseSize = graph.getNodeAttribute(diseaseNode, "size");
+        // Position allele nodes around each disease node
+        const connectedDiseases = graph
+          .inNeighbors(diseaseNode)
+          .filter((n) => graph.getNodeAttribute(n, "node_type") === "disease");
+
+        // Calculate the disease node's relative angle with respect to its category center
+        const categoryX = graph.getNodeAttribute(categoryNode, "x");
+        const categoryY = graph.getNodeAttribute(categoryNode, "y");
+        const diseaseAngle = Math.atan2(
+          diseaseY - categoryY,
+          diseaseX - categoryX,
+        );
 
         // Get all allele nodes connected to this disease node
         const alleleNodes = graph
@@ -399,29 +441,58 @@ class GraphHelper {
           .filter((n) => graph.getNodeAttribute(n, "node_type") === "allele");
 
         // Sort allele nodes alphabetically by their label
-        alleleNodes.sort((a, b) => {
+        alleleNodes.sort((b, a) => {
           const labelA = graph.getNodeAttribute(a, "label").toLowerCase();
           const labelB = graph.getNodeAttribute(b, "label").toLowerCase();
           return labelA.localeCompare(labelB);
         });
 
         // Position sorted allele nodes around the disease node
-        const alleleAngleStep = (2 * Math.PI) / alleleNodes.length;
+        const spreadAngle = Math.PI / 4; // Control the spread of the arc of allele nodes around the disease node
         alleleNodes.forEach((alleleNode, index) => {
-          const angle = alleleAngleStep * index;
+          // Calculate the angle for each allele node around the disease node based on the number of alleles and spread angle
+          const alleleAngle =
+            diseaseAngle +
+            (index - (alleleNodes.length - 1) / 2) *
+              (spreadAngle / alleleNodes.length);
+
+          // Set the radius for positioning allele nodes around disease nodes
+          const alleleRadius = 20; // Radius for positioning allele nodes around disease nodes
+          // Calculate the position of the allele node around the disease node with a staggered arc, taking into account the size of the nodes
           const alleleX =
-            diseaseX + (diseaseSize + alleleRadius) * Math.cos(angle);
+            diseaseX +
+            (graph.getNodeAttribute(diseaseNode, "size") +
+              graph.getNodeAttribute(alleleNode, "size") +
+              alleleRadius) *
+              Math.cos(alleleAngle);
           const alleleY =
-            diseaseY + (diseaseSize + alleleRadius) * Math.sin(angle);
+            diseaseY +
+            (graph.getNodeAttribute(diseaseNode, "size") +
+              graph.getNodeAttribute(alleleNode, "size") +
+              alleleRadius) *
+              Math.sin(alleleAngle);
 
           graph.setNodeAttribute(alleleNode, "x", alleleX);
           graph.setNodeAttribute(alleleNode, "y", alleleY);
-          graph.setNodeAttribute(alleleNode, "fixed", false);
+
+          // If connected to multiple diseases, make it flexible (unfixed)
+          const connectedDiseases = graph
+            .inNeighbors(alleleNode)
+            .filter(
+              (n) => graph.getNodeAttribute(n, "node_type") === "disease",
+            );
+
+          // If the allele node is connected to multiple diseases, make it flexible
+          graph.setNodeAttribute(
+            alleleNode,
+            "fixed",
+            connectedDiseases.length <= 1,
+          );
         });
-      }
+      });
     });
 
-    // Step 4: Apply Force Atlas 2 to non-fixed nodes
+    // Apply Force Atlas 2 to non-fixed nodes (mainly for the flexible allele nodes)
     const settings = {
       iterations: 100,
       settings: {
@@ -433,17 +504,18 @@ class GraphHelper {
       },
       nodeUpdater: (node, attributes) => !attributes.fixed,
     };
+    // Apply the Force Atlas 2 layout to the graph
     forceAtlas2.assign(graph, settings);
 
     this.sigmaInstance.refresh();
   }
 
-  // Method for calculating the color of a node
+  /**
+   * Method for calculating the color of a node
+   * @param {Object} node - The node object
+   * @returns {string} - The color of the node
+   */
   calculateNodeColor(node) {
-    if (node.hidden) {
-      return rgbaToFloat(0, 0, 0, 0);
-    }
-
     // Set the color of the node based on the node type
     switch (node.node_type) {
       // If the node is a category
@@ -451,7 +523,11 @@ class GraphHelper {
         return "#0fc405";
       // If the node is a disease set the color based on the allele count
       case "disease":
-        return diseaseColor(clamp(node.allele_count, diseaseColor.domain()));
+        const color = diseaseColor(
+          clamp(node.allele_count, diseaseColor.domain()),
+        );
+        // Return the string representation of the color
+        return color.toString();
       // If the node is an allele
       case "allele":
         return "#e871fb";
@@ -460,39 +536,63 @@ class GraphHelper {
     }
   }
 
-  // Method for calculating the border of a node
+  /**
+   * Method for calculating the border and size of a node.
+   * @param {Object} node - The node object.
+   * @returns {Object} - The border properties of the node.
+   */
   calculateBorder(node) {
-    // Set the color of the node based on the node type
-    const color = this.calculateNodeColor(node);
-    //  Set the size of the node based on the node type
-    const baseSize =
-      node.node_type === "allele"
-        ? sizeScale(clamp(node.p, sizeScale.domain()))
-        : 6;
+    console.log("Node:", node);
+    let baseSize;
+    let borderSize;
+    let borderColor;
+    let color;
 
-    // Set the border size and color based on the odds ratio
-    let borderScaleFactor = 0.5;
-    let oddsRatio = node.odds_ratio;
-    let oddsRatioDeviation = Math.abs(oddsRatio - 1);
-    let scaledBorderSize;
+    // Get the color of the node
+    color = this.calculateNodeColor(node);
+    // Handle category nodes
+    if (node.node_type === "category") {
+      baseSize = 10; // Constant size
+      borderSize = 0; // No border
+      borderColor = color;
+    } else if (node.node_type === "disease") {
+      baseSize = 10; // Constant size for diseases
+      color = diseaseColor(node.allele_count); // Color based on the number of alleles
+      borderSize = 0; // No border needed for diseases
+      borderColor = color;
+    } else if (node.node_type === "allele") {
+      console.log("OR:", node.odds_ratio);
+      console.log("P-Value:", node.p);
+      const pValue = node.p || 0.05; // Use p-value for sizing alleles
+      baseSize = sizeScale(clamp(pValue, sizeScale.domain())); // Scale size based on clamped p-value
 
-    // If the odds ratio is greater than or equal to 1
-    if (oddsRatio >= 1) {
-      // Set the scaled border size
-      scaledBorderSize = clamp(oddsRatioDeviation / 8, [0, 1]);
-    } else {
-      // Set the scaled border size
-      scaledBorderSize = clamp(1 / oddsRatio - 1, [0, 1]);
+      // Determine border color based on odds ratio
+      const oddsRatio = node.odds_ratio || 1; // Default to 1 if odds ratio is not defined
+      borderColor = oddsRatio >= 1 ? "red" : "blue";
+
+      // Calculate border thickness based on deviation from OR = 1
+      const oddsRatioDeviation = Math.abs(oddsRatio - 1);
+      const borderScaleFactor = 0.5; // Factor to adjust border size relative to base size
+      borderSize = baseSize * borderScaleFactor * oddsRatioDeviation; // Thickness proportional to deviation
+
+      // Clamp border size to avoid excessive or minimal borders
+      borderSize = clamp(borderSize, [0.25, baseSize * 0.75]);
     }
-    // Set the border size and color
-    let finalBorderSize = baseSize * borderScaleFactor * scaledBorderSize;
-    let borderSize = clamp(finalBorderSize, [0.5, baseSize * 0.5]);
-    let borderColor = node.odds_ratio >= 1 ? "red" : "blue";
+
+    console.log("Border Size:", borderSize);
+    console.log("Border Color:", borderColor);
+    console.log("Color:", color);
+    console.log("Base Size:", baseSize);
+
     // Return the border size and color
     return { color, baseSize, borderSize, borderColor };
   }
 
-  // Show the source of edge on a label on hover
+  /**
+   * Show the source of edge on a label on hover
+   * @param {string} edge - The edge ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOnEdge(edge, graph) {
     // Get the source of the edge and the label of the source
     const source = graph.source(edge);
@@ -504,7 +604,11 @@ class GraphHelper {
     }
   }
 
-  // Hide the source of edge on a label on hover
+  /**
+   * Hide the source of edge on a label on hover
+   * @param {string} edge - The edge ID
+   * @param {Object} graph - The graph instance
+   */
   hoverOffEdge(edge, graph) {
     graph.setEdgeAttribute(edge, "label", "");
   }
