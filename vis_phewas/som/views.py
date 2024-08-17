@@ -9,11 +9,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
-# noinspection PyUnresolvedReferences
 from api.models import TemporaryCSVData
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
-# noinspection PyUnresolvedReferences
 from mainapp.models import HlaPheWasCatalog
 from minisom import MiniSom
 from rest_framework.views import APIView
@@ -52,7 +50,7 @@ def preprocess_temp_data(temp_data):
     # Preprocessing
     filtered_df = df[df['subtype'] != 0]  # Keep only 4-digit HLA alleles
     filtered_df = filtered_df[filtered_df['p'] < 0.05]  # Only keep statistically significant associations
-    filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '')  # Remove the prefix "HLA_"
+    filtered_df['snp'] = filtered_df['snp'].str.replace('HLA_', '').str.strip()  # Remove the prefix "HLA_"
     return filtered_df
 
 
