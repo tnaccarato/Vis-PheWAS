@@ -165,3 +165,4 @@ bundle.js
 docker-compose.yml
 *.pem
 /vis_phewas/media
+Vis-PheWAS.code-workspace

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}SOM Visualization{% endblock %}
+<!-- Set the title of the page to be the type of SOM visualization -->
+{% block title %} - {{ type|capfirst }} SOM Visualization{% endblock %}
 {% block head %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
@@ -8,13 +9,22 @@
     <script src="{% static 'mainapp/js/som.js' %}"></script>
     <style>
         .checkbox-container {
-            column-count: 3;
-            column-gap: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* Center the checkboxes horizontally */
+            gap: 20px; /* Add space between checkboxes */
         }
 
         .checkbox-container label {
             display: block;
             margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .allele-filters, .disease-filters {
+            align-items: center;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         #som-visualisation {
@@ -28,32 +38,53 @@
 {% endblock %}
 {% block content %}
     <div id="som-visualisation" style="display: flex; flex-direction: column; align-items: center">
-        <h1>SOM Visualization</h1>
+        <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualization</h1>
         <form id="filter-form" style="display: flex; flex-direction: column" onsubmit="handleSubmit(event)">
             {% if type == 'disease' %}
                 <div class="disease-filters" style="display: flex; align-content: center; flex-direction: column">
-                    <h2 style="align-self: center">Filter by Disease Category</h2>
-                    <div class="checkbox-container">
-                        {% for category in categories %}
-                            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if not cleaned_filters %}
-                                   checked
-                                    {% else %}
-                                        {% if category in cleaned_filters %} checked {% endif %}
-                                    {% endif %}
-                            >
-                            <!-- Check the checkbox if it is in the selected filters -->
-                            <label for="{{ category }}">{{ category }}</label>
-                        {% endfor %}
-                    </div>
+                <h2 style="align-self: center">Filter by Disease Category</h2>
+                <div class="checkbox-container">
+                    {% for category in categories %}
+                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                {% if not cleaned_filters %}
+                               checked
+                                {% else %}
+                                    {% if category in cleaned_filters %} checked {% endif %}
+                                {% endif %}
+                        >
+                        <!-- Check the checkbox if it is in the selected filters -->
+                        <label for="{{ category }}">{{ category }}</label>
+                    {% endfor %}
                 </div>
             {% endif %}
+            {% if type == 'allele' %}
+                <div class="allele-filters" style="display: flex; align-content: center; flex-direction: column">
+                <h2 style="align-self: center">Filter by Gene Name</h2>
+                <div class="checkbox-container">
+                    {% for category in categories %}
+                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                {% if not cleaned_filters %}
+                               checked
+                                {% else %}
+                                    {% if category in cleaned_filters %} checked {% endif %}
+                                {% endif %}
+                        >
+                        <!-- Check the checkbox if it is in the selected filters -->
+                        <label for="{{ category }}">{{ category }}</label>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <button type="button" class="btn btn-primary" style="margin: 1%" onclick="toggleCheckboxes()">
+                Select/Deselect All
+            </button>
+
             <!-- Get a slider for number of clusters -->
             <div class="cluster-slider" style="align-self: center">
                 <label for="clusters">Number of Clusters:</label>
                 <input type="range" id="clusters" name="clusters" min="2" max="10" value={{ num_clusters }}>
                 <!-- Add a tooltip showing the current value of the slider -->
                 <span id="clusters-value">{{ num_clusters }}</span>
+            </div>
             </div>
             <div style="display: flex;flex-direction: row;justify-content: space-around;margin-top: 10px;">
 
@@ -80,7 +111,15 @@
     <script>
         function getSelectedFilters() {
             const selectedFilters = [];
-            const baseFilter = 'category_string:==:';
+            let baseFilter = ''; // Initialize the base filter string as empty
+            // Set the base filter string based on the type
+            {% if type == 'disease' %}
+                baseFilter = 'category_string:==:'; // Set the base filter string based on the type
+            {% endif %}
+            {% if type == 'allele' %}
+                baseFilter = 'gene_name:==:'; // Set the base filter string based on the type
+            {% endif %}
+
 
             document.querySelectorAll('input[name="filters"]:checked').forEach((checkbox) => {
                 selectedFilters.push(baseFilter + checkbox.value);
@@ -98,9 +137,10 @@
             event.preventDefault(); // Prevent form submission and page reload
             const filters = getSelectedFilters();
             const num_clusters = document.getElementById('clusters').value;
+            const type = "{{ type }}";
             console.log("Number of clusters: ", num_clusters);
             // Call the generateSOM function with the filters, type and number of clusters
-            generateSOM(filters, 'disease', num_clusters);
+            generateSOM(filters, type, num_clusters);
         }
 
         // Function to update the displayed value of the slider
@@ -108,6 +148,23 @@
             document.getElementById('clusters-value').textContent = this.value;
             console.log(this.value);
         });
+
+        // Function to uncheck or check all checkboxes
+        function toggleCheckboxes() {
+            const checkboxes = document.querySelectorAll('input[name="filters"]');
+            // If more are checked than unchecked, uncheck all
+            if (checkboxes.length === document.querySelectorAll('input[name="filters"]:checked').length) {
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = false;
+                });
+            }
+            else {
+                // Otherwise, check all
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = true;
+                });
+            }
+        }
 
     </script>
     </body>
