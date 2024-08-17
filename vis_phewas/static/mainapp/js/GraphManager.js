@@ -497,7 +497,7 @@ class GraphManager {
     const updateNodeStyles = (nodeData, diseaseNode) => {
       // Get the allele node
       const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
-          localStorage.getItem("showSubtypes") === true ? "" + nodeData.subtype.toString() : ""
+          localStorage.getItem("showSubtypes") === "true" ? "" + nodeData.subtype.toString() : ""
       }`;
 
       // Update allele node
