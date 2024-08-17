@@ -21,8 +21,6 @@ from scipy.stats import combine_pvalues
 class IndexView(APIView):
     """
     API view to get the index page.
-    :param request: Request object from the client
-    :return: Response object with the index page
     """
 
     def get(self, request) -> Response:
@@ -37,7 +35,6 @@ class IndexView(APIView):
 class GraphDataView(APIView):
     """
     API view to get the data for the graph.
-    :param request: Request object from the client with the type, filters, and category_id parameters if applicable
     :return: Response object with the graph data for the specified type
     """
 
@@ -56,6 +53,7 @@ class GraphDataView(APIView):
         if filters == ['']:
             filters = []
 
+        # Get the data based on the type
         if data_type == 'initial':
             nodes, edges, visible = get_category_data(filters, show_subtypes, initial=True)
         elif data_type == 'categories':
@@ -64,12 +62,42 @@ class GraphDataView(APIView):
             category_id: str = request.GET.get('category_id')
             nodes, edges, visible = get_disease_data(category_id, filters, show_subtypes)
         elif data_type == 'alleles':
+            # Get the disease ID from the request escaped with urllib.parse.unquote
             disease_id: str = urllib.parse.unquote(request.GET.get('disease_id'))
             nodes, edges, visible = get_allele_data(disease_id, filters, show_subtypes)
         else:
             return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
+
+
+def normalise_snp_filter(filters):
+    """
+    Normalise the SNP filter to be case-insensitive, handle different delimiters,
+    and ensure HLA_A_01 format is used.
+    :param filters: The filter string containing SNP conditions.
+    :return: The normalised filter string.
+    """
+
+    # Define a function to normalise the SNP value
+    def normalize_snp(match):
+        snp_value = match.group(2).strip()
+        # Remove any existing HLA prefix and delimiter
+        snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
+        # Remove all delimiters and spaces
+        snp_value = re.sub(r'[-_\s]+', '', snp_value)
+        # Format as HLA_A_01
+        if len(snp_value) >= 2:
+            snp_value = f"HLA_{snp_value[0].upper()}_{snp_value[1:].zfill(2)}"
+        return f"snp:==:{snp_value}"
+
+    # Normalize the entire filter string
+    filters = re.sub(r'((?:^|,\s*)snp\s*[:_-]?(?:==|:==:)?\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
+                     normalize_snp,
+                     filters,
+                     flags=re.IGNORECASE)
+
+    return filters
 
 
 def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
@@ -89,19 +117,30 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
         category_string: str = category_id.replace('category-', '').replace('_', ' ')
         queryset = queryset.filter(category_string=category_string)
     # If the export flag is set, return the queryset without any filters
+    print("Show subtypes: ", show_subtypes)
     if not export and not initial:
         # If the show_subtypes flag is set, filter the queryset to show only the main groups
-        if not show_subtypes:
+        if show_subtypes == 'false':
+            print("Filtering subtypes")
             queryset = queryset.filter(subtype='00')
             # If show_subtypes is not set, filter the queryset to show only the subtypes
         else:
+            print("Not filtering subtypes")
             queryset = queryset.exclude(subtype='00')
     else:
         queryset = queryset
 
-    # If no filters are provided, return the queryset
+    # If no filters are provided, return the queryset filtered to show only the significant results
     if not filters:
         return queryset.filter(p__lte=0.05)
+
+    # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
+    filters = normalise_snp_filter(filters)
+
+    # If show_subtypes is false, remove the last two digits of the SNP filter
+    if not show_subtypes:
+        # Match HLA_[letter]_[four digits] and capture only the first two digits
+        filters = re.sub(r'(HLA_[A-Z]_\d{2})\d{2}', r'\1', filters)
 
     # Parse the filters and apply them to the queryset
     filter_list: list = parse_filters(filters)

@@ -1,10 +1,13 @@
 import unittest
+from unittest import TestCase
 
 from django.test import TestCase
 from django.urls import reverse
 from mainapp.models import HlaPheWasCatalog
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from api.views import normalise_snp_filter
 
 
 class HlaPheWasCatalogTestCase(TestCase):
@@ -270,3 +273,28 @@ class HlaPheWasCatalogTestCase(TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class NormaliseSNPFilterTests(TestCase):
+    """
+    Tests for the normalise_snp_filter function
+    """
+    def test_normalise_snp_filter_should_equalHLA_A_01(self):
+        """
+        Test that the normalise_snp_filter function normalises the SNP filter to the expected format
+        :return:
+        """
+        # Test cases
+        test_cases = [
+            "snp:==:a 01",
+            "snp:==:hla_a_01",
+            "snp:==:HLA-A01",
+            "snp_HLA A01",
+            "snp:==:a-01"
+        ]
+
+        # Loop through the test cases
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                self.assertEqual(normalise_snp_filter(test_case), "snp:==:HLA_A_01") # Expected result
+
