@@ -139,7 +139,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
     filters = normalise_snp_filter(filters)
-    filters = html.unescape(filters) # Unescape the HTML entities in the filters to handle escapes <, >, etc.
+    filters = html.unescape(filters)  # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
     if not show_subtypes:
@@ -383,7 +383,7 @@ class ExportDataView(APIView):
         """
         # Get the filters from the request
         filters: str = request.GET.get('filters', '')
-        filters:str = html.unescape(filters)
+        filters: str = html.unescape(filters)
         # Get the filtered data
         df: pd.DataFrame = get_filtered_df(filters)
         # Create the response object
@@ -461,12 +461,6 @@ class SendDataToSOMView(APIView):
         # Return the response with the status of the request, data ID, number of clusters, and filters
         return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id, 'num_clusters': num_clusters,
                              'filters': filters})
-
-    import os
-    from django.conf import settings
-    from django.utils import timezone
-    from datetime import timedelta
-    from api.models import TemporaryCSVData  # Adjust this import based on your app's structure
 
     def cleanup_old_data(self) -> None:
         """

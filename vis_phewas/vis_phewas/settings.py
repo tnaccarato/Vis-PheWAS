@@ -13,6 +13,7 @@ import ast
 import os
 import sys
 from pathlib import Path
+from rest_framework.views import exception_handler
 
 from dotenv import load_dotenv
 
@@ -109,6 +110,11 @@ LOGGING = {
 }
 
 WSGI_APPLICATION = 'vis_phewas.wsgi.application'
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    # Other DRF settings can be added here
+}
 
 DATABASES = {
     'default': {
