@@ -1,5 +1,6 @@
 import html
 import itertools
+import os
 import re
 import urllib.parse
 from datetime import timedelta
@@ -8,6 +9,7 @@ from typing import List
 
 import pandas as pd
 from api.models import TemporaryCSVData
+from django.conf import settings
 from django.db.models import Q, Count, QuerySet
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
@@ -460,13 +462,47 @@ class SendDataToSOMView(APIView):
         return JsonResponse({'status': 'CSV data stored', 'data_id': temp_data.id, 'num_clusters': num_clusters,
                              'filters': filters})
 
+    import os
+    from django.conf import settings
+    from django.utils import timezone
+    from datetime import timedelta
+    from api.models import TemporaryCSVData  # Adjust this import based on your app's structure
+
     def cleanup_old_data(self) -> None:
         """
-        Cleanup the old data from the database.
-        :return:
+        Cleanup old data from both the database and the media folder.
+        Removes old database records and associated files older than 1 day.
         """
-        threshold: timezone = timezone.now() - timedelta(days=1)
-        TemporaryCSVData.objects.filter(created_at__lt=threshold).delete()
+        # Cleanup old database records
+        threshold_time = timezone.now() - timedelta(days=1)
+        old_records = TemporaryCSVData.objects.filter(created_at__lt=threshold_time)
+
+        # Delete associated files in the media folder, if applicable
+        for record in old_records:
+            # Assuming your files are stored with a path or filename related to the record (e.g., record.id)
+            file_path = os.path.join(settings.MEDIA_ROOT,
+                                     f"{record.id}.csv")  # Adjust the file naming pattern as needed
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Deleted file: {file_path}")
+
+        # Delete the old records from the database
+        old_records_count = old_records.count()
+        old_records.delete()
+        print(f"Deleted {old_records_count} old records from the database.")
+
+        # Cleanup old files in the media folder
+        folder_path = settings.MEDIA_ROOT  # Change this to your specific folder if needed
+        threshold_timestamp = threshold_time.timestamp()
+
+        # Iterate over files in the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):
+                file_modified_time = os.path.getmtime(file_path)
+                if file_modified_time < threshold_timestamp:
+                    os.remove(file_path)
+                    print(f"Deleted untracked file: {file_path}")  # For files not linked to database records
 
 
 class CombinedAssociationsView(APIView):
