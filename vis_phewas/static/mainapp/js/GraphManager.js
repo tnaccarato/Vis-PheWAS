@@ -16,7 +16,7 @@ class GraphManager {
     // Get the container element
     this.container = document.getElementById(containerId);
     // Create a new Graph object
-    this.graph = new Graph({multi: true});
+    this.graph = new Graph({ multi: true });
     // Create a new Sigma instance
     this.sigmaInstance = new Sigma(this.graph, this.container, {
       allowInvalidContainer: true,
@@ -27,24 +27,24 @@ class GraphManager {
       // Configure the node program classes
       nodeProgramClasses: {
         bordered: createNodeBorderProgram({
-                                            // Define the border program attributes
-                                            borders: [
-                                              {
-                                                size: {attribute: "borderSize", defaultValue: 0.5},
-                                                color: {attribute: "borderColor"},
-                                              },
-                                              {size: {fill: true}, color: {attribute: "color"}},
-                                            ],
-                                          }),
+          // Define the border program attributes
+          borders: [
+            {
+              size: { attribute: "borderSize", defaultValue: 0.5 },
+              color: { attribute: "borderColor" },
+            },
+            { size: { fill: true }, color: { attribute: "color" } },
+          ],
+        }),
       },
     });
     // Set the adjustSigmaContainerHeight function
     this.adjustSigmaContainerHeight = adjustSigmaContainerHeight;
     // Create a new GraphHelper object for the GraphManager
     this.graphHelper = new GraphHelper(
-        this,
-        this.sigmaInstance,
-        this.adjustSigmaContainerHeight,
+      this,
+      this.sigmaInstance,
+      this.adjustSigmaContainerHeight,
     );
     // Initialize the event listeners
     this.initEventListeners();
@@ -60,32 +60,32 @@ class GraphManager {
    */
   initEventListeners() {
     // Add an event listener for the clickNode event
-    this.sigmaInstance.on("clickNode", ({node}) => {
+    this.sigmaInstance.on("clickNode", ({ node }) => {
       this.graphHelper.clickedNode(
-          this.graph,
-          node,
-          this.fetchGraphData.bind(this),
-          this.adjustSigmaContainerHeight,
-          this.getInfoTable.bind(this),
+        this.graph,
+        node,
+        this.fetchGraphData.bind(this),
+        this.adjustSigmaContainerHeight,
+        this.getInfoTable.bind(this),
       );
     });
 
     // Add an event listener for hovering over a node
-    this.sigmaInstance.on("enterNode", ({node}) => {
-      this.graphHelper.hoverOnNode(node, this.graph, this.sigmaInstance);
+    this.sigmaInstance.on("enterNode", ({ node }) => {
+      this.graphHelper.hoverOnNode(node, this.graph);
     });
 
     // Add an event listener for leaving a node
-    this.sigmaInstance.on("leaveNode", ({node}) => {
+    this.sigmaInstance.on("leaveNode", ({ node }) => {
       this.graphHelper.hoverOffNode(
-          node,
-          this.graph,
-          this.getActiveSelection(),
+        node,
+        this.graph,
+        this.getActiveSelection(),
       );
     });
 
     // Add an event listener for right-clicking a node
-    this.sigmaInstance.on("rightClickNode", ({node}) => {
+    this.sigmaInstance.on("rightClickNode", ({ node }) => {
       const nodeAttributes = this.graph.getNodeAttributes(node);
       const forceLabel = nodeAttributes.forceLabel;
       this.graph.setNodeAttribute(node, "forceLabel", !forceLabel);
@@ -99,12 +99,12 @@ class GraphManager {
     });
 
     // Event listener for entering an edge
-    this.sigmaInstance.on("enterEdge", ({edge}) => {
+    this.sigmaInstance.on("enterEdge", ({ edge }) => {
       this.graphHelper.hoverOnEdge(edge, this.graph);
     });
 
     // Event listener for leaving an edge
-    this.sigmaInstance.on("leaveEdge", ({edge}) => {
+    this.sigmaInstance.on("leaveEdge", ({ edge }) => {
       this.graphHelper.hoverOffEdge(edge, this.graph);
     });
   }
@@ -115,38 +115,36 @@ class GraphManager {
    */
   fetchGraphData(params = {}) {
     // Set the default parameters
-    params.showSubtypes = localStorage.getItem("showSubtypes") === "true" ? "true" : "false";
+    params.showSubtypes =
+      localStorage.getItem("showSubtypes") === "true" ? "true" : "false";
     console.log("Show subtypes parameter:", params.showSubtypes);
 
     // Create a new URLSearchParams object
     const query = new URLSearchParams(params).toString();
-    const url = "/api/graph-data/" + (
-        query ? "?" + query : ""
-    );
+    const url = "/api/graph-data/" + (query ? "?" + query : "");
     console.log("URL:", url);
 
     // Fetch the data from the URL
     fetch(url)
-        .then((response) => response.json())
-        .then((data) => {
-          // If the type parameter is set, update the graph
-          if (params.type) {
-            // console.log("Updating");
-            this.updateGraph(
-                data.nodes,
-                data.edges,
-                data.visible,
-                params.clicked,
-            );
-            // Otherwise, initialize the graph
-          }
-          else {
-            // console.log("Initializing");
-            // console.log(data);
-            this.initializeGraph(data.nodes, data.edges, data.visible);
-          }
-        })
-        .catch((error) => console.error("Error loading graph data:", error));
+      .then((response) => response.json())
+      .then((data) => {
+        // If the type parameter is set, update the graph
+        if (params.type) {
+          // console.log("Updating");
+          this.updateGraph(
+            data.nodes,
+            data.edges,
+            data.visible,
+            params.clicked,
+          );
+          // Otherwise, initialize the graph
+        } else {
+          // console.log("Initializing");
+          // console.log(data);
+          this.initializeGraph(data.nodes, data.edges, data.visible);
+        }
+      })
+      .catch((error) => console.error("Error loading graph data:", error));
   }
 
   /**
@@ -242,8 +240,8 @@ class GraphManager {
     // Update the nodes and edges in the graph
     nodes.forEach((node) => {
       if (!this.graph.hasNode(node.id) && this.visibleNodes.has(node.id)) {
-        let {color, baseSize, borderSize, borderColor} =
-            this.graphHelper.calculateBorder(node);
+        let { color, baseSize, borderSize, borderColor } =
+          this.graphHelper.calculateBorder(node);
 
         this.graph.addNode(node.id, {
           label: node.label.replace("HLA_", ""),
@@ -268,20 +266,20 @@ class GraphManager {
 
       // Update the node attributes
       this.graph.setNodeAttribute(
-          node.id,
-          "hidden",
-          !this.visibleNodes.has(node.id),
+        node.id,
+        "hidden",
+        !this.visibleNodes.has(node.id),
       );
     });
 
     // Update the edges in the graph
     edges.forEach((edge) => {
       if (
-          this.visibleNodes.has(edge.source) &&
-          this.visibleNodes.has(edge.target)
+        this.visibleNodes.has(edge.source) &&
+        this.visibleNodes.has(edge.target)
       ) {
         if (!this.graph.hasEdge(edge.id)) {
-          this.graph.addEdge(edge.source, edge.target, {color: "darkgrey"});
+          this.graph.addEdge(edge.source, edge.target, { color: "darkgrey" });
         }
       }
     });
@@ -316,8 +314,8 @@ class GraphManager {
     // Get the disease nodes connected to the selected node
     const diseaseNodes = edges.map((edge) => {
       return this.graph.source(edge) === selectedNode
-          ? this.graph.target(edge)
-          : this.graph.source(edge);
+        ? this.graph.target(edge)
+        : this.graph.source(edge);
     });
 
     // If there are no disease nodes, log an error and return
@@ -334,10 +332,10 @@ class GraphManager {
     const closeButton = document.createElement("button");
     closeButton.className = "btn-close";
     closeButton.onclick = closeInfoContainer(
-        // Call the closeInfoContainer function
-        this.adjustSigmaContainerHeight,
-        this.graph,
-        this.sigmaInstance,
+      // Call the closeInfoContainer function
+      this.adjustSigmaContainerHeight,
+      this.graph,
+      this.sigmaInstance,
     );
     infoContainer.appendChild(closeButton);
 
@@ -359,12 +357,11 @@ class GraphManager {
     filterButton.onclick = () => {
       if (window.filterManager) {
         window.filterManager.tableSelectFilter({
-                                                 // Call the tableSelectFilter function with the snp field
-                                                 field: "snp",
-                                                 value: nodeData.full_label,
-                                               });
-      }
-      else {
+          // Call the tableSelectFilter function with the snp field
+          field: "snp",
+          value: nodeData.full_label,
+        });
+      } else {
         console.error("filterManager is not defined");
       }
     };
@@ -386,9 +383,7 @@ class GraphManager {
       prevButton.textContent = "<";
       prevButton.onclick = () => {
         currentIndex =
-            (
-                currentIndex - 1 + diseaseNodes.length
-            ) % diseaseNodes.length;
+          (currentIndex - 1 + diseaseNodes.length) % diseaseNodes.length;
         displayNodeInfo(diseaseNodes[currentIndex]);
       };
       navContainer.appendChild(prevButton);
@@ -407,9 +402,7 @@ class GraphManager {
       nextButton.className = "btn btn-secondary";
       nextButton.textContent = ">";
       nextButton.onclick = () => {
-        currentIndex = (
-            currentIndex + 1
-        ) % diseaseNodes.length;
+        currentIndex = (currentIndex + 1) % diseaseNodes.length;
         displayNodeInfo(diseaseNodes[currentIndex]);
       };
       navContainer.appendChild(nextButton);
@@ -423,7 +416,7 @@ class GraphManager {
      * @param {Object} data - The data containing the odds information.
      */
     const displayOddsTables = (data) => {
-      const {top_odds, lowest_odds} = data;
+      const { top_odds, lowest_odds } = data;
 
       // Function to create the odds table
       /**
@@ -440,7 +433,7 @@ class GraphManager {
         // Create a table element
         const table = document.createElement("table");
         table.className =
-            "odds-table table table-striped table-bordered table-hover table-sm";
+          "odds-table table table-striped table-bordered table-hover table-sm";
 
         // Create header row
         const headerRow = document.createElement("tr");
@@ -469,11 +462,11 @@ class GraphManager {
           row.appendChild(pValueCell);
           row.onclick = () => {
             GraphHelper.simulateClickToNode(
-                // Add the simulateClickToNode function to click to the disease node
-                this,
-                this.graph,
-                odds.phewas_string,
-                this.graphHelper,
+              // Add the simulateClickToNode function to click to the disease node
+              this,
+              this.graph,
+              odds.phewas_string,
+              this.graphHelper,
             );
           };
           table.appendChild(row);
@@ -497,7 +490,9 @@ class GraphManager {
     const updateNodeStyles = (nodeData, diseaseNode) => {
       // Get the allele node
       const alleleNode = `allele-HLA_${nodeData.gene_name}_${nodeData.serotype.toString()}${
-          localStorage.getItem("showSubtypes") === "true" ? "" + nodeData.subtype.toString() : ""
+        localStorage.getItem("showSubtypes") === "true"
+          ? "" + nodeData.subtype.toString()
+          : ""
       }`;
 
       // Update allele node
@@ -506,8 +501,8 @@ class GraphManager {
       node.odds_ratio = nodeData.odds_ratio;
       node.p = nodeData.p;
 
-      let {color, baseSize, borderSize, borderColor} =
-          this.graphHelper.calculateBorder(node);
+      let { color, baseSize, borderSize, borderColor } =
+        this.graphHelper.calculateBorder(node);
 
       this.graph.setNodeAttribute(alleleNode, "color", color);
       this.graph.setNodeAttribute(alleleNode, "borderColor", borderColor);
@@ -517,13 +512,13 @@ class GraphManager {
       // Reset other nodes
       this.graph.nodes().forEach((node) => {
         if (
-            node !== diseaseNode &&
-            this.graph.getNodeAttribute(node, "node_type") === "disease"
+          node !== diseaseNode &&
+          this.graph.getNodeAttribute(node, "node_type") === "disease"
         ) {
           this.graph.setNodeAttribute(
-              node,
-              "borderColor",
-              this.graph.getNodeAttribute(node, "color"),
+            node,
+            "borderColor",
+            this.graph.getNodeAttribute(node, "color"),
           );
           this.graph.setNodeAttribute(node, "borderSize", 0);
           if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
@@ -532,13 +527,12 @@ class GraphManager {
         }
 
         if (
-            this.graph.getNodeAttribute(node, "node_type") === "allele" &&
-            node !== alleleNode
+          this.graph.getNodeAttribute(node, "node_type") === "allele" &&
+          node !== alleleNode
         ) {
           if (this.graph.getNodeAttribute(node, "userForceLabel") === false) {
             this.graph.setNodeAttribute(node, "forceLabel", false);
-          }
-          else {
+          } else {
             this.graph.setNodeAttribute(node, "forceLabel", true);
           }
         }
@@ -552,8 +546,8 @@ class GraphManager {
       // Find and update the edge connecting the disease and allele node
       const edge = this.graph.edges().find((edge) => {
         return (
-            this.graph.source(edge) === diseaseNode &&
-            this.graph.target(edge) === alleleNode
+          this.graph.source(edge) === diseaseNode &&
+          this.graph.target(edge) === alleleNode
         );
       });
 
@@ -563,8 +557,7 @@ class GraphManager {
 
       if (edge) {
         this.graph.setEdgeAttribute(edge, "color", "black");
-      }
-      else {
+      } else {
         console.error("Edge from disease to allele not found");
       }
 
@@ -601,97 +594,6 @@ class GraphManager {
       const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
 
       fetch(url)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            if (data.error) {
-              throw new Error(data.error);
-            }
-
-            // Create a table element for the disease info
-            const table = document.createElement("table");
-            // Set the class name for the table
-            table.className =
-                "disease-info allele-info-table table table-striped table-bordered table-hover table-sm";
-            // Create a header row for the table
-            const headerRow = document.createElement("tr");
-            const header1 = document.createElement("th");
-            header1.textContent = "Field";
-            headerRow.appendChild(header1);
-            const header2 = document.createElement("th");
-            header2.textContent = "Value";
-            headerRow.appendChild(header2);
-            table.appendChild(headerRow);
-
-            // Iterate over the data and create rows for the table
-            Object.entries(data).forEach(([key, value]) => {
-              if (key !== "top_odds" && key !== "lowest_odds") {
-                const row = document.createElement("tr");
-                const cell1 = document.createElement("td");
-                cell1.textContent = key;
-                row.appendChild(cell1);
-                const cell2 = document.createElement("td");
-                cell2.textContent = value;
-                row.appendChild(cell2);
-                // If the key is phewas_string, create a button to show combinational associations
-                if (key === "phewas_string") {
-                  const cell3 = document.createElement("td");
-                  const button = document.createElement("button");
-                  button.className = "btn btn-primary";
-                  button.textContent = "Show Combinational Associations";
-                  // Get the showSubtypes value from local storage
-                  const showSubtypes = localStorage.getItem("showSubtypes") === "true";
-                  button.onclick = () => {
-                    fetchAndShowAssociations(value, showSubtypes);
-                  };
-                  cell3.appendChild(button);
-                  row.appendChild(cell3);
-                }
-                table.appendChild(row);
-              }
-            });
-
-            // Set the overflow style for the info container
-            infoContainer.style.overflowY = "auto";
-            if (existingDiseaseInfo) {
-              // Replace the existing disease info with the table
-              existingDiseaseInfo.replaceWith(table);
-            }
-            else {
-              // Append the table to the info container
-              infoContainer.appendChild(table);
-            }
-            // Update the node styles based on the new table data
-            updateNodeStyles(data, diseaseNode);
-          })
-          .catch((error) => {
-            // Log an error if the data cannot be fetched
-            console.error("Error loading disease info:", error);
-            const errorMessage = document.createElement("div");
-            errorMessage.className = "disease-info alert alert-danger";
-            errorMessage.textContent = `Error loading disease info: ${error.message}`;
-            infoContainer.appendChild(errorMessage);
-          });
-    };
-
-    // Display the node information for the first disease node
-    displayNodeInfo(diseaseNodes[currentIndex]);
-
-    // Get the allele node
-    const encodedAllele = encodeURIComponent(nodeData.full_label);
-    // Get the disease node
-    const encodedDisease = encodeURIComponent(
-        // Get the full label of the disease node
-        this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label,
-    );
-    // Fetch the data from the URL
-    const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
-
-    fetch(url)
         .then((response) => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -703,19 +605,110 @@ class GraphManager {
             throw new Error(data.error);
           }
 
-          // Display the odds tables for the allele node
-          displayOddsTables(data);
+          // Create a table element for the disease info
+          const table = document.createElement("table");
+          // Set the class name for the table
+          table.className =
+            "disease-info allele-info-table table table-striped table-bordered table-hover table-sm";
+          // Create a header row for the table
+          const headerRow = document.createElement("tr");
+          const header1 = document.createElement("th");
+          header1.textContent = "Field";
+          headerRow.appendChild(header1);
+          const header2 = document.createElement("th");
+          header2.textContent = "Value";
+          headerRow.appendChild(header2);
+          table.appendChild(headerRow);
+
+          // Iterate over the data and create rows for the table
+          Object.entries(data).forEach(([key, value]) => {
+            if (key !== "top_odds" && key !== "lowest_odds") {
+              const row = document.createElement("tr");
+              const cell1 = document.createElement("td");
+              cell1.textContent = key;
+              row.appendChild(cell1);
+              const cell2 = document.createElement("td");
+              cell2.textContent = value;
+              row.appendChild(cell2);
+              // If the key is phewas_string, create a button to show combinational associations
+              if (key === "phewas_string") {
+                const cell3 = document.createElement("td");
+                const button = document.createElement("button");
+                button.className = "btn btn-primary";
+                button.textContent = "Show Combinational Associations";
+                // Get the showSubtypes value from local storage
+                const showSubtypes =
+                  localStorage.getItem("showSubtypes") === "true";
+                button.onclick = () => {
+                  fetchAndShowAssociations(value, showSubtypes);
+                };
+                cell3.appendChild(button);
+                row.appendChild(cell3);
+              }
+              table.appendChild(row);
+            }
+          });
+
+          // Set the overflow style for the info container
+          infoContainer.style.overflowY = "auto";
+          if (existingDiseaseInfo) {
+            // Replace the existing disease info with the table
+            existingDiseaseInfo.replaceWith(table);
+          } else {
+            // Append the table to the info container
+            infoContainer.appendChild(table);
+          }
+          // Update the node styles based on the new table data
+          updateNodeStyles(data, diseaseNode);
         })
         .catch((error) => {
-          console.error("Error loading allele info:", error);
+          // Log an error if the data cannot be fetched
+          console.error("Error loading disease info:", error);
           const errorMessage = document.createElement("div");
-          errorMessage.className = "alert alert-danger";
-          errorMessage.textContent = `Error loading allele info: ${error.message}`;
+          errorMessage.className = "disease-info alert alert-danger";
+          errorMessage.textContent = `Error loading disease info: ${error.message}`;
           infoContainer.appendChild(errorMessage);
         });
+    };
+
+    // Display the node information for the first disease node
+    displayNodeInfo(diseaseNodes[currentIndex]);
+
+    // Get the allele node
+    const encodedAllele = encodeURIComponent(nodeData.full_label);
+    // Get the disease node
+    const encodedDisease = encodeURIComponent(
+      // Get the full label of the disease node
+      this.graph.getNodeAttributes(diseaseNodes[currentIndex]).full_label,
+    );
+    // Fetch the data from the URL
+    const url = `/api/get-info/?allele=${encodedAllele}&disease=${encodedDisease}`;
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Display the odds tables for the allele node
+        displayOddsTables(data);
+      })
+      .catch((error) => {
+        console.error("Error loading allele info:", error);
+        const errorMessage = document.createElement("div");
+        errorMessage.className = "alert alert-danger";
+        errorMessage.textContent = `Error loading allele info: ${error.message}`;
+        infoContainer.appendChild(errorMessage);
+      });
   }
 
-// Getters for the active selection
+  // Getters for the active selection
   /**
    * Get the active selection.
    * @returns {Object} The active selection containing allele and disease nodes.
@@ -727,4 +720,5 @@ class GraphManager {
     };
   }
 }
+
 export default GraphManager;
