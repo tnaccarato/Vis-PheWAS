@@ -111,6 +111,11 @@ export class FilterManager {
     if (toolbar) {
       toolbar.style.display = "none";
     }
+    const infoPanel = document.getElementsByClassName("info-container")[0];
+    // If the info container is visible, close it
+    if (infoPanel) {
+      closeInfoContainer(this.adjustSigmaContainerHeight, this.graphManager.graph, this.sigmaInstance)();
+    }
     // Show alert message and fetch graph data
     this.showAlert("Filters cleared. Showing all data.");
     this.fetchGraphData();
