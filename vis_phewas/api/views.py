@@ -150,11 +150,11 @@ def parse_filters(filters: str) -> list:
     :param filters:
     :return:
     """
-    # Initialize the filter list and the current operator
+    # Initialise the filter list and the current operator
     filter_list: list = []
-    # Initialize the pattern to match the logical operators
+    # Initialise the pattern to match the logical operators
     current_operator = None
-    # Initialize the pattern to match the logical operators
+    # Initialise the pattern to match the logical operators
     pattern = re.compile(r'\s*(AND|OR)\s*')
     # Split the filters string into parts based on the logical operators
     parts: list = pattern.split(filters)
@@ -450,7 +450,7 @@ class CombinedAssociationsView(APIView):
             allele_data = allele_data.filter(subtype='00')
         # Get the combinations of alleles and calculate the combined odds ratio and p-value
         allele_combinations: list = list(itertools.combinations(allele_data, 2))
-        # Initialize the result list
+        # Initialise the result list
         result: list = []
         # Loop through the allele combinations and calculate the combined odds ratio and p-value
         for allele1, allele2 in allele_combinations:
