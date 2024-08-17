@@ -117,7 +117,7 @@ class TestSOMFunctions(unittest.TestCase):
 
     def test_create_title_disease(self):
         # Define the input data
-        filters = "category_string:==:Category_X OR category_string:==:Category_Y"
+        filters = "category_string:==:Category X OR category_string:==:Category Y"
         num_clusters = 3
         vis_type = "disease"
         # Define the expected title
