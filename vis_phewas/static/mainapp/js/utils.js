@@ -1,6 +1,6 @@
-import { filterManager } from "./main.js";
-import { scaleLog } from "d3-scale";
-import * as d3 from "d3";
+import {filterManager} from "./main.js";
+import {scaleLog}      from "d3-scale";
+import * as d3         from "d3";
 
 /**
  * Function to toggle the visibility of the info container.
@@ -45,6 +45,12 @@ export function closeInfoContainer(
           graph.getNodeAttribute(node, "color"),
         );
       }
+    });
+    // Reset the thickness of the edges and set the color to darkgrey
+    graph.edges().forEach((edge) => {
+      graph.setEdgeAttribute(edge, "size", 1);
+        graph.setEdgeAttribute(edge, "color", "darkgrey");
+
     });
     // Refresh the Sigma instance
     sigmaInstance.refresh();
