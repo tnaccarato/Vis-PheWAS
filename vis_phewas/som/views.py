@@ -3,7 +3,7 @@ import urllib.parse
 from collections import defaultdict
 from datetime import datetime
 from io import StringIO
-
+import json
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -17,6 +17,7 @@ from minisom import MiniSom
 from rest_framework.views import APIView
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from scipy.sparse import hstack
 
 
 def cluster_results_to_csv(cluster_results):
@@ -168,15 +169,15 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         ),
         xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
         yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
-        plot_bgcolor='rgba(0,0,0,0)', # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
         height=800,
         width=800,
         legend=dict(
             x=1.06,
             y=0.7,
-            bgcolor='rgba(0,0,0,0)' # Transparent background
+            bgcolor='rgba(0,0,0,0)'  # Transparent background
         ),
-        paper_bgcolor='rgba(0,0,0,0)' # Transparent background
+        paper_bgcolor='rgba(0,0,0,0)'  # Transparent background
     )
     fig.data[0].colorbar.update(
         thickness=15,
@@ -238,7 +239,7 @@ def process_and_visualise_som(data_id, num_clusters, filters, som_type):
         ).groupby('snp').sum()
 
         # Combine the aggregated features
-        encoded_features = np.hstack([phenotype_aggregated, category_aggregated])
+        encoded_features = hstack([phenotype_aggregated, category_aggregated]).toarray()
 
         # Create the phenotype features for each row
         def create_phenotype_features(df_row):
@@ -336,6 +337,15 @@ def process_and_visualise_som(data_id, num_clusters, filters, som_type):
     cluster_results = results_df.sort_values(by=['cluster', 'snp' if som_type == 'snp' else 'phewas_string'])
     file_name = cluster_results_to_csv(cluster_results)
 
+    # Generate the connections based on shared alleles/SNPs within clusters
+    connections = compute_cluster_connections(results_df, som_type)
+
+    # Save the connections as a JSON file
+    connections_file = f"connections_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    connections_file_path = os.path.join(settings.MEDIA_ROOT, connections_file)
+    with open(connections_file_path, 'w') as file:
+        json.dump(connections, file)
+
     # Generate the SOM visualisation
     fig = go.Figure()
     distance_map = som.distance_map().T
@@ -400,7 +410,8 @@ def process_and_visualise_som(data_id, num_clusters, filters, som_type):
         'categories': categories,
         'num_clusters': num_clusters,
         'filters': filters if filters else categories,
-        'cleaned_filters': cleaned_filters
+        'cleaned_filters': cleaned_filters,
+        'connections_file': connections_file, # Pass the connections file path
     }
 
 
@@ -445,3 +456,61 @@ class SOMDiseaseView(APIView):
         context = process_and_visualise_som(data_id, num_clusters, filters, 'disease')
         # Render the template with the context
         return render(request, 'som/som_view.html', context)
+
+
+def compute_cluster_connections(results_df, som_type):
+    """
+    Compute the connections within clusters based on shared alleles/SNPs.
+
+    :param results_df: DataFrame containing SOM results, including cluster labels and alleles/SNPs.
+    :param som_type: Type of the SOM (SNP or disease)
+    :return: List of connections with source, target, strength, and tooltip information.
+    """
+    connections = []
+
+    # Iterate through each unique cluster
+    for cluster_id in results_df['cluster'].unique():
+        cluster_data = results_df[results_df['cluster'] == cluster_id]
+
+        # Compare each pair within the cluster
+        for i, row1 in cluster_data.iterrows():
+            for j, row2 in cluster_data.iterrows():
+                if i < j:  # Avoid duplicate and self-comparisons
+                    shared_components = set(row1['phenotypes']).intersection(set(row2['phenotypes'])) if som_type == 'snp' else set(row1['snps']).intersection(set(row2['snps']))
+
+                    # Add a connection only if there are shared components
+                    if shared_components:
+                        connections.append({
+                            'source': row1['snp'] if som_type == 'snp' else row1['phewas_string'],
+                            'target': row2['snp'] if som_type == 'snp' else row2['phewas_string'],
+                            'value': len(shared_components),
+                            'tooltip': f"Shared components: {len(shared_components)}"
+                        })
+    return connections
+
+
+class CircosDiagramView(APIView):
+    """
+    API view to get the connections between clusters based on shared alleles/SNPs.
+    """
+
+    def get(self, request, file_name):
+        print(file_name)
+        # Path to the CSV file generated by the SOM
+        csv_path = os.path.join(settings.MEDIA_ROOT, str(file_name))
+        print(csv_path)
+        if not os.path.exists(csv_path):
+            print('SOM results file not found')
+            return Response({"error": "SOM results file not found"}, status=404)
+
+        # Read the CSV into a DataFrame
+        results_df = pd.read_csv(csv_path, nrows=50)
+        print(results_df.columns)
+
+        # Determine the type of SOM (e.g., 'snp' or 'disease') based on available columns
+        som_type = 'snp' if 'snp' in results_df.columns else 'disease'
+
+        # Compute connections from the CSV data
+        connections = compute_cluster_connections(results_df, som_type)
+
+        return Response(connections)
