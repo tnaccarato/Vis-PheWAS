@@ -162,9 +162,7 @@ cython_debug/
 bundle.js
 /vis_phewas/staticfiles
 *.env
-docker-compose-build.yml
-Dockerfile.django
-Dockerfile.postgres
+docker-compose.yml
 *.pem
 /vis_phewas/media
 Vis-PheWAS.code-workspace
