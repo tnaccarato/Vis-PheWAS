@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster Connections Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.rawgit.com/nicgirault/circosJS/v2/dist/circos.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #circosContainer {
+            width: 800px;
+            height: 800px;
+            margin: 0 auto;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            pointer-events: none;
+        }
+        #legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="circosContainer"></div>
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const connections = {{ connections|safe }};  // Data passed from Django context
+
+        // Extract unique clusters
+        const clusters = new Set();
+        connections.forEach(link => {
+            clusters.add(link.source);
+            clusters.add(link.target);
+        });
+
+        // Create ideograms for each cluster
+        const ideograms = Array.from(clusters).map((cluster, index) => ({
+            id: cluster,
+            label: `Cluster ${cluster}`,
+            color: d3.schemeCategory10[index % 10] // Use D3's color scheme for clusters
+        }));
+
+        // Initialize Circos
+        const circos = new Circos({
+            container: '#circosContainer',
+            width: 800,
+            height: 800
+        });
+
+        // Configure Circos layout
+        circos.layout(ideograms, {
+            innerRadius: 300,
+            outerRadius: 400,
+            labels: { display: true, radialOffset: 60 },
+            ticks: { display: false }
+        });
+
+        // Configure and render the connections
+        circos.chords('links', connections, {
+            color: d => d.color || "#00ccff",  // Default connection color
+            radius: 300,
+            thickness: d => d.value * 2,  // Thickness based on connection strength
+            opacity: 0.7,
+            tooltipContent: d => d.tooltip  // Tooltip content for hover
+        }).render();
+
+        // Add tooltip interactivity
+        const tooltip = document.getElementById('tooltip');
+        d3.selectAll('.chord')
+            .on('mouseover', function (event, datum) {
+                tooltip.style.display = 'block';
+                tooltip.innerHTML = datum.tooltip;
+                tooltip.style.left = event.pageX + 5 + 'px';
+                tooltip.style.top = event.pageY + 5 + 'px';
+                d3.select(this).style('opacity', 1);
+            })
+            .on('mousemove', function (event) {
+                tooltip.style.left = event.pageX + 5 + 'px';
+                tooltip.style.top = event.pageY + 5 + 'px';
+            })
+            .on('mouseout', function () {
+                tooltip.style.display = 'none';
+                d3.select(this).style('opacity', 0.7);
+            });
+    });
+</script>
+</body>
+</html>
