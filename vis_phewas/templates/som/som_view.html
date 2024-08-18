@@ -6,8 +6,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="{% static 'som/js/som.js' %}"></script>
-    <script src="{% static 'som/js/clusterCircos.js' %}"></script>
+    <script src="{% static 'mainapp/js/som.js' %}"></script>
     <style>
         .checkbox-container {
             display: flex;
@@ -100,8 +99,6 @@
                 </button>
             </div>
         </form>
-
-<a href="javascript:void(0);" onclick="fetchAndShowClusterConnections('{{ connections_file }}')">View Chord Diagram</a>
 
 
         <div id="plotly-div">
