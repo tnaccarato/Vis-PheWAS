@@ -1,9 +1,0 @@
-# Use the official Nginx image as the base
-FROM nginx:latest
-
-# Copy custom nginx configuration file to the container
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose ports
-EXPOSE 80
-EXPOSE 443
