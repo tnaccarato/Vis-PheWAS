@@ -90,18 +90,14 @@ TEMPLATES = [
     },
 ]
 
-from concurrent_log_handler import ConcurrentRotatingFileHandler
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
             'level': 'DEBUG',
-            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
+            'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'debug.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 3,
         },
     },
     'loggers': {

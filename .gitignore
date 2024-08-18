@@ -168,5 +168,3 @@ Dockerfile.postgres
 *.pem
 /vis_phewas/media
 Vis-PheWAS.code-workspace
-*.lock
-debug.log.*
