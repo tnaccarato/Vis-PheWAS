@@ -184,7 +184,7 @@ class GraphManager {
       });
     }
 
-    const categoryRadius = 400; // Adjust this value as needed
+    const categoryRadius = 400; // Radius for the category nodes
     const categoryNodes = nodes.filter((node) => node.node_type === "category");
     const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
 
