@@ -46,7 +46,7 @@ class GraphManager {
       this.sigmaInstance,
       this.adjustSigmaContainerHeight,
     );
-    // Initialize the event listeners
+    // Initialise the event listeners
     this.initEventListeners();
     this.visibleNodes = new Set();
     this.selectedAlleleNode = null;
@@ -56,7 +56,7 @@ class GraphManager {
   }
 
   /**
-   * Method to initialize the event listeners
+   * Method to initialise the event listeners
    */
   initEventListeners() {
     // Add an event listener for the clickNode event
@@ -130,17 +130,14 @@ class GraphManager {
       .then((data) => {
         // If the type parameter is set, update the graph
         if (params.type) {
-          // console.log("Updating");
           this.updateGraph(
             data.nodes,
             data.edges,
             data.visible,
             params.clicked,
           );
-          // Otherwise, initialize the graph
+          // Otherwise, initialise the graph
         } else {
-          // console.log("Initializing");
-          // console.log(data);
           this.initializeGraph(data.nodes, data.edges, data.visible);
         }
       })
@@ -148,9 +145,9 @@ class GraphManager {
   }
 
   /**
-   * Method to initialize the graph
-   * @param {Array} nodes - Array of nodes to initialize
-   * @param {Array} edges - Array of edges to initialize
+   * Method to initialise the graph
+   * @param {Array} nodes - Array of nodes to initialise
+   * @param {Array} edges - Array of edges to initialise
    * @param {Array} visible - Array of visible nodes
    */
   initializeGraph(nodes, edges, visible) {

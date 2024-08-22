@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-<!-- Set the title of the page to be the type of SOM visualization -->
-{% block title %} - {{ type|capfirst }} SOM Visualization{% endblock %}
+<!-- Set the title of the page to be the type of SOM visualisation -->
+{% block title %} - {{ type|capfirst }} SOM Visualisation{% endblock %}
 {% block head %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
@@ -38,7 +38,7 @@
 {% endblock %}
 {% block content %}
     <div id="som-visualisation" style="display: flex; flex-direction: column; align-items: center">
-        <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualization</h1>
+        <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualisation</h1>
         <form id="filter-form" style="display: flex; flex-direction: column" onsubmit="handleSubmit(event)">
             {% if type == 'disease' %}
                 <div class="disease-filters" style="display: flex; align-content: center; flex-direction: column">
@@ -111,7 +111,7 @@
     <script>
         function getSelectedFilters() {
             const selectedFilters = [];
-            let baseFilter = ''; // Initialize the base filter string as empty
+            let baseFilter = ''; // Initialise the base filter string as empty
             // Set the base filter string based on the type
             {% if type == 'disease' %}
                 baseFilter = 'category_string:==:'; // Set the base filter string based on the type

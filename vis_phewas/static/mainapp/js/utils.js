@@ -135,7 +135,7 @@ export function getShowAlert(message) {
 export function getAdjustSigmaContainer(container, sigmaInstance) {
   const filtersContainer = document.getElementById("filters-container");
 
-  // Using requestAnimationFrame to optimize resizing
+  // Using requestAnimationFrame to optimise resizing
   window.requestAnimationFrame(() => {
     const filtersHeight = filtersContainer.offsetHeight;
     const filtersWidth = filtersContainer.offsetWidth;
@@ -171,7 +171,7 @@ export function clamp(value, domain) {
 export function formatCategoryString(string) {
   return string
     .split("_") // Split the string by underscores
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalise the first letter of each word
     .join(" "); // Join the words back together with a space
 }
 

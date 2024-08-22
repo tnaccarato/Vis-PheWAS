@@ -111,7 +111,7 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
         // Get the maximum locus value for this gene category
         const maxLocus = maxLocusValues[gene_name] || 1; // Default to 1 to avoid division by zero
 
-        // Normalize the locus value and calculate lightness variation
+        // Normalise the locus value and calculate lightness variation
         const normalizedLocus = locus / maxLocus;
         const lightnessVariation = 40 + normalizedLocus * 40; // Map to range 40% to 80%
 
@@ -136,7 +136,7 @@ export function fetchAndShowAssociations(disease, showSubtypes) {
         return;
       }
 
-      // Function to capitalize the first letter of each word
+      // Function to capitalise the first letter of each word
       function capitalizeWords(str) {
         return str.replace(/\b\w/g, (char) => char.toUpperCase());
       }
