@@ -105,7 +105,10 @@ class SOMView(APIView):
                         f"Phenotype: {phewas_string[:10]}..., Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
                         for phewas_string, or_value, p in zip(row['phenotypes'], row['odds_ratios'], row['p_values'])
                     ])
-                    hover_text = f"SNP: {row['snp']}<br>{phenotype_details}"
+                    # Show only top 5 phenotypes based on odds ratio
+                    reduced_details = "<br>".join(phenotype_details.split("<br>")[:5])
+
+                    hover_text = f"SNP: {row['snp']}<br>{reduced_details}"
                     hover_texts.append(hover_text)
             else:
                 for _, row in cluster_data.iterrows():
