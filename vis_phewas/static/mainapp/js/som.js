@@ -7,7 +7,7 @@
 function generateSOM(filters, type, num_clusters) {
   console.log("Generating SOM with filters: " + filters + ", type: " + type + ", num_clusters: " + num_clusters);
   // Validate the type parameter
-  if (type !== "allele" && type !== "disease") {
+  if (type !== "snp" && type !== "disease") {
     alert("Invalid SOM type specified. Must be 'allele' or 'disease'.");
     return;
   }
@@ -31,15 +31,15 @@ function generateSOM(filters, type, num_clusters) {
 
     // Handle the response from the server
     success: function (response) {
-      // Determine the correct SOM visualization page based on the type
-      let url = type === "allele" ? "/som/SOMSNP/" : "/som/SOMDisease/";
+      // Get the URL for the SOM visualisation page
+      let url = "/som/SOM/";
 
       // Open the SOM visualization page
       if (filters === "") {
         // If no filters, it means the SOM is generated for all data as an initial SOM
         window.open(
-          url + "?data_id=" + response.data_id,
-          type === "allele" ? "AlleleSOMWindow" : "DiseaseSOMWindow",
+          url + "?data_id=" + response.data_id + "&type=" + type,
+          "SOMWindow",
           "width=800,height=600,scrollbars=yes,resizable=yes"
         );
       } else {
