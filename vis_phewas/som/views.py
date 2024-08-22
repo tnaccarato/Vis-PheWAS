@@ -18,6 +18,9 @@ from rest_framework.views import APIView
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
+# Set the transparent colour for the visualisation
+TRANSPARENT = 'rgba(0,0,0,0)'
+
 
 def cluster_results_to_csv(cluster_results):
     """
@@ -168,15 +171,15 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         ),
         xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
         yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
-        plot_bgcolor='rgba(0,0,0,0)', # Transparent background
+        plot_bgcolor=TRANSPARENT, # Transparent background
         height=800,
         width=800,
         legend=dict(
             x=1.06,
             y=0.7,
-            bgcolor='rgba(0,0,0,0)' # Transparent background
+            bgcolor=TRANSPARENT  # Transparent background
         ),
-        paper_bgcolor='rgba(0,0,0,0)' # Transparent background
+        paper_bgcolor=TRANSPARENT  # Transparent background
     )
     fig.data[0].colorbar.update(
         thickness=15,
@@ -188,7 +191,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
 # noinspection PyShadowingNames
 def process_and_visualise_som(data_id, num_clusters, filters, som_type):
     """
-    Shared method to process data and generate SOM visualisation.
+    Method to process data and generate SOM visualisation.
 
     :param data_id: ID of the temporary data
     :param num_clusters: Number of clusters
@@ -405,43 +408,25 @@ def process_and_visualise_som(data_id, num_clusters, filters, som_type):
 
 
 # noinspection PyMethodMayBeStatic
-class SOMSNPView(APIView):
+class SOMView(APIView):
     """
-    View to generate and display the SOM visualisation for SNPs.
-    """
-
-    def get(self, request):
-        """
-        :param request: Request object with parameters data_id, num_clusters, and filters
-        :return: Rendered template with the SOM visualisation for SNPs
-        """
-        # Get the parameters from the request
-        data_id = request.GET.get('data_id')
-        num_clusters = request.GET.get('num_clusters', 7)
-        filters = request.GET.get('filters')
-        # Process and visualise the SOM
-        context = process_and_visualise_som(data_id, num_clusters, filters, 'snp')
-        # Render the template with the context
-        return render(request, 'som/som_view.html', context)
-
-
-# noinspection PyMethodMayBeStatic
-class SOMDiseaseView(APIView):
-    """
-    View to generate and display the SOM visualisation for diseases.
-
+    View to generate and display the SOM visualisation
     """
 
     def get(self, request):
         """
-        :param request: Request object with parameters data_id, num_clusters, and filters
-        :return: Rendered template with the SOM visualisation for diseases
+        :param request: Request object with parameters data_id, num_clusters, som_type and filters
+        :return: Rendered template with the SOM visualisation
         """
         # Get the parameters from the request
         data_id = request.GET.get('data_id')
-        num_clusters = request.GET.get('num_clusters', 5)
+        som_type = request.GET.get('type')
+        # Set the default number of clusters based on the SOM type or get the number of clusters from the request
+        num_clusters = request.GET.get('num_clusters', 7 if som_type == 'snp' else 5)
+        # Get the filters from the request
         filters = request.GET.get('filters')
+
         # Process and visualise the SOM
-        context = process_and_visualise_som(data_id, num_clusters, filters, 'disease')
+        context = process_and_visualise_som(data_id, num_clusters, filters, som_type)
         # Render the template with the context
         return render(request, 'som/som_view.html', context)
