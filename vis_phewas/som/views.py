@@ -105,7 +105,10 @@ class SOMView(APIView):
                         f"Phenotype: {phewas_string[:10]}..., Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
                         for phewas_string, or_value, p in zip(row['phenotypes'], row['odds_ratios'], row['p_values'])
                     ])
-                    hover_text = f"SNP: {row['snp']}<br>{phenotype_details}"
+                    # Show only top 5 phenotypes based on odds ratio
+                    reduced_details = "<br>".join(phenotype_details.split("<br>")[:5])
+
+                    hover_text = f"SNP: {row['snp']}<br>{reduced_details}"
                     hover_texts.append(hover_text)
             else:
                 for _, row in cluster_data.iterrows():
@@ -118,8 +121,8 @@ class SOMView(APIView):
 
             # Add the cluster data to the visualisation
             fig.add_trace(go.Scatter(
-                x=cluster_data['x'] + 0.5,
-                y=cluster_data['y'] + 0.5,
+                x=cluster_data['x'],
+                y=cluster_data['y'],
                 mode='markers',
                 marker=dict(
                     size=10,
