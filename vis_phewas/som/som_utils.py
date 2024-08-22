@@ -1,8 +1,8 @@
 import os
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
-
+import glob
 import numpy as np
 import pandas as pd
 from django.conf import settings
@@ -16,11 +16,14 @@ TRANSPARENT = 'rgba(0,0,0,0)'
 
 def cluster_results_to_csv(cluster_results):
     """
-    Function to save the cluster results to a CSV file.
+    Function to save the cluster results to a CSV file and delete old files.
 
     :param cluster_results: DataFrame with the cluster results
     :return: The name of the saved CSV
     """
+    # Clean up old files
+    clean_up_old_files()
+
     # Get the current timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Save the cluster results to a CSV file
@@ -30,6 +33,53 @@ def cluster_results_to_csv(cluster_results):
     cluster_results.to_csv(file_path, index=False)
     # Return the file name
     return file_name
+
+
+def clean_up_old_files() -> None:
+    """
+    Function to delete any cluster results files older than 1 day, but only if the oldest file is past the time delta.
+    """
+    # Define the directory and file pattern for cluster results files
+    file_pattern = os.path.join(settings.MEDIA_ROOT, "cluster_results_*.csv")
+    # Get all matching files
+    files = glob.glob(file_pattern)
+
+    if not files:
+        return  # No files to clean up
+
+    # Sort files by timestamp (oldest first)
+    files.sort(key=lambda x: get_file_timestamp(x))
+
+    # Get the timestamp of the oldest file
+    oldest_file_time = get_file_timestamp(files[0])
+
+    # Calculate the cutoff time for deletion (1 day ago)
+    cutoff_time = datetime.now() - timedelta(days=1)
+
+    # If the oldest file is older than the cutoff time, proceed with cleanup
+    if oldest_file_time < cutoff_time:
+        for file_path in files:
+            file_time = get_file_timestamp(file_path)
+            if file_time < cutoff_time:
+                os.remove(file_path)
+                print(f"Deleted old file: {os.path.basename(file_path)}")
+
+
+def get_file_timestamp(file_path):
+    """
+    Extracts and parses the timestamp from the given file path.
+
+    :param file_path: Path to the file
+    :return: datetime object representing the file's timestamp
+    """
+    file_name = os.path.basename(file_path)
+    try:
+        # Extract and parse the timestamp from the filename
+        timestamp_str = file_name.split('_')[2] + "_" + file_name.split('_')[3].split('.')[0]
+        return datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+    except ValueError:
+        # In case of any parsing error, return a very recent time to avoid accidental deletion
+        return datetime.now()
 
 
 def preprocess_temp_data(temp_data):
