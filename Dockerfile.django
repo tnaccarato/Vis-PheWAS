@@ -48,8 +48,8 @@ RUN mkdir -p /app/vis_phewas/staticfiles && \
 RUN mkdir -p /app/vis_phewas/media && \
     chmod -R 755 /app/vis_phewas/media
 	
-# Collect static files with WhiteNoise in mind
-RUN python manage.py collectstatic --noinput --verbosity 3
+# Collect static files
+RUN python manage.py collectstatic --noinput
 
 # Ensure the static files are served correctly
 ENV STATIC_ROOT /app/vis_phewas/staticfiles
