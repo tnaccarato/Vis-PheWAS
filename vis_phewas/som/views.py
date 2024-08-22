@@ -121,8 +121,8 @@ class SOMView(APIView):
 
             # Add the cluster data to the visualisation
             fig.add_trace(go.Scatter(
-                x=cluster_data['x'],
-                y=cluster_data['y'],
+                x=cluster_data['x'] + 0.5,
+                y=cluster_data['y'] + 0.5,
                 mode='markers',
                 marker=dict(
                     size=10,
