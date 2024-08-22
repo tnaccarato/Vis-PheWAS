@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -9,7 +8,8 @@ from api.models import TemporaryCSVData
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
-from scipy import sparse
+from scipy.sparse import csr_matrix, hstack, vstack
+from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
@@ -57,13 +57,16 @@ class SOMView(APIView):
         # Engineer features based on the SOM type
         features_matrix, grouped_df = self.engineer_features(filtered_df, som_type)
 
-        # Apply dimensionality reduction with TruncatedSVD to reduce the number of features for the SOM
-        svd = TruncatedSVD(n_components=100, random_state=42)
-        reduced_features_matrix = svd.fit_transform(features_matrix)
+        # Apply dimensionality reduction with TruncatedSVD to reduce the number of features for the SOM if needed
+        reduced_features_matrix = self.perform_dimensionality_reduction(features_matrix)
 
-        # Standardize the data without converting to dense format to save memory
+        # Standardise the data without converting to dense format to save memory
         scaler = StandardScaler(with_mean=False)
         x_normalised = scaler.fit_transform(reduced_features_matrix)
+
+        # Ensure the SOM input is dense
+        if not isinstance(x_normalised, np.ndarray):
+            x_normalised = x_normalised.toarray() # Convert to dense format
 
         # SOM training and positions
         positions, som = initialise_som(x_normalised)
@@ -148,6 +151,24 @@ class SOMView(APIView):
             'cleaned_filters': cleaned_filters
         }
 
+    def perform_dimensionality_reduction(self, features_matrix):
+        """
+        Helper method to perform dimensionality reduction using TruncatedSVD if the number of features exceeds 100.
+        :param features_matrix:
+        :return:
+        """
+        if features_matrix.shape[1] > 100:
+            # Ensure input is sparse before applying TruncatedSVD
+            if not isinstance(features_matrix, csr_matrix):
+                features_matrix = csr_matrix(features_matrix)
+            # Perform TruncatedSVD with 100 components, but ensure it doesn’t exceed available features
+            svd = TruncatedSVD(n_components=min(100, features_matrix.shape[1] - 1), random_state=42)
+            reduced_features_matrix = svd.fit_transform(features_matrix)
+        else:
+            # If there are fewer than 100 features, skip SVD and use the original features matrix
+            reduced_features_matrix = features_matrix
+        return reduced_features_matrix
+
     def construct_results_df(self, grouped_df, positions_df, som_type):
         """
         Helper method to construct the results DataFrame based on the SOM type.
@@ -182,74 +203,72 @@ class SOMView(APIView):
 
     def engineer_features(self, filtered_df, som_type):
         """
-        Helper method to engineer the features for the SOM based on the specified type.
-        :param filtered_df: Filtered DataFrame
-        :param som_type: Type of the SOM ('snp' or 'disease')
-        :return: Features matrix and grouped DataFrame
+        Helper method to engineer the features for the SOM (Self-Organising Map) based on the specified type.
+
+        :param filtered_df: Filtered DataFrame containing the input data.
+        :param som_type: Type of the SOM ('snp' or 'disease').
+            - 'snp': Groups the data by SNP and generates features based on associated phenotypes.
+            - 'disease': Groups the data by disease and generates features based on associated SNPs and gene categories.
+
+        :return: Features matrix (sparse) and grouped DataFrame.
         """
-        # Determine the grouping column and aggregation logic based on the SOM type
+
+        # For disease-based SOM, group data by 'phewas_string' (disease identifier)
         if som_type == 'disease':
-            group_by_col = 'phewas_string'  # Group by disease identifier
-            aggregation = {
-                'snp': list,  # Collect all SNPs associated with the disease
-                'gene_name': list,  # Collect all gene names associated with the disease
-                'p': list,  # Collect p-values
-                'odds_ratio': list,  # Collect odds ratios
-                'category_string': 'first',  # Keep the first category string as it’s categorical
-                'l95': list,  # Collect lower confidence interval
-                'u95': list,  # Collect upper confidence interval
-                'maf': list,  # Collect minor allele frequency
-            }
-        else:
-            group_by_col = 'snp'  # Group by SNP identifier
-            aggregation = {
-                'phewas_string': list,  # Collect all phenotypes associated with the SNP
-                'p': list,  # Collect p-values
-                'odds_ratio': list,  # Collect odds ratios
-                'category_string': list,  # Collect category strings
-                'l95': list,  # Collect lower confidence interval
-                'u95': list,  # Collect upper confidence interval
-                'maf': list,  # Collect minor allele frequency
-            }
+            # Group and aggregate relevant columns
+            grouped_df = filtered_df.groupby('phewas_string').agg({
+                'snp': list,  # List of SNPs associated with each disease
+                'gene_name': list,  # List of gene names associated with each disease
+                'p': list,  # List of p-values
+                'odds_ratio': list,  # List of odds ratios
+                'category_string': 'first',  # Single category (as it's categorical)
+                'l95': list,  # Lower confidence interval
+                'u95': list,  # Upper confidence interval
+                'maf': list,  # Minor allele frequency
+            }).reset_index()
 
-        # Group the data based on the specified grouping column and apply the aggregation
-        grouped_df = filtered_df.groupby(group_by_col).agg(aggregation).reset_index()
+            # Encode gene names and categories as sparse matrices
+            ohe_gene = OneHotEncoder(sparse_output=True)
+            ohe_category = OneHotEncoder(sparse_output=True)
 
-        if som_type == 'disease':
-            # For disease-based SOM, extract unique alleles across all groups
-            all_alleles = sorted(set(allele for alleles in grouped_df['snp'] for allele in alleles))
-            # Initialize one-hot encoder for gene names and categories
-            ohe = OneHotEncoder(sparse_output=True)
-
-            # Encode the gene names (flattening into a comma-separated string for unique encoding)
-            gene_name_encoded = ohe.fit_transform(
+            # Encode gene names (as a comma-separated string for unique encoding)
+            gene_name_encoded = ohe_gene.fit_transform(
                 grouped_df['gene_name'].apply(lambda x: ','.join(set(x))).str.get_dummies(sep=',')
             )
 
             # Encode the categorical disease categories
-            category_encoded = ohe.fit_transform(grouped_df[['category_string']])
+            category_encoded = ohe_category.fit_transform(grouped_df[['category_string']])
 
             # Combine the encoded gene and category features into a sparse matrix
-            encoded_features = sparse.hstack([gene_name_encoded, category_encoded])
+            encoded_features = hstack([gene_name_encoded, category_encoded])
 
-            # Function to create allele features for each disease
+            # Function to create combined features for each disease
             def create_combined_features(df_row):
                 features = defaultdict(float)
-                # Scale the odds ratio by 5 for better visualization and map it to each allele
-                for allele, p, or_value in zip(df_row['snp'], df_row['p'], df_row['odds_ratio']):
+                # Map odds ratios to each SNP, scaled for better visualisation
+                for allele, or_value in zip(df_row['snp'], df_row['odds_ratio']):
                     features[allele] = or_value * 5
                 # Create a sparse feature vector for all alleles
-                allele_features = sparse.csr_matrix([features[allele] for allele in all_alleles])
-                # Combine allele features with encoded gene and category features, keeping everything sparse
-                return sparse.hstack([allele_features, encoded_features[df_row.name]])
+                allele_features = csr_matrix([features.get(allele, 0) for allele in ohe_gene.categories_[0]])
+                # Combine allele features with encoded gene and category features
+                return hstack([allele_features, encoded_features[df_row.name]])
 
-        else:  # If som_type == 'snp'
-            # For SNP-based SOM, extract unique phenotypes across all groups
-            all_phenotypes = set([phenotype for phenotypes in grouped_df['phewas_string'] for phenotype in phenotypes])
-            # Explode the dataframe to separate out each category and phenotype into separate rows
+        else:  # For SNP-based SOM
+            # Group data by 'snp' and aggregate relevant columns
+            grouped_df = filtered_df.groupby('snp').agg({
+                'phewas_string': list,  # List of phenotypes associated with each SNP
+                'p': list,  # List of p-values
+                'odds_ratio': list,  # List of odds ratios
+                'category_string': list,  # List of category strings
+                'l95': list,  # Lower confidence interval
+                'u95': list,  # Upper confidence interval
+                'maf': list,  # Minor allele frequency
+            }).reset_index()
+
+            # Explode the dataframe to separate out each phenotype and category into individual rows
             exploded_df = grouped_df.explode('phewas_string').explode('category_string')
 
-            # Initialize one-hot encoders for phenotypes and categories
+            # Initialise one-hot encoders for phenotypes and categories
             ohe_phenotype = OneHotEncoder(sparse_output=True)
             ohe_category = OneHotEncoder(sparse_output=True)
 
@@ -257,49 +276,39 @@ class SOMView(APIView):
             phenotype_encoded = ohe_phenotype.fit_transform(exploded_df[['phewas_string']])
             category_encoded = ohe_category.fit_transform(exploded_df[['category_string']])
 
-            # Aggregate encoded features back by SNP into sparse matrices
-            phenotype_aggregated = pd.DataFrame.sparse.from_spmatrix(
-                phenotype_encoded,
-                columns=ohe_phenotype.categories_[0],
-                index=exploded_df['snp']
-            ).groupby('snp').sum()
+            # Convert the 'snp' column to a numerical index for sparse matrix creation
+            snp_mapping, _ = pd.factorize(exploded_df['snp'])
+            n_snps = len(set(snp_mapping))
 
-            category_aggregated = pd.DataFrame.sparse.from_spmatrix(
-                category_encoded,
-                columns=ohe_category.categories_[0],
-                index=exploded_df['snp']
-            ).groupby('snp').sum()
+            # Create a sparse matrix indexed by SNP for phenotypes
+            phenotype_aggregated = csr_matrix((phenotype_encoded.data, (snp_mapping, phenotype_encoded.indices)),
+                                              shape=(n_snps, phenotype_encoded.shape[1]))
 
-            # Ensure both matrices have the same SNPs and consistent shape
-            common_snps = phenotype_aggregated.index.intersection(category_aggregated.index)
-            phenotype_aggregated = phenotype_aggregated.loc[common_snps]
-            category_aggregated = category_aggregated.loc[common_snps]
+            # Create a sparse matrix indexed by SNP for categories
+            category_aggregated = csr_matrix((category_encoded.data, (snp_mapping, category_encoded.indices)),
+                                             shape=(n_snps, category_encoded.shape[1]))
 
-            # Convert matrices to sparse format if necessary
-            phenotype_aggregated = sparse.csr_matrix(phenotype_aggregated)
-            category_aggregated = sparse.csr_matrix(category_aggregated)
+            # Combine phenotype and category features into a single sparse matrix
+            encoded_features = hstack([phenotype_aggregated, category_aggregated])
 
-            # Perform hstack to combine phenotype and category features, keeping everything sparse
-            encoded_features = sparse.hstack([phenotype_aggregated, category_aggregated])
-
-            # Function to create phenotype features for each SNP
+            # Function to create combined features for each SNP
             def create_combined_features(df_row):
                 features = defaultdict(float)
-                # Scale the odds ratio by 5 for better visualization and map it to each phenotype
-                for phenotype, p, or_value in zip(df_row['phewas_string'], df_row['p'], df_row['odds_ratio']):
+                # Map odds ratios to each phenotype, scaled for better visualisation
+                for phenotype, or_value in zip(df_row['phewas_string'], df_row['odds_ratio']):
                     features[phenotype] = or_value * 5
                 # Create a sparse feature vector for all phenotypes
-                phenotype_features = sparse.csr_matrix([features[phenotype] for phenotype in all_phenotypes])
-                # Combine phenotype features with encoded categorical features, keeping everything sparse
-                return sparse.hstack([phenotype_features, encoded_features[df_row.name]])
+                phenotype_features = csr_matrix(
+                    [features.get(phenotype, 0) for phenotype in ohe_phenotype.categories_[0]])
+                # Combine phenotype features with encoded categorical features
+                return hstack([phenotype_features, encoded_features[df_row.name]])
 
-        # Apply the function to create the features matrix, keeping it sparse
-        features_matrix = grouped_df.apply(create_combined_features, axis=1)
+        # Apply the feature creation function across the grouped DataFrame
+        features_matrix = vstack(grouped_df.apply(create_combined_features, axis=1).values)
 
-        # Convert the resulting Series of sparse matrices into a sparse matrix
-        features_matrix = sparse.vstack(features_matrix.values)
-
+        # Return the final sparse features matrix and the grouped DataFrame
         return features_matrix, grouped_df
+
 
 
 
