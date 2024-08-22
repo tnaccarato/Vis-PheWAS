@@ -6,7 +6,7 @@ import { fetchAndShowAssociations } from "./associationsPlot";
 class UIManager {
   /**
    * Constructor for the UIManager class.
-   * Initializes the GraphManager and FilterManager instances and sets up event listeners.
+   * Initialises the GraphManager and FilterManager instances and sets up event listeners.
    */
   constructor() {
     this.graphManager = new GraphManager(
@@ -29,7 +29,7 @@ class UIManager {
   }
 
   /**
-   * Initializes event listeners for the UIManager.
+   * Initialises event listeners for the UIManager.
    */
   initEventListeners() {
     document.addEventListener(
@@ -110,6 +110,6 @@ class UIManager {
   }
 }
 
-// Initialize the UIManager instance and export the filterManager and uiManager.
+// Initialise the UIManager instance and export the filterManager and uiManager.
 const uiManager = new UIManager();
 export const filterManager = uiManager.filterManager;

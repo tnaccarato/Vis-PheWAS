@@ -1,5 +1,5 @@
 /**
- * Function to generate a Self-Organizing Map (SOM) based on the provided filters, type, and number of clusters.
+ * Function to generate a Self-Organising Map (SOM) based on the provided filters, type, and number of clusters.
  * @param {string} filters - The filters to apply to the data.
  * @param {string} type - The type of SOM to generate ('allele' or 'disease').
  * @param {number} [num_clusters] - The number of clusters to generate. Defaults to 5 for 'disease' and 7 for 'allele'.
@@ -24,7 +24,7 @@ function generateSOM(filters, type, num_clusters) {
     url: "/api/send_data_to_som/",
     type: "GET",
     data: {
-      filters: filters, // Initialize with no filter but allow to pass filters
+      filters: filters, // Initialise with no filter but allow to pass filters
       type: type,
       num_clusters: num_clusters
     },
@@ -34,7 +34,7 @@ function generateSOM(filters, type, num_clusters) {
       // Get the URL for the SOM visualisation page
       let url = "/som/SOM/";
 
-      // Open the SOM visualization page
+      // Open the SOM visualisation page
       if (filters === "") {
         // If no filters, it means the SOM is generated for all data as an initial SOM
         window.open(

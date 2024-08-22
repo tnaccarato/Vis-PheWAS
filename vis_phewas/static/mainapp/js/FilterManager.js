@@ -6,7 +6,7 @@ import DOMPurify                                from "dompurify";
  */
 export class FilterManager {
   /**
-   * Constructor to initialize the FilterManager
+   * Constructor to initialise the FilterManager
    * @param {Function} adjustSigmaContainerHeight - Function to adjust the height of the sigma container
    * @param {Function} showAlert - Function to show alert messages
    * @param {Function} fetchGraphData - Function to fetch graph data
