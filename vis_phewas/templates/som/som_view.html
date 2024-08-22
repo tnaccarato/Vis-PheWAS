@@ -57,7 +57,7 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            {% if type == 'allele' %}
+            {% if type == 'snp' %}
                 <div class="allele-filters" style="display: flex; align-content: center; flex-direction: column">
                 <h2 style="align-self: center">Filter by Gene Name</h2>
                 <div class="checkbox-container">
@@ -116,7 +116,7 @@
             {% if type == 'disease' %}
                 baseFilter = 'category_string:==:'; // Set the base filter string based on the type
             {% endif %}
-            {% if type == 'allele' %}
+            {% if type == 'snp' %}
                 baseFilter = 'gene_name:==:'; // Set the base filter string based on the type
             {% endif %}
 
@@ -139,6 +139,7 @@
             const num_clusters = document.getElementById('clusters').value;
             const type = "{{ type }}";
             console.log("Number of clusters: ", num_clusters);
+            console.log("Type: ", type);
             // Call the generateSOM function with the filters, type and number of clusters
             generateSOM(filters, type, num_clusters);
         }

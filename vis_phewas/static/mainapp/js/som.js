@@ -8,7 +8,7 @@ function generateSOM(filters, type, num_clusters) {
   console.log("Generating SOM with filters: " + filters + ", type: " + type + ", num_clusters: " + num_clusters);
   // Validate the type parameter
   if (type !== "snp" && type !== "disease") {
-    alert("Invalid SOM type specified. Must be 'allele' or 'disease'.");
+    alert("Invalid SOM type specified. Must be 'snp' or 'disease'.");
     return;
   }
 
@@ -46,7 +46,8 @@ function generateSOM(filters, type, num_clusters) {
         // If filters are specified, pass them as query parameters to the SOM page
         window.open(url + "?data_id=" + encodeURIComponent(response.data_id) +
             "&num_clusters=" + encodeURIComponent(response.num_clusters) +
-            "&filters=" + encodeURIComponent(filters), "_self");
+            "&filters=" + encodeURIComponent(filters)+ "&type=" + type
+            , "_self")
 
       }
     },
