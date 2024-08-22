@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-<!-- Set the title of the page to be the type of SOM visualization -->
-{% block title %} - {{ type|capfirst }} SOM Visualization{% endblock %}
+<!-- Set the title of the page to be the type of SOM visualisation -->
+{% block title %} - {{ type|capfirst }} SOM Visualisation{% endblock %}
 {% block head %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
@@ -38,7 +38,7 @@
 {% endblock %}
 {% block content %}
     <div id="som-visualisation" style="display: flex; flex-direction: column; align-items: center">
-        <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualization</h1>
+        <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualisation</h1>
         <form id="filter-form" style="display: flex; flex-direction: column" onsubmit="handleSubmit(event)">
             {% if type == 'disease' %}
                 <div class="disease-filters" style="display: flex; align-content: center; flex-direction: column">
@@ -57,7 +57,7 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            {% if type == 'allele' %}
+            {% if type == 'snp' %}
                 <div class="allele-filters" style="display: flex; align-content: center; flex-direction: column">
                 <h2 style="align-self: center">Filter by Gene Name</h2>
                 <div class="checkbox-container">
@@ -111,12 +111,12 @@
     <script>
         function getSelectedFilters() {
             const selectedFilters = [];
-            let baseFilter = ''; // Initialize the base filter string as empty
+            let baseFilter = ''; // Initialise the base filter string as empty
             // Set the base filter string based on the type
             {% if type == 'disease' %}
                 baseFilter = 'category_string:==:'; // Set the base filter string based on the type
             {% endif %}
-            {% if type == 'allele' %}
+            {% if type == 'snp' %}
                 baseFilter = 'gene_name:==:'; // Set the base filter string based on the type
             {% endif %}
 
@@ -139,6 +139,7 @@
             const num_clusters = document.getElementById('clusters').value;
             const type = "{{ type }}";
             console.log("Number of clusters: ", num_clusters);
+            console.log("Type: ", type);
             // Call the generateSOM function with the filters, type and number of clusters
             generateSOM(filters, type, num_clusters);
         }

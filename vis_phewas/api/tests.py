@@ -255,11 +255,12 @@ class HlaPheWasCatalogTestCase(TestCase):
         # Check that the path is not empty
         self.assertTrue(response.data['path'])
         # Check that the path contains the expected nodes
-        expected_nodes = ['neurological', 'brain cancer']
+        expected_nodes = ['category-neurological', 'disease-brain_cancer']
+        self.assertEqual(response.data['path'], expected_nodes)
 
     def test_get_diseases_for_category_view(self):
         url = reverse('get_diseases_for_category')
-        response = self.client.get(url, {'category': 'neurological', 'show_subtypes': 'true'})
+        response = self.client.get(url, {'category': 'neurological', 'showSubtypes': 'true'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('diseases', response.data)
         # Check that the diseases are a list
@@ -289,7 +290,7 @@ class NormaliseSNPFilterTests(TestCase):
             "snp:==:a 01",
             "snp:==:hla_a_01",
             "snp:==:HLA-A01",
-            "snp_HLA A01",
+            "snp:==:HLA A01",
             "snp:==:a-01"
         ]
 

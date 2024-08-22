@@ -10,6 +10,7 @@ from typing import List
 import pandas as pd
 from api.models import TemporaryCSVData
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q, Count, QuerySet
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
@@ -50,7 +51,6 @@ class GraphDataView(APIView):
         data_type: str = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
         show_subtypes = request.GET.get('showSubtypes')
-        print("Show subtypes: ", show_subtypes)
         if show_subtypes == 'undefined':
             show_subtypes = False
         if filters == ['']:
@@ -83,8 +83,7 @@ def normalise_snp_filter(filters):
     """
 
     # Define a function to normalise the SNP value
-    def normalize_snp(match):
-        snp_value = match.group(2).strip()
+    def normalise_snp(snp_value):
         # Remove any existing HLA prefix and delimiter
         snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
         # Remove all delimiters and spaces
@@ -92,14 +91,15 @@ def normalise_snp_filter(filters):
         # Format as HLA_A_01
         if len(snp_value) >= 2:
             snp_value = f"HLA_{snp_value[0].upper()}_{snp_value[1:].zfill(2)}"
-        return f"snp:==:{snp_value}"
+        return snp_value
 
-    # Normalize the entire filter string
-    filters = re.sub(r'((?:^|,\s*)snp\s*[:_-]?(?:==|:==:)?\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
-                     normalize_snp,
-                     filters,
-                     flags=re.IGNORECASE)
-
+    # Normalise the entire filter string
+    filters = re.sub(
+        r'((?:^|,\s*)snp\s*[:_-]?)((==|:==:|contains)\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
+        lambda m: f"{m.group(1)}{m.group(2)}{normalise_snp(m.group(4))}",
+        filters,
+        flags=re.IGNORECASE
+    )
     return filters
 
 
@@ -115,7 +115,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return: Filtered queryset
     """
-    print("Filters: ", filters)
+    print("Initial filters: ", filters)
     # If the category_id is provided, filter the queryset by the category
     if category_id:
         category_string: str = category_id.replace('category-', '').replace('_', ' ')
@@ -124,11 +124,9 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
     if not export and not initial:
         # If the show_subtypes flag is set, filter the queryset to show only the main groups
         if show_subtypes == 'false':
-            print("Filtering subtypes")
             queryset = queryset.filter(subtype='00')
             # If show_subtypes is not set, filter the queryset to show only the subtypes
         else:
-            print("Not filtering subtypes")
             queryset = queryset.exclude(subtype='00')
     else:
         queryset = queryset
@@ -139,6 +137,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
     filters = normalise_snp_filter(filters)
+    print("Normalised filters: ", filters)
     filters = html.unescape(filters)  # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
@@ -148,6 +147,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Parse the filters and apply them to the queryset
     filter_list: list = parse_filters(filters)
+    print("Parsed filters list: ", filter_list)
     combined_query: Q = Q()
 
     # Loop through the filter list and apply the filters to the queryset
@@ -157,6 +157,8 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
             continue
         field, operator, value = parts
         value = value.rstrip(',')
+
+        print("Applying filter: ", field, operator, value)
 
         # Apply the filter based on the operator
         if operator == '==':
@@ -182,6 +184,7 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Filter the queryset based on the combined query
     queryset = queryset.filter(combined_query)
+    print("Queryset after filters: ", queryset.query)
     # Filter the queryset to show only the significant results
     filtered_queryset: QuerySet = queryset.filter(p__lte=0.05)
     return filtered_queryset
@@ -464,39 +467,24 @@ class SendDataToSOMView(APIView):
 
     def cleanup_old_data(self) -> None:
         """
-        Cleanup old data from both the database and the media folder.
-        Removes old database records and associated files older than 1 day.
+        Cleanup old data from both the database.
+        Removes old database records older than 1 day.
         """
-        # Cleanup old database records
+        # Set the threshold time to 1 day ago
         threshold_time = timezone.now() - timedelta(days=1)
-        old_records = TemporaryCSVData.objects.filter(created_at__lt=threshold_time)
 
-        # Delete associated files in the media folder, if applicable
-        for record in old_records:
-            # Assuming your files are stored with a path or filename related to the record (e.g., record.id)
-            file_path = os.path.join(settings.MEDIA_ROOT,
-                                     f"{record.id}.csv")  # Adjust the file naming pattern as needed
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                print(f"Deleted file: {file_path}")
+        # Use a transaction to ensure atomicity
+        with transaction.atomic():
+            # Filter the old records from the database
+            old_records = TemporaryCSVData.objects.filter(created_at__lt=threshold_time)
 
-        # Delete the old records from the database
-        old_records_count = old_records.count()
-        old_records.delete()
+            # Record the count before deletion for logging
+            old_records_count = old_records.count()
+
+            # Delete the old records from the database
+            old_records.delete()
+
         print(f"Deleted {old_records_count} old records from the database.")
-
-        # Cleanup old files in the media folder
-        folder_path = settings.MEDIA_ROOT  # Change this to your specific folder if needed
-        threshold_timestamp = threshold_time.timestamp()
-
-        # Iterate over files in the folder
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-            if os.path.isfile(file_path):
-                file_modified_time = os.path.getmtime(file_path)
-                if file_modified_time < threshold_timestamp:
-                    os.remove(file_path)
-                    print(f"Deleted untracked file: {file_path}")  # For files not linked to database records
 
 
 class CombinedAssociationsView(APIView):
@@ -603,29 +591,24 @@ class GetDiseasesForCategoryView(APIView):
         :param request: Request object from the client with the category parameter and optional filters and show_subtypes parameters
         :return: Response object with the diseases for the category
         """
-        # Get the filters parameter from the request
         filters: str = request.GET.get('filters', '')
-        # Get the category parameter from the request or return an error if it is not provided
         category: str = request.GET.get('category')
-        if not category:
-            return Response({"error": "Category parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
-        # Get the diseases for the category and return the response
-        category = category.replace('_', ' ')
-        # Get the show_subtypes parameter from the request
-        show_subtypes = request.GET.get('showSubtypes')
-        # If the show_subtypes parameter is not provided, set it to False
-        if show_subtypes == 'undefined':
-            show_subtypes = False
+        show_subtypes = request.GET.get('showSubtypes') == 'true'
 
-        # Get the diseases for the category and return the response
         try:
-            # Get the diseases for the category and apply the filters
-            diseases: QuerySet = HlaPheWasCatalog.objects.filter(category_string=category)
-            diseases = apply_filters(diseases, filters, show_subtypes=show_subtypes)
-            diseases = diseases.values('phewas_string').distinct()
-            # Format the diseases and return the response
-            diseases: List = sorted([disease['phewas_string'] for disease in diseases])
+            # Get all objects as a QuerySet initially
+            diseases: QuerySet = HlaPheWasCatalog.objects.all()
+            # Apply SNP filter first
+            filtered_queryset = apply_filters(diseases, filters, show_subtypes=show_subtypes, initial=True)
+            # Then filter by category
+            category = category.replace('_', ' ') # Replace underscores with spaces to match the category_string
+            category_filtered = filtered_queryset.filter(category_string=category)
+            # Apply subtype filter last
+            if not show_subtypes:
+                category_filtered = category_filtered.filter(subtype='00')
+            # Get the distinct diseases for the category and sort them as a list
+            distinct_diseases = category_filtered.values('phewas_string').distinct()
+            diseases: List = sorted([disease['phewas_string'] for disease in distinct_diseases])
             return Response({"diseases": diseases})
-        # Return an error if an exception occurs
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock, mock_open
 import pandas as pd
 import numpy as np
 from io import StringIO
-from .views import preprocess_temp_data, initialise_som, clean_filters, create_title, \
-    prepare_categories_for_context
+from som.som_utils import preprocess_temp_data, initialise_som, clean_filters, \
+    prepare_categories_for_context, create_title
 from api.models import TemporaryCSVData
 from mainapp.models import HlaPheWasCatalog
 
