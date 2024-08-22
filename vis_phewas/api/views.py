@@ -115,7 +115,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
     :param show_subtypes: Whether to show the subtypes of the alleles or just the main groups
     :return: Filtered queryset
     """
-    print("Initial filters: ", filters)
     # If the category_id is provided, filter the queryset by the category
     if category_id:
         category_string: str = category_id.replace('category-', '').replace('_', ' ')
@@ -137,7 +136,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
     filters = normalise_snp_filter(filters)
-    print("Normalised filters: ", filters)
     filters = html.unescape(filters)  # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
@@ -147,7 +145,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Parse the filters and apply them to the queryset
     filter_list: list = parse_filters(filters)
-    print("Parsed filters list: ", filter_list)
     combined_query: Q = Q()
 
     # Loop through the filter list and apply the filters to the queryset
@@ -158,7 +155,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
         field, operator, value = parts
         value = value.rstrip(',')
 
-        print("Applying filter: ", field, operator, value)
 
         # Apply the filter based on the operator
         if operator == '==':
@@ -184,7 +180,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Filter the queryset based on the combined query
     queryset = queryset.filter(combined_query)
-    print("Queryset after filters: ", queryset.query)
     # Filter the queryset to show only the significant results
     filtered_queryset: QuerySet = queryset.filter(p__lte=0.05)
     return filtered_queryset
@@ -446,8 +441,10 @@ class SendDataToSOMView(APIView):
         filters = urllib.parse.unquote(filters)
         # Get the type of the SOM
         som_type: str = request.GET.get('type')
-        # Get the number of clusters with a default of 5 for the disease SOM and 7 for the allele SOM
-        num_clusters: int = int(request.GET.get('num_clusters') or 5 if som_type == 'disease' else 7)
+        print("Num of Clusters:", request.GET.get('num_clusters'))
+        # Get the number of clusters with a default of 5 for the disease SOM and 7 for the allele SOM if not provided
+        num_clusters = int(request.GET.get('num_clusters') or (5 if som_type == 'disease' else 7))
+        print("Num of Clusters:", num_clusters)
         # Get the filtered data as a DataFrame
         df: pd.DataFrame = get_filtered_df(filters)
         # Write the data to a buffer
