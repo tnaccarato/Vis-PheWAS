@@ -88,10 +88,6 @@ body {
     display: none; /* Hide the toolbar initially */
 }
 
-.filter-group {
-    margin-bottom: 0;
-}
-
 .filter-group label {
     margin-right: 10px;
 }
@@ -120,17 +116,12 @@ body {
 }
 
 .filter-group {
-    flex: 1 1 33%;
-    box-sizing: border-box;
-    padding: 5px;
-}
-
-.filter-group {
     flex: 1 1 18%;
     box-sizing: border-box;
     padding: 5px;
     display: flex;
     flex-direction: column;
+    margin-bottom: 0;
 }
 
 .filter-group label,
@@ -292,9 +283,9 @@ input:checked + .slider:before {
 
 .side-panel {
     position: fixed;
-    right: -18%; /* Change from left to right */
+    right: -20%; /* Change from left to right */
     top: 0;
-    width: 18%;
+    width: 20%;
     height: 100%;
     background: #80e5fa;
     transition: right 0.3s ease; /* Change from left to right */
@@ -310,10 +301,9 @@ input:checked + .slider:before {
 
 #tab-container {
     position: fixed;
-    top: 18%;
+    top: 25%;
     left: 0;
     transform: translateY(-50%);
-    display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 10;
@@ -338,7 +328,7 @@ input:checked + .slider:before {
 }
 
 .side-panel.open ~ #tab-container {
-    left: 18%; /* Match the width of the side panel */
+    left: 20%; /* Match the width of the side panel */
 }
 
 .toggle-button .fa {
