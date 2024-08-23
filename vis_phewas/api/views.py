@@ -84,24 +84,21 @@ def normalise_snp_filter(filters):
 
     # Define a function to normalise the SNP value
     def normalise_snp(snp_value):
-        # Remove any existing HLA prefix and delimiter
+        # Remove any leading 'HLA', normalize delimiters to underscores, and lowercase everything
         snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
-        # Remove all delimiters and spaces
-        snp_value = re.sub(r'[-_\s]+', '', snp_value)
-        # Format as HLA_A_01
-        if len(snp_value) >= 2:
-            snp_value = f"HLA_{snp_value[0].upper()}_{snp_value[1:].zfill(2)}"
-        return snp_value
+        # Replace any remaining hyphens, spaces, or mixed delimiters with underscores
+        snp_value = re.sub(r'[-\s]', '_', snp_value)
+        # Ensure the format remains in lowercase
+        return snp_value.lower()
 
     # Normalise the entire filter string
     filters = re.sub(
         r'((?:^|,\s*)snp\s*[:_-]?)((==|:==:|contains)\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
-        lambda m: f"{m.group(1)}{m.group(2)}{normalise_snp(m.group(4))}",
+        lambda m: f"{m.group(1)}{m.group(2)}hla_{normalise_snp(m.group(4))}",
         filters,
         flags=re.IGNORECASE
     )
     return filters
-
 
 def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
                   export: bool = False, initial: bool = False) -> QuerySet:
@@ -587,7 +584,6 @@ class GetDiseasesForCategoryView(APIView):
         filters: str = request.GET.get('filters', '')
         category: str = request.GET.get('category')
         show_subtypes = request.GET.get('showSubtypes') == 'true'
-
         try:
             # Get all objects as a QuerySet initially
             diseases: QuerySet = HlaPheWasCatalog.objects.all()
