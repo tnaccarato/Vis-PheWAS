@@ -12,9 +12,9 @@ function generateSOM(filters, type, num_clusters) {
     return;
   }
 
-  // If num_clusters is not provided, set default values based on the type
+  // If num_clusters is not provided, set default value of 4
   if (num_clusters == null) {
-    num_clusters = type === "disease" ? 5 : 7;
+    num_clusters = 4
   }
 
   console.log("Generating SOM with filters: " + filters + ", type: " + type + ", num_clusters: " + num_clusters);

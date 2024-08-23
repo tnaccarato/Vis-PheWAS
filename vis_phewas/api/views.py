@@ -127,8 +127,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
             # If show_subtypes is not set, filter the queryset to show only the subtypes
         else:
             queryset = queryset.exclude(subtype='00')
-    else:
-        queryset = queryset
 
     # If no filters are provided, return the queryset filtered to show only the significant results
     if not filters:
@@ -299,7 +297,7 @@ def get_allele_data(disease_id: str, filters: str, show_subtypes: bool = False) 
         'snp', 'gene_class', 'gene_name', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
     ).distinct()
     # Apply the filters to the queryset
-    filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
+    filters = ",".join([f for f in filters.split(',') if 'snp' not in str(f)])
     # Apply the filters to the queryset
     filtered_queryset: QuerySet = apply_filters(queryset, filters, show_subtypes=show_subtypes)
     # Get the visible nodes
@@ -416,7 +414,7 @@ def get_filtered_df(filters: str) -> pd.DataFrame:
     df: pd.DataFrame = pd.DataFrame(list(filtered_queryset.values()))
     # Drop the ID column
     if 'id' in df.columns:
-        df.drop(columns=['id'], inplace=True)
+        df = df.drop(columns=['id'])
         # Return the filtered DataFrame
     return df
 
@@ -441,10 +439,8 @@ class SendDataToSOMView(APIView):
         filters = urllib.parse.unquote(filters)
         # Get the type of the SOM
         som_type: str = request.GET.get('type')
-        print("Num of Clusters:", request.GET.get('num_clusters'))
-        # Get the number of clusters with a default of 5 for the disease SOM and 7 for the allele SOM if not provided
-        num_clusters = int(request.GET.get('num_clusters') or (5 if som_type == 'disease' else 7))
-        print("Num of Clusters:", num_clusters)
+        # Get the number of clusters with a default of 4 if not provided
+        num_clusters = int(request.GET.get('num_clusters') or 4)
         # Get the filtered data as a DataFrame
         df: pd.DataFrame = get_filtered_df(filters)
         # Write the data to a buffer
