@@ -24,7 +24,7 @@ html, body, .container-fluid {
 }
 
 .col-md-6.right-column {
-    padding-right: 0;
+    padding-right: 0.5%;
     padding-left: 0.5%;
     width: 0; /* Hidden initially */
     transition: width 0.5s ease; /* Smooth transition for width change */
@@ -70,6 +70,7 @@ html, body, .container-fluid {
 table {
     width: 100%;
     table-layout: fixed;
+    text-align: center;
 }
 
 th, td {
@@ -91,7 +92,6 @@ body {
 .filter-group label {
     margin-right: 10px;
 }
-
 
 
 .left-column {
@@ -123,6 +123,12 @@ body {
     flex-direction: column;
     margin-bottom: 0;
 }
+
+
+.table-bordered > :not(caption) > * {
+    text-align: inherit;
+}
+
 
 .filter-group label,
 .filter-group select,
