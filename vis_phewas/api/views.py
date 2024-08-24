@@ -339,6 +339,8 @@ class InfoView(APIView):
         # Remove the subtype if it is the main group
         if allele_data['subtype'] == '00':
             allele_data.pop('subtype')
+        # Round p-values to 5 decimal places
+        allele_data['p'] = round(allele_data['p'], 5)
 
         # Get the top and lowest odds ratios for the allele
         top_odds: QuerySet = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string',
@@ -351,6 +353,12 @@ class InfoView(APIView):
             'odds_ratio',
             'p').order_by(
             'odds_ratio', 'p')[:5]
+
+        # Round p-values to 5 decimal places
+        for odds in top_odds:
+            odds['p'] = round(odds['p'], 5)
+        for odds in lowest_odds:
+            odds['p'] = round(odds['p'], 5)
 
         # Format the data for the response
         allele_data['top_odds'] = list(top_odds)
