@@ -115,7 +115,6 @@ class GraphHelper {
         });
         nodeData.expanded = true;
         nodeData.forceLabel = true;
-        // nodeData.userForceLabel = true;
       }
       // If the node is an allele
     } else if (nodeData.node_type === "allele") {
@@ -542,7 +541,6 @@ class GraphHelper {
    * @returns {Object} - The border properties of the node.
    */
   calculateBorder(node) {
-    console.log("Node:", node);
     let baseSize;
     let borderSize;
     let borderColor;
@@ -561,8 +559,6 @@ class GraphHelper {
       borderSize = 0; // No border needed for diseases
       borderColor = color;
     } else if (node.node_type === "allele") {
-      console.log("OR:", node.odds_ratio);
-      console.log("P-Value:", node.p);
       const pValue = node.p || 0.05; // Use p-value for sizing alleles
       baseSize = sizeScale(clamp(pValue, sizeScale.domain())); // Scale size based on clamped p-value
 
@@ -578,11 +574,6 @@ class GraphHelper {
       // Clamp border size to avoid excessive or minimal borders
       borderSize = clamp(borderSize, [0.25, baseSize * 0.75]);
     }
-
-    console.log("Border Size:", borderSize);
-    console.log("Border Color:", borderColor);
-    console.log("Color:", color);
-    console.log("Base Size:", baseSize);
 
     // Return the border size and color
     return { color, baseSize, borderSize, borderColor };
