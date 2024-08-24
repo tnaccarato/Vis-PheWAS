@@ -6,9 +6,12 @@ import glob
 import numpy as np
 import pandas as pd
 from django.conf import settings
+from matplotlib import pyplot as plt
 from minisom import MiniSom
 
 from mainapp.models import HlaPheWasCatalog
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 # Set the transparent colour for the visualisation
 TRANSPARENT = 'rgba(0,0,0,0)'
@@ -228,3 +231,38 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         x=1.005,
         len=0.8
     )
+
+def plot_metrics_on_som(positions):
+    """
+    Function to plot the Elbow Method and Silhouette Score graphs for a range of clusters based on the SOM grid positions.
+    :param positions: 2D array of SOM positions (e.g., [[x1, y1], [x2, y2], ...])
+    :return: None
+    """
+    wcss = []
+    silhouette_scores = []
+    range_n_clusters = range(2, 11)  # Trying 2 to 10 clusters
+
+    for n_clusters in range_n_clusters:
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        cluster_labels = kmeans.fit_predict(positions)  # Use the SOM positions for clustering
+
+        wcss.append(kmeans.inertia_)
+        silhouette_avg = silhouette_score(positions, cluster_labels, random_state=42)
+        silhouette_scores.append(silhouette_avg)
+
+    # Plotting the Elbow Method graph (WCSS)
+    plt.figure(figsize=(10, 5))
+    plt.plot(range_n_clusters, wcss, marker='o')
+    plt.title('Elbow Method For Optimal Number of Clusters')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
+    plt.show()
+
+    # Plotting the Silhouette Score graph
+    plt.figure(figsize=(10, 5))
+    plt.plot(range_n_clusters, silhouette_scores, marker='o')
+    plt.title('Silhouette Score For Optimal Number of Clusters')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('Silhouette Score')
+    plt.show()
+

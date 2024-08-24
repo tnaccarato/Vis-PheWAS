@@ -1,4 +1,3 @@
-from collections import defaultdict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -13,8 +12,9 @@ from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
-    prepare_categories_for_context, create_title, style_visualisation
+    prepare_categories_for_context, create_title, style_visualisation,  plot_metrics_on_som
 from sklearn.decomposition import TruncatedSVD
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
 
 class SOMView(APIView):
@@ -31,8 +31,8 @@ class SOMView(APIView):
         data_id = request.GET.get('data_id')
         som_type = request.GET.get('type')
         print(som_type)
-        # Set the default number of clusters based on the SOM type or get the number of clusters from the request
-        num_clusters = request.GET.get('num_clusters', 7 if som_type == 'snp' else 5)
+        # Set the default number of clusters or get the number of clusters from the request
+        num_clusters = request.GET.get('num_clusters', 4)
         # Get the filters from the request
         filters = request.GET.get('filters')
 
@@ -75,6 +75,8 @@ class SOMView(APIView):
         # Create the results DataFrame based on the SOM type
         results_df = self.construct_results_df(grouped_df, positions_df, som_type)
 
+
+
         # K-Means clustering
         kmeans = KMeans(n_clusters=int(num_clusters), random_state=42)
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -83,6 +85,17 @@ class SOMView(APIView):
         # Save cluster results to a CSV
         cluster_results = results_df.sort_values(by=['cluster', 'snp' if som_type == 'snp' else 'phewas_string'])
         file_name = cluster_results_to_csv(cluster_results)
+
+        # # Evaluate the metrics on the SOM
+        # plot_metrics_on_som(positions)
+
+        # Print performance metrics
+        # print("SOM performance metrics:")
+        # print("Quantisation Error: ", som.quantization_error(x_normalised))
+        # print("Topographical Error: ", som.topographic_error(x_normalised))
+        # print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
+        # print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
+        # print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
 
         # Generate the SOM visualisation
         fig = go.Figure()
@@ -228,6 +241,8 @@ class SOMView(APIView):
                 'l95': list,  # Lower confidence interval
                 'u95': list,  # Upper confidence interval
                 'maf': list,  # Minor allele frequency
+                'cases': list,  # List of cases
+                'controls': list,  # List of controls
             }).reset_index()
 
             # Encode gene names and categories as sparse matrices
@@ -249,8 +264,9 @@ class SOMView(APIView):
             def create_combined_features(df_row):
                 features = defaultdict(float)
                 # Map odds ratios to each SNP, scaled for better visualisation
-                for allele, or_value in zip(df_row['snp'], df_row['odds_ratio']):
-                    features[allele] = or_value * 5
+                for allele, or_value, cases, controls in zip(df_row['snp'], df_row['odds_ratio'], df_row['cases'], df_row['controls']):
+                    weight = cases / (cases + controls + 1e-5)  # Adding a small constant to avoid division by zero
+                    features[allele] = or_value * weight
                 # Create a sparse feature vector for all alleles
                 allele_features = csr_matrix([features.get(allele, 0) for allele in ohe_gene.categories_[0]])
                 # Combine allele features with encoded gene and category features
@@ -266,6 +282,8 @@ class SOMView(APIView):
                 'l95': list,  # Lower confidence interval
                 'u95': list,  # Upper confidence interval
                 'maf': list,  # Minor allele frequency
+                'cases': list,  # List of cases
+                'controls': list,  # List of controls
             }).reset_index()
 
             # Explode the dataframe to separate out each phenotype and category into individual rows
@@ -298,8 +316,10 @@ class SOMView(APIView):
             def create_combined_features(df_row):
                 features = defaultdict(float)
                 # Map odds ratios to each phenotype, scaled for better visualisation
-                for phenotype, or_value in zip(df_row['phewas_string'], df_row['odds_ratio']):
-                    features[phenotype] = or_value * 5
+                for phenotype, or_value, cases, controls in zip(df_row['phewas_string'], df_row['odds_ratio'],
+                                                                df_row['cases'], df_row['controls']):
+                    weight = cases / (cases + controls + 1e-5)
+                    features[phenotype] = or_value * weight
                 # Create a sparse feature vector for all phenotypes
                 phenotype_features = csr_matrix(
                     [features.get(phenotype, 0) for phenotype in ohe_phenotype.categories_[0]])

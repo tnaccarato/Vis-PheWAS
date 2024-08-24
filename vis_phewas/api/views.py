@@ -74,33 +74,50 @@ class GraphDataView(APIView):
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def normalise_snp_filter(filters):
+def normalise_snp_filter(filter_str):
     """
-    Normalise the SNP filter to be case-insensitive, handle different delimiters,
-    and ensure HLA_A_01 format is used.
-    :param filters: The filter string containing SNP conditions.
+    Normalise a single SNP filter to be case-insensitive, handle different delimiters,
+    and ensure HLA_[gene_name]_[first_two_numbers][optional_next_two_numbers] format is used only for :==: operator.
+    :param filter_str: The filter string containing SNP conditions.
     :return: The normalised filter string.
     """
 
-    # Define a function to normalise the SNP value
-    def normalise_snp(snp_value):
-        # Remove any existing HLA prefix and delimiter
+    def normalise_snp(snp_value, include_prefix):
+        # Remove any leading 'HLA' or unnecessary delimiters
         snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
-        # Remove all delimiters and spaces
-        snp_value = re.sub(r'[-_\s]+', '', snp_value)
-        # Format as HLA_A_01
-        if len(snp_value) >= 2:
-            snp_value = f"HLA_{snp_value[0].upper()}_{snp_value[1:].zfill(2)}"
-        return snp_value
 
-    # Normalise the entire filter string
-    filters = re.sub(
-        r'((?:^|,\s*)snp\s*[:_-]?)((==|:==:|contains)\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
-        lambda m: f"{m.group(1)}{m.group(2)}{normalise_snp(m.group(4))}",
-        filters,
-        flags=re.IGNORECASE
-    )
-    return filters
+        # normalise delimiters to underscores
+        snp_value = re.sub(r'[-\s/*]', '_', snp_value)
+
+        # Capture the gene name and the numbers separately
+        match = re.match(r'([A-Z]+\d?)[_\s-]?(\d{2})([:_\s-]?(\d{2}))?$', snp_value, flags=re.IGNORECASE)
+        if match:
+            gene_name = match.group(1).upper()  # Ensure gene name is uppercase
+            first_two_digits = match.group(2)   # Capture the first two digits
+            next_two_digits = match.group(4) if match.group(4) else ""  # Capture the next two digits if present
+            result = f'{gene_name}_{first_two_digits}{next_two_digits}'
+            return f'HLA_{result}' if include_prefix else result
+        else:
+            # If no match, return the original value (preserving the gene name normalization)
+            return f'HLA_{snp_value.upper()}' if include_prefix else snp_value.upper()
+
+    # Identify the operator and SNP part
+    match = re.match(r'(snp\s*[:_-]?)((==|:==:|contains):?\s*)((?:HLA[-_ ]?)?[A-Z0-9-_\s/*:]+)', filter_str, flags=re.IGNORECASE)
+    if match:
+        operator = match.group(3).strip().lower()
+        snp_value = match.group(4).strip()
+
+        # Determine if the HLA prefix should be included based on the operator
+        include_prefix = operator == "=="
+
+        # normalise the SNP value
+        normalised_snp = normalise_snp(snp_value, include_prefix)
+
+        # Return the normalised condition
+        return f"{match.group(1)}{operator}:{normalised_snp}"
+
+    return filter_str  # Return the filter as-is if no match
+
 
 
 def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
@@ -127,15 +144,11 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
             # If show_subtypes is not set, filter the queryset to show only the subtypes
         else:
             queryset = queryset.exclude(subtype='00')
-    else:
-        queryset = queryset
 
     # If no filters are provided, return the queryset filtered to show only the significant results
     if not filters:
         return queryset.filter(p__lte=0.05)
 
-    # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
-    filters = normalise_snp_filter(filters)
     filters = html.unescape(filters)  # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
@@ -149,6 +162,8 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Loop through the filter list and apply the filters to the queryset
     for logical_operator, filter_str in filter_list:
+        if filter_str.startswith('snp'):
+            filter_str = normalise_snp_filter(filter_str)
         parts: list = filter_str.split(':', 2)
         if len(parts) < 3:
             continue
@@ -299,7 +314,7 @@ def get_allele_data(disease_id: str, filters: str, show_subtypes: bool = False) 
         'snp', 'gene_class', 'gene_name', 'cases', 'controls', 'p', 'odds_ratio', 'l95', 'u95', 'maf'
     ).distinct()
     # Apply the filters to the queryset
-    filters = ",".join([f for f in filters.split(',') if not ('snp' in str(f))])
+    filters = ",".join([f for f in filters.split(',') if 'snp' not in str(f)])
     # Apply the filters to the queryset
     filtered_queryset: QuerySet = apply_filters(queryset, filters, show_subtypes=show_subtypes)
     # Get the visible nodes
@@ -344,6 +359,8 @@ class InfoView(APIView):
         # Remove the subtype if it is the main group
         if allele_data['subtype'] == '00':
             allele_data.pop('subtype')
+        # Round p-values to 5 decimal places
+        allele_data['p'] = round(allele_data['p'], 5)
 
         # Get the top and lowest odds ratios for the allele
         top_odds: QuerySet = HlaPheWasCatalog.objects.filter(snp=allele, p__lte=0.05).values('phewas_string',
@@ -356,6 +373,12 @@ class InfoView(APIView):
             'odds_ratio',
             'p').order_by(
             'odds_ratio', 'p')[:5]
+
+        # Round p-values to 5 decimal places
+        for odds in top_odds:
+            odds['p'] = round(odds['p'], 5)
+        for odds in lowest_odds:
+            odds['p'] = round(odds['p'], 5)
 
         # Format the data for the response
         allele_data['top_odds'] = list(top_odds)
@@ -416,7 +439,7 @@ def get_filtered_df(filters: str) -> pd.DataFrame:
     df: pd.DataFrame = pd.DataFrame(list(filtered_queryset.values()))
     # Drop the ID column
     if 'id' in df.columns:
-        df.drop(columns=['id'], inplace=True)
+        df = df.drop(columns=['id'])
         # Return the filtered DataFrame
     return df
 
@@ -441,10 +464,8 @@ class SendDataToSOMView(APIView):
         filters = urllib.parse.unquote(filters)
         # Get the type of the SOM
         som_type: str = request.GET.get('type')
-        print("Num of Clusters:", request.GET.get('num_clusters'))
-        # Get the number of clusters with a default of 5 for the disease SOM and 7 for the allele SOM if not provided
-        num_clusters = int(request.GET.get('num_clusters') or (5 if som_type == 'disease' else 7))
-        print("Num of Clusters:", num_clusters)
+        # Get the number of clusters with a default of 4 if not provided
+        num_clusters = int(request.GET.get('num_clusters') or 4)
         # Get the filtered data as a DataFrame
         df: pd.DataFrame = get_filtered_df(filters)
         # Write the data to a buffer
@@ -591,7 +612,6 @@ class GetDiseasesForCategoryView(APIView):
         filters: str = request.GET.get('filters', '')
         category: str = request.GET.get('category')
         show_subtypes = request.GET.get('showSubtypes') == 'true'
-
         try:
             # Get all objects as a QuerySet initially
             diseases: QuerySet = HlaPheWasCatalog.objects.all()
