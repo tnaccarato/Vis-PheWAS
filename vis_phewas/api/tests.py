@@ -291,7 +291,8 @@ class NormaliseSNPFilterTests(TestCase):
             "snp:==:hla_a_01",
             "snp:==:HLA-A01",
             "snp:==:HLA A01",
-            "snp:==:a-01"
+            "snp:==:a-01",
+            "snp:==:a*01",
         ]
 
         # Loop through the test cases
@@ -299,3 +300,61 @@ class NormaliseSNPFilterTests(TestCase):
             with self.subTest(test_case=test_case):
                 self.assertEqual(normalise_snp_filter(test_case), "snp:==:HLA_A_01") # Expected result
 
+    def test_normalise_snp_filter_should_equalHLA_DQA1_01(self):
+        """
+        Test that the normalise_snp_filter function normalises the SNP filter to the expected format
+        :return:
+        """
+        # Test cases
+        test_cases = [
+            "snp:==:dqa1 01",
+            "snp:==:hla_dqa1_01",
+            "snp:==:HLA-DQA1-01",
+            "snp:==:HLA DQA1 01",
+            "snp:==:dqa1-01",
+            "snp:==:dqa1*01",
+            "snp:==:dqa101",
+            "snp:==:dqa1_01"
+        ]
+
+        # Loop through the test cases
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                self.assertEqual(normalise_snp_filter(test_case), "snp:==:HLA_DQA1_01") # Expected result
+
+    def test_normalise_snp_filter_should_equalHLA_DQB1_0101(self):
+        """
+        Test that the normalise_snp_filter function normalises the SNP filter to the expected format
+        :return:
+        """
+        # Test cases
+        test_cases = [
+            "snp:==:dqb1 0101",
+            "snp:==:hla_dqb1_0101",
+            "snp:==:HLA-DQB1-0101",
+            "snp:==:HLA DQB1 0101",
+            "snp:==:dqb1-0101",
+            "snp:==:dqb1*0101",
+            "snp:==:dqb10101",
+            "snp:==:dqb1*01:01"
+        ]
+
+        # Loop through the test cases
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                self.assertEqual(normalise_snp_filter(test_case), "snp:==:HLA_DQB1_0101")
+
+    def test_normalise_snp_filter_contains_a(self):
+        """
+        Test that the normalise_snp_filter function normalises the SNP filter to the expected format
+        :return:
+        """
+        # Test cases
+        test_cases = [
+            "snp:contains:a",
+        ]
+
+        # Loop through the test cases
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                self.assertEqual(normalise_snp_filter(test_case), "snp:contains:A")

@@ -74,31 +74,51 @@ class GraphDataView(APIView):
         return Response({'nodes': nodes, 'edges': edges, 'visible': visible})
 
 
-def normalise_snp_filter(filters):
+def normalise_snp_filter(filter_str):
     """
-    Normalise the SNP filter to be case-insensitive, handle different delimiters,
-    and ensure HLA_A_01 format is used.
-    :param filters: The filter string containing SNP conditions.
+    Normalise a single SNP filter to be case-insensitive, handle different delimiters,
+    and ensure HLA_[gene_name]_[first_two_numbers][optional_next_two_numbers] format is used only for :==: operator.
+    :param filter_str: The filter string containing SNP conditions.
     :return: The normalised filter string.
     """
 
-    # Define a function to normalise the SNP value
-    def normalise_snp(snp_value):
-        # Remove any leading 'HLA', normalize delimiters to underscores, and lowercase everything
+    def normalise_snp(snp_value, include_prefix):
+        # Remove any leading 'HLA' or unnecessary delimiters
         snp_value = re.sub(r'^HLA[-_\s]?', '', snp_value, flags=re.IGNORECASE)
-        # Replace any remaining hyphens, spaces, or mixed delimiters with underscores
-        snp_value = re.sub(r'[-\s]', '_', snp_value)
-        # Ensure the format remains in lowercase
-        return snp_value.lower()
 
-    # Normalise the entire filter string
-    filters = re.sub(
-        r'((?:^|,\s*)snp\s*[:_-]?)((==|:==:|contains)\s*)((?:HLA[-_ ]?)?[a-zA-Z0-9-_\s]+)',
-        lambda m: f"{m.group(1)}{m.group(2)}hla_{normalise_snp(m.group(4))}",
-        filters,
-        flags=re.IGNORECASE
-    )
-    return filters
+        # normalise delimiters to underscores
+        snp_value = re.sub(r'[-\s/*]', '_', snp_value)
+
+        # Capture the gene name and the numbers separately
+        match = re.match(r'([A-Z]+\d?)[_\s-]?(\d{2})([:_\s-]?(\d{2}))?$', snp_value, flags=re.IGNORECASE)
+        if match:
+            gene_name = match.group(1).upper()  # Ensure gene name is uppercase
+            first_two_digits = match.group(2)   # Capture the first two digits
+            next_two_digits = match.group(4) if match.group(4) else ""  # Capture the next two digits if present
+            result = f'{gene_name}_{first_two_digits}{next_two_digits}'
+            return f'HLA_{result}' if include_prefix else result
+        else:
+            # If no match, return the original value (preserving the gene name normalization)
+            return f'HLA_{snp_value.upper()}' if include_prefix else snp_value.upper()
+
+    # Identify the operator and SNP part
+    match = re.match(r'(snp\s*[:_-]?)((==|:==:|contains):?\s*)((?:HLA[-_ ]?)?[A-Z0-9-_\s/*:]+)', filter_str, flags=re.IGNORECASE)
+    if match:
+        operator = match.group(3).strip().lower()
+        snp_value = match.group(4).strip()
+
+        # Determine if the HLA prefix should be included based on the operator
+        include_prefix = operator == "=="
+
+        # normalise the SNP value
+        normalised_snp = normalise_snp(snp_value, include_prefix)
+
+        # Return the normalised condition
+        return f"{match.group(1)}{operator}:{normalised_snp}"
+
+    return filter_str  # Return the filter as-is if no match
+
+
 
 def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
                   export: bool = False, initial: bool = False) -> QuerySet:
@@ -129,8 +149,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
     if not filters:
         return queryset.filter(p__lte=0.05)
 
-    # Normalise the SNP filter to handle different delimiters and ensure HLA_ prefix
-    filters = normalise_snp_filter(filters)
     filters = html.unescape(filters)  # Unescape the HTML entities in the filters to handle escapes <, >, etc.
 
     # If show_subtypes is false, remove the last two digits of the SNP filter
@@ -144,6 +162,8 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
 
     # Loop through the filter list and apply the filters to the queryset
     for logical_operator, filter_str in filter_list:
+        if filter_str.startswith('snp'):
+            filter_str = normalise_snp_filter(filter_str)
         parts: list = filter_str.split(':', 2)
         if len(parts) < 3:
             continue
