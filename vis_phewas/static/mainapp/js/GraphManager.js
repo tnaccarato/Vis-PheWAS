@@ -2,7 +2,6 @@ import Graph from "graphology";
 import { Sigma } from "sigma";
 import { createNodeBorderProgram } from "@sigma/node-border";
 import GraphHelper from "./GraphHelper";
-import { fetchAndShowAssociations } from "./associationsPlot";
 import { closeInfoContainer } from "./utils";
 
 // Main class for managing the graph
@@ -117,12 +116,10 @@ class GraphManager {
     // Set the default parameters
     params.showSubtypes =
       localStorage.getItem("showSubtypes") === "true" ? "true" : "false";
-    console.log("Show subtypes parameter:", params.showSubtypes);
 
     // Create a new URLSearchParams object
     const query = new URLSearchParams(params).toString();
     const url = "/api/graph-data/" + (query ? "?" + query : "");
-    console.log("URL:", url);
 
     // Fetch the data from the URL
     fetch(url)
@@ -154,9 +151,7 @@ class GraphManager {
     const containerCenterX = this.container.offsetWidth / 2;
     const containerCenterY = this.container.offsetHeight / 2;
     this.graph.clear();
-    // console.log(this.visibleNodes);
     this.visibleNodes = new Set(visible); // Initialize the visible nodes set
-    // console.log(this.visibleNodes);
     // If the camera position is null, set cameraPosition to current camera position
     if (this.cameraPosition === null) {
       // console.log("Setting camera position");
@@ -168,7 +163,6 @@ class GraphManager {
         ratio: camera.ratio,
         angle: camera.angle,
       };
-      // console.log(this.cameraPosition);
     } else {
       // console.log("Camera position already set");
       // console.log(this.cameraPosition);
@@ -473,9 +467,13 @@ class GraphManager {
         infoContainer.appendChild(table);
       };
 
-      // Create the odds tables for the top and lowest odds
-      createOddsTable(top_odds, "Most Affected Diseases");
-      createOddsTable(lowest_odds, "Most Mitigated Diseases");
+      // Add a timeout to create the odds tables to ensure the table is created after the allele node information
+      setTimeout(() => {
+        // Create the odds tables for the top and lowest odds
+        createOddsTable(top_odds, "Most Affected Diseases");
+        createOddsTable(lowest_odds, "Most Mitigated Diseases");
+      }
+        , 100);
     };
 
     // Function to update node styles
@@ -627,21 +625,6 @@ class GraphManager {
               const cell2 = document.createElement("td");
               cell2.textContent = value;
               row.appendChild(cell2);
-              // If the key is phewas_string, create a button to show combinational associations
-              if (key === "phewas_string") {
-                const cell3 = document.createElement("td");
-                const button = document.createElement("button");
-                button.className = "btn btn-primary";
-                button.textContent = "Show Combinational Associations";
-                // Get the showSubtypes value from local storage
-                const showSubtypes =
-                  localStorage.getItem("showSubtypes") === "true";
-                button.onclick = () => {
-                  fetchAndShowAssociations(value, showSubtypes);
-                };
-                cell3.appendChild(button);
-                row.appendChild(cell3);
-              }
               table.appendChild(row);
             }
           });
@@ -649,10 +632,14 @@ class GraphManager {
           // Set the overflow style for the info container
           infoContainer.style.overflowY = "auto";
           if (existingDiseaseInfo) {
+            console.log("Replacing existing disease info");
+            console.log(existingDiseaseInfo);
             // Replace the existing disease info with the table
             existingDiseaseInfo.replaceWith(table);
           } else {
             // Append the table to the info container
+            console.log("Appending new disease info");
+            console.log(table);
             infoContainer.appendChild(table);
           }
           // Update the node styles based on the new table data
