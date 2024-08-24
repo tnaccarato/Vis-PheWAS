@@ -382,7 +382,7 @@ class GraphHelper {
     );
     const centerX = 500;
     const centerY = 500;
-    const categoryRadius = 400; // Radius for the category circle
+    const categoryRadius = 600; // Radius for the category circle
 
     // Position category nodes in a circle
     const categoryAngleStep = (2 * Math.PI) / categoryNodes.length;
@@ -456,7 +456,7 @@ class GraphHelper {
               (spreadAngle / alleleNodes.length);
 
           // Set the radius for positioning allele nodes around disease nodes
-          const alleleRadius = 20; // Radius for positioning allele nodes around disease nodes
+          const alleleRadius = 30; // Radius for positioning allele nodes around disease nodes
           // Calculate the position of the allele node around the disease node with a staggered arc, taking into account the size of the nodes
           const alleleX =
             diseaseX +
