@@ -1,4 +1,3 @@
-from collections import defaultdict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -76,6 +75,8 @@ class SOMView(APIView):
         # Create the results DataFrame based on the SOM type
         results_df = self.construct_results_df(grouped_df, positions_df, som_type)
 
+
+
         # K-Means clustering
         kmeans = KMeans(n_clusters=int(num_clusters), random_state=42)
         positions_df['cluster'] = kmeans.fit_predict(positions_df)
@@ -89,10 +90,12 @@ class SOMView(APIView):
         # plot_metrics_on_som(positions)
 
         # Print performance metrics
-        print("SOM performance metrics:")
-        print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
-        print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
-        print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
+        # print("SOM performance metrics:")
+        # print("Quantisation Error: ", som.quantization_error(x_normalised))
+        # print("Topographical Error: ", som.topographic_error(x_normalised))
+        # print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
+        # print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
+        # print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
 
         # Generate the SOM visualisation
         fig = go.Figure()
