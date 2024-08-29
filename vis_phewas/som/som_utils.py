@@ -12,6 +12,7 @@ from minisom import MiniSom
 from mainapp.models import HlaPheWasCatalog
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import MinMaxScaler
 
 # Set the transparent colour for the visualisation
 TRANSPARENT = 'rgba(0,0,0,0)'
@@ -102,27 +103,35 @@ def preprocess_temp_data(temp_data):
     return filtered_df
 
 
-def initialise_som(x_normalised):
+def initialise_som(x_normalised, som_x=None, som_y=None, sigma=1.0, learning_rate=0.5, num_iterations=20000):
     """
-    Function to initialise and train the SOM.
+    Function to initialise and train the SOM with dynamic parameters.
 
     :param x_normalised: Normalised feature matrix
+    :param som_x: Width of the SOM grid
+    :param som_y: Height of the SOM grid
+    :param sigma: Spread of the neighborhood function
+    :param learning_rate: Initial learning rate
+    :param num_iterations: Number of iterations for training
     :return: Positions of the winning neurons and the trained SOM
     """
-    # Use rule of 5 sqrt(n) for the number of neurons
-    som_x = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
-    som_y = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
+    # Use rule of 10 sqrt(n) for the number of neurons if not specified
+    if som_x is None:
+        som_x = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
+    if som_y is None:
+        som_y = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
+
+    print(f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, num_iterations={num_iterations}")
+
     # Initialise the SOM
     input_len = x_normalised.shape[1]
-    # Train the SOM with 10000 iterations
-    som = MiniSom(x=som_x, y=som_y, input_len=input_len, sigma=1.0, learning_rate=0.5)
+    som = MiniSom(x=som_x, y=som_y, input_len=input_len, sigma=sigma, learning_rate=learning_rate)
     som.random_weights_init(x_normalised)
-    som.train_random(x_normalised, 10000)
+    som.train_random(x_normalised, num_iterations)
+
     # Get the positions of the winning neurons
     positions = np.array([som.winner(x) for x in x_normalised])
-    # Return the positions and the trained SOM
     return positions, som
-
 
 def clean_filters(filters, som_type):
     """
@@ -232,10 +241,11 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         len=0.8
     )
 
-def plot_metrics_on_som(positions):
+def plot_metrics_on_som(positions, som_type):
     """
     Function to plot the Elbow Method and Silhouette Score graphs for a range of clusters based on the SOM grid positions.
     :param positions: 2D array of SOM positions (e.g., [[x1, y1], [x2, y2], ...])
+    :param som_type: Type of the SOM (SNP or disease)
     :return: None
     """
     wcss = []
@@ -253,7 +263,7 @@ def plot_metrics_on_som(positions):
     # Plotting the Elbow Method graph (WCSS)
     plt.figure(figsize=(10, 5))
     plt.plot(range_n_clusters, wcss, marker='o')
-    plt.title('Elbow Method For Optimal Number of Clusters')
+    plt.title(f'Elbow Method For Optimal Number of Clusters for {som_type.capitalize()} Clustering')
     plt.xlabel('Number of Clusters')
     plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
     plt.show()
@@ -261,8 +271,95 @@ def plot_metrics_on_som(positions):
     # Plotting the Silhouette Score graph
     plt.figure(figsize=(10, 5))
     plt.plot(range_n_clusters, silhouette_scores, marker='o')
-    plt.title('Silhouette Score For Optimal Number of Clusters')
+    plt.title(f'Silhouette Score For Optimal Number of Clusters for {som_type.capitalize()} Clustering')
     plt.xlabel('Number of Clusters')
     plt.ylabel('Silhouette Score')
     plt.show()
 
+def grid_search_som(x_normalised, output_csv='som_grid_search_results.csv', n_range=6):
+    """
+    Function to perform grid search for the best SOM parameters and save all results to a CSV file.
+
+    :param n_range: Number of values to generate within the range for x and y dimensions
+    :param x_normalised: Normalised feature matrix
+    :param output_csv: The output CSV file path to save the grid search results
+    :return: Best parameters and the corresponding quantisation error
+    """
+    # Define parameter ranges for the grid search
+    lower_bound = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
+    upper_bound = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
+
+    # Generate n_range values between lower_bound and upper_bound using linspace
+    som_grid_range = np.linspace(lower_bound, upper_bound, n_range, dtype=int)
+
+    sigma_range = [0.5, 1.0, 1.5]
+    learning_rate_range = [0.1, 0.5, 0.9]
+    num_iterations_range = [5000, 10000, 20000]
+
+    # Create a list to store all results
+    results = []
+
+    # Set a label column for n times
+    grid_multiplier = 5
+    # Perform grid search
+    for som_size in som_grid_range:
+        for sigma in sigma_range:
+            for learning_rate in learning_rate_range:
+                for num_iterations in num_iterations_range:
+                    # Train the SOM with the current set of parameters
+                    _, som = initialise_som(
+                        x_normalised,
+                        som_x=som_size,
+                        som_y=som_size,
+                        sigma=sigma,
+                        learning_rate=learning_rate,
+                        num_iterations=num_iterations
+                    )
+
+                    # Calculate quantisation error
+                    qe = som.quantization_error(x_normalised)
+                    te = som.topographic_error(x_normalised)
+
+                    # Append the result to the results list
+                    results.append({
+                        'som_x': som_size,
+                        'som_y': som_size,
+                        'multiplier': grid_multiplier,
+                        'sigma': sigma,
+                        'learning_rate': learning_rate,
+                        'num_iterations': num_iterations,
+                        'quantisation_error': qe,
+                        'topographic_error': te,
+                    })
+        grid_multiplier += 1 # Increment the grid multiplier for labelling
+
+
+    # Convert results to a DataFrame
+    results_df = pd.DataFrame(results)
+    # Compute the combined score for each set of parameters
+    results_df['combined_score'] = compute_combined_score(results_df['quantisation_error'], results_df['topographic_error'])
+
+    # Save the results DataFrame to a CSV file
+    results_df.to_csv(output_csv, index=False)
+    print(f"Grid search results saved to {output_csv}")
+
+
+def compute_combined_score(qe, te):
+    """
+    Compute the combined score for quantisation error (QE) and topographic error (TE) after normalisation.
+
+    :param qe: Quantisation error
+    :param te: Topographic error
+    :return: Combined score
+    """
+    # Initialize MinMaxScaler
+    scaler = MinMaxScaler()
+
+    # Normalise QE and TE separately
+    normalised_qe = scaler.fit_transform(np.array(qe).reshape(-1, 1)).flatten()
+    normalised_te = scaler.fit_transform(np.array(te).reshape(-1, 1)).flatten()
+
+    # Compute the combined score by summing the normalised QE and TE
+    combined_score = normalised_qe + normalised_te
+
+    return combined_score
