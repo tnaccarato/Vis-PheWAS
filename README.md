@@ -7,6 +7,10 @@ Docker and Docker Compose on your system.
     - You can access the installation instructions here: [Get Docker](https://docs.docker.com/get-docker/).
 - SSL Certificates (cert.pem and key.pem) for HTTPS configuration.
 - `docker-compose.yml` file from the repository.
+- If using Windows, openSSL is required to generate SSL certificates. Follow this 
+[link](https://slproweb.com/products/Win32OpenSSL.html) and download the latest version of openSSL.
+  - Alternatively, you can use the Windows Subsystem for Linux (WSL) to generate the certificates or use your preferred
+package manager (e.g. [chocolatey](https://github.com/chocolatey/choco)) to install openSSL.
 
 ## Project Directory Structure
 Make sure that your project directory contains the following before starting:
