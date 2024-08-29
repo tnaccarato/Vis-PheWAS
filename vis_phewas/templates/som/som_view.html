@@ -6,7 +6,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="{% static 'mainapp/js/../../static/som/js/som.js' %}"></script>
+    <script src="{% static 'som/js/som.js' %}"></script>
     <link rel="stylesheet" href="{% static 'som/css/som_view.css' %}">
 
 {% endblock %}
@@ -22,7 +22,7 @@
                         <div class="checkbox-item">
                             <!-- Check the checkbox if it is in the selected filters (or if all categories are selected) -->
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if cleaned_filters == "All Categories" %}
+                                    {% if "All Categories" in cleaned_filters %}
                                    checked
                                     {% else %}
                                         {% if category in cleaned_filters %} checked {% endif %}
@@ -42,7 +42,7 @@
                         <div class="checkbox-item">
                             <!-- Check the checkbox if it is in the selected filters (or if all genes are selected) -->
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if cleaned_filters == "All Genes" %}
+                                    {% if "All Genes" in cleaned_filters %}
                                    checked
                                     {% else %}
                                         {% if category in cleaned_filters %} checked {% endif %}
