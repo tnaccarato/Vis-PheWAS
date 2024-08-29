@@ -14,7 +14,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
-    prepare_categories_for_context, create_title, , create_hover_text, style_visualisation, evaluate_som, \
+    prepare_categories_for_context, create_title, create_hover_text, style_visualisation, evaluate_som, \
     compute_mean_som_results
 
 
@@ -165,9 +165,6 @@ class SOMView(APIView):
         graph_div = pio.to_html(fig, full_html=False)
         # Prepare the categories for the context
         categories = prepare_categories_for_context(som_type)
-
-        print(categories)
-        print(filter_list)
 
         # Return the context for the visualisation
         return {
