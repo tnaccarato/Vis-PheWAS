@@ -22,7 +22,7 @@
                         <div class="checkbox-item">
                             <!-- Check the checkbox if it is in the selected filters (or if all categories are selected) -->
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if "All Categories" in cleaned_filters %}
+                                    {% if "all categories" in cleaned_filters %}
                                    checked
                                     {% else %}
                                         {% if category in cleaned_filters %} checked {% endif %}
@@ -42,7 +42,7 @@
                         <div class="checkbox-item">
                             <!-- Check the checkbox if it is in the selected filters (or if all genes are selected) -->
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if "All Genes" in cleaned_filters %}
+                                    {% if "all genes" in cleaned_filters %}
                                    checked
                                     {% else %}
                                         {% if category in cleaned_filters %} checked {% endif %}
