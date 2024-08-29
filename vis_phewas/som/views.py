@@ -12,7 +12,7 @@ from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
-    prepare_categories_for_context, create_title, style_visualisation,  plot_metrics_on_som
+    prepare_categories_for_context, create_title, style_visualisation,  plot_metrics_on_som, grid_search_som
 from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
@@ -68,14 +68,31 @@ class SOMView(APIView):
         if not isinstance(x_normalised, np.ndarray):
             x_normalised = x_normalised.toarray() # Convert to dense format
 
-        # SOM training and positions
-        positions, som = initialise_som(x_normalised)
+        # Set som parameters based on best grid search results (See grid_search_results_snp.csv
+        # and grid_search_results_disease.csv)
+        if som_type == 'snp':
+            som_params = {
+                'sigma': 1.5,
+                'learning_rate': 1.0,
+                'num_iterations': 10000,
+            }
+        else:
+            som_params = {
+                'sigma': 1.0,
+                'learning_rate': 0.5,
+                'num_iterations': 20000,
+            }
+
+        # SOM training and positions using extracted parameters from dictionary
+        positions, som = initialise_som(x_normalised, **som_params)
+
+        # Testing grid search
+        # grid_search_som(x_normalised, output_csv=f"grid_search_results_{som_type}.csv")
+
         positions_df = pd.DataFrame(positions, columns=['x', 'y'])
 
         # Create the results DataFrame based on the SOM type
         results_df = self.construct_results_df(grouped_df, positions_df, som_type)
-
-
 
         # K-Means clustering
         kmeans = KMeans(n_clusters=int(num_clusters), random_state=42)
@@ -86,16 +103,14 @@ class SOMView(APIView):
         cluster_results = results_df.sort_values(by=['cluster', 'snp' if som_type == 'snp' else 'phewas_string'])
         file_name = cluster_results_to_csv(cluster_results)
 
-        # # Evaluate the metrics on the SOM
-        # plot_metrics_on_som(positions)
-
-        # Print performance metrics
-        # print("SOM performance metrics:")
-        # print("Quantisation Error: ", som.quantization_error(x_normalised))
-        # print("Topographical Error: ", som.topographic_error(x_normalised))
-        # print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
-        # print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
-        # print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
+        # Evaluate the metrics on the SOM
+        plot_metrics_on_som(positions, som_type)
+        print("SOM performance metrics:")
+        print("Quantisation Error: ", som.quantization_error(x_normalised))
+        print("Topographical Error: ", som.topographic_error(x_normalised))
+        print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
+        print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
+        print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
 
         # Generate the SOM visualisation
         fig = go.Figure()
