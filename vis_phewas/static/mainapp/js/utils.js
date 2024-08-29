@@ -145,7 +145,7 @@ export function getAdjustSigmaContainer(container, sigmaInstance) {
 }
 
 // Create a scale for the size of the nodes
-export const sizeScale = scaleLog().domain([0.00001, 0.05]).range([8, 2]);
+export const sizeScale = scaleLog().domain([0.00001, 0.05]).range([7, 2]);
 
 // Sets the color of the disease nodes based on how many alleles are associated with the disease
 export const diseaseColor = scaleLog()
