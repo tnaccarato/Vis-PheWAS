@@ -1,15 +1,16 @@
 import datetime
+import glob
 import os
 import urllib.parse
 from datetime import datetime, timedelta
 from io import StringIO
-import glob
+
 import numpy as np
 import pandas as pd
 from django.conf import settings
+from mainapp.models import HlaPheWasCatalog
 from matplotlib import pyplot as plt
 from minisom import MiniSom
-from mainapp.models import HlaPheWasCatalog
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.preprocessing import MinMaxScaler
@@ -117,11 +118,12 @@ def initialise_som(x_normalised, som_x=None, som_y=None, sigma=1.0, learning_rat
     """
     # Use rule of 10 sqrt(n) for the number of neurons if not specified
     if som_x is None:
-        som_x = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
+        som_x = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
     if som_y is None:
-        som_y = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
+        som_y = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
 
-    print(f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, num_iterations={num_iterations}")
+    print(
+        f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, num_iterations={num_iterations}")
 
     # Initialise the SOM
     input_len = x_normalised.shape[1]
@@ -133,6 +135,7 @@ def initialise_som(x_normalised, som_x=None, som_y=None, sigma=1.0, learning_rat
     positions = np.array([som.winner(x) for x in x_normalised])
     return positions, som
 
+
 def clean_filters(filters, som_type):
     """
     Function to clean and format the filters string.
@@ -141,6 +144,7 @@ def clean_filters(filters, som_type):
     :param som_type: Type of the SOM (SNP or disease)
     :return: Cleaned and formatted filters string
     """
+    print(f"Filters: {filters}")
     # If no filters are provided, return "All Genes" or "All Categories" as appropriate
     if not filters:
         return "All Genes" if som_type == 'snp' else "All Categories"
@@ -149,6 +153,14 @@ def clean_filters(filters, som_type):
     decoded_filters = urllib.parse.unquote(filters)
     filters_list = decoded_filters.split(" OR ")
     cleaned_filters = [f.split(":==:")[-1] for f in filters_list]
+
+    # If all filters are selected, return "All Genes" or "All Categories" as appropriate
+    if (som_type == 'snp' and len(cleaned_filters) == HlaPheWasCatalog.objects.values('gene_name')
+            .distinct().count()):
+        return "All Genes"
+    if (som_type == 'disease' and len(cleaned_filters) == HlaPheWasCatalog.objects.values('category_string')
+            .distinct().count()):
+        return "All Categories"
 
     # Format filters into lines of 3 filters each with a line break between each line
     formatted_lines = [", ".join(cleaned_filters[i:i + 3]) for i in range(0, len(cleaned_filters), 3)]
@@ -211,7 +223,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         title=dict(
             text=title_text,
             x=0.5,
-            y=.93,
+            y=.95,
             xanchor='center',
             yanchor='top',
             font=dict(
@@ -221,7 +233,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
             )
         ),
         margin=dict(
-            t=100 + 20 * (len(cleaned_filters.split("<br>")) - 1),
+            t=150 + 20 * (len(cleaned_filters.split("<br>")) - 1),
         ),
         xaxis=dict(title='SOM X', showgrid=False, zeroline=False),
         yaxis=dict(title='SOM Y', showgrid=False, zeroline=False),
@@ -240,6 +252,7 @@ def style_visualisation(cleaned_filters, fig, title_text) -> None:
         x=1.005,
         len=0.8
     )
+
 
 def plot_metrics_on_som(positions, som_type):
     """
@@ -275,6 +288,7 @@ def plot_metrics_on_som(positions, som_type):
     plt.xlabel('Number of Clusters')
     plt.ylabel('Silhouette Score')
     plt.show()
+
 
 def grid_search_som(x_normalised, output_csv='som_grid_search_results.csv', n_range=6):
     """
@@ -331,13 +345,13 @@ def grid_search_som(x_normalised, output_csv='som_grid_search_results.csv', n_ra
                         'quantisation_error': qe,
                         'topographic_error': te,
                     })
-        grid_multiplier += 1 # Increment the grid multiplier for labelling
-
+        grid_multiplier += 1  # Increment the grid multiplier for labelling
 
     # Convert results to a DataFrame
     results_df = pd.DataFrame(results)
     # Compute the combined score for each set of parameters
-    results_df['combined_score'] = compute_combined_score(results_df['quantisation_error'], results_df['topographic_error'])
+    results_df['combined_score'] = compute_combined_score(results_df['quantisation_error'],
+                                                          results_df['topographic_error'])
 
     # Save the results DataFrame to a CSV file
     results_df.to_csv(output_csv, index=False)
@@ -439,3 +453,34 @@ def compute_mean_som_results(som_types=None):
             print(f"No files found for SOM type '{som_type}'")
 
     return mean_results
+
+
+def create_hover_text(cluster_data, som_type):
+    """
+    Function to create the hover text for the SOM clusters based on the SOM type.
+    :param cluster_data: DataFrame with the cluster data
+    :param som_type: Type of the SOM ('snp' or 'disease')
+    :return: List of hover texts for each node
+    """
+    hover_texts = []
+    # Create the hover text based on the SOM type
+    if som_type == 'snp':
+        for _, row in cluster_data.iterrows():
+            phenotype_details = "<br>".join([
+                f"Phenotype: {phewas_string[:10]}..., Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
+                for phewas_string, or_value, p in zip(row['phenotypes'], row['odds_ratios'], row['p_values'])
+            ])
+            # Show only top 5 phenotypes based on odds ratio
+            reduced_details = "<br>".join(phenotype_details.split("<br>")[:5])
+
+            hover_text = f"SNP: {row['snp']}<br>{reduced_details}"
+            hover_texts.append(hover_text)
+    else:
+        for _, row in cluster_data.iterrows():
+            snp_details = "<br>".join([
+                f"SNP: {snp}, Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
+                for snp, or_value, p in zip(row['snps'], row['odds_ratios'], row['p_values'])
+            ])
+            hover_text = f"Disease: {row['phewas_string']}<br>{snp_details}"
+            hover_texts.append(hover_text)
+    return hover_texts

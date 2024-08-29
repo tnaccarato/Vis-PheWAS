@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -8,12 +10,12 @@ from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from scipy.sparse import csr_matrix, hstack, vstack
-from collections import defaultdict
 from sklearn.cluster import KMeans
+from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
-    prepare_categories_for_context, create_title, style_visualisation, evaluate_som, compute_mean_som_results
-from sklearn.decomposition import TruncatedSVD
+    prepare_categories_for_context, create_title, , create_hover_text, style_visualisation, evaluate_som, \
+    compute_mean_som_results
 
 
 class SOMView(APIView):
@@ -33,7 +35,7 @@ class SOMView(APIView):
         num_clusters = request.GET.get('num_clusters', 4)
         # Get the filters from the request
         filters = request.GET.get('filters')
-        testing = request.GET.get('testing', False) # Testing flag for evaluation
+        testing = request.GET.get('testing', False)  # Testing flag for evaluation
 
         # If testing flag is set
         if testing:
@@ -76,7 +78,7 @@ class SOMView(APIView):
 
         # Ensure the SOM input is dense
         if not isinstance(x_normalised, np.ndarray):
-            x_normalised = x_normalised.toarray() # Convert to dense format
+            x_normalised = x_normalised.toarray()  # Convert to dense format
 
         # Set som parameters based on best grid search results (See grid_search_results_snp.csv
         # and grid_search_results_disease.csv)
@@ -133,27 +135,7 @@ class SOMView(APIView):
         # Add the cluster data to the visualisation
         for cluster in range(int(num_clusters)):
             cluster_data = results_df[results_df['cluster'] == cluster]
-            hover_texts = []
-            # Create the hover text based on the SOM type
-            if som_type == 'snp':
-                for _, row in cluster_data.iterrows():
-                    phenotype_details = "<br>".join([
-                        f"Phenotype: {phewas_string[:10]}..., Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
-                        for phewas_string, or_value, p in zip(row['phenotypes'], row['odds_ratios'], row['p_values'])
-                    ])
-                    # Show only top 5 phenotypes based on odds ratio
-                    reduced_details = "<br>".join(phenotype_details.split("<br>")[:5])
-
-                    hover_text = f"SNP: {row['snp']}<br>{reduced_details}"
-                    hover_texts.append(hover_text)
-            else:
-                for _, row in cluster_data.iterrows():
-                    snp_details = "<br>".join([
-                        f"SNP: {snp}, Odds Ratio: {or_value:.2f}, P-Value: {p:.4f}"
-                        for snp, or_value, p in zip(row['snps'], row['odds_ratios'], row['p_values'])
-                    ])
-                    hover_text = f"Disease: {row['phewas_string']}<br>{snp_details}"
-                    hover_texts.append(hover_text)
+            hover_texts = create_hover_text(cluster_data, som_type)
 
             # Add the cluster data to the visualisation
             fig.add_trace(go.Scatter(
@@ -174,10 +156,18 @@ class SOMView(APIView):
         # Style the visualisation
         style_visualisation(cleaned_filters, fig, title_text)
 
+        # Format the filters for the context
+        filter_list = cleaned_filters.lower()
+        filter_list = filter_list.replace('<br>', ',').split(',')
+        filter_list = [f.strip() for f in filter_list]
+
         # Render the visualisation
         graph_div = pio.to_html(fig, full_html=False)
         # Prepare the categories for the context
         categories = prepare_categories_for_context(som_type)
+
+        print(categories)
+        print(filter_list)
 
         # Return the context for the visualisation
         return {
@@ -187,7 +177,7 @@ class SOMView(APIView):
             'categories': categories,
             'num_clusters': num_clusters,
             'filters': filters if filters else categories,
-            'cleaned_filters': cleaned_filters
+            'cleaned_filters': filter_list
         }
 
     def perform_dimensionality_reduction(self, features_matrix):
@@ -287,7 +277,8 @@ class SOMView(APIView):
             def create_combined_features(df_row):
                 features = defaultdict(float)
                 # Map odds ratios to each SNP, scaled for better visualisation
-                for allele, or_value, cases, controls in zip(df_row['snp'], df_row['odds_ratio'], df_row['cases'], df_row['controls']):
+                for allele, or_value, cases, controls in zip(df_row['snp'], df_row['odds_ratio'], df_row['cases'],
+                                                             df_row['controls']):
                     weight = cases / (cases + controls + 1e-5)  # Adding a small constant to avoid division by zero
                     features[allele] = or_value * weight
                 # Create a sparse feature vector for all alleles
@@ -354,7 +345,3 @@ class SOMView(APIView):
 
         # Return the final sparse features matrix and the grouped DataFrame
         return features_matrix, grouped_df
-
-
-
-
