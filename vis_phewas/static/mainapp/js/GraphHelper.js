@@ -298,6 +298,8 @@ class GraphHelper {
     edges.forEach((edge) => {
       // Set the color of the edge to black
       graph.setEdgeAttribute(edge, "color", "black");
+      // Bring the edge to the front
+      this.bringEdgeToFront(graph, edge);
     });
 
     // Display the edge source on hover
@@ -421,11 +423,6 @@ class GraphHelper {
         graph.setNodeAttribute(diseaseNode, "y", diseaseY);
         graph.setNodeAttribute(diseaseNode, "fixed", true);
 
-        // Position allele nodes around each disease node
-        const connectedDiseases = graph
-          .inNeighbors(diseaseNode)
-          .filter((n) => graph.getNodeAttribute(n, "node_type") === "disease");
-
         // Calculate the disease node's relative angle with respect to its category center
         const categoryX = graph.getNodeAttribute(categoryNode, "x");
         const categoryY = graph.getNodeAttribute(categoryNode, "y");
@@ -447,30 +444,26 @@ class GraphHelper {
         });
 
         // Position sorted allele nodes around the disease node
-        const spreadAngle = Math.PI / 4; // Control the spread of the arc of allele nodes around the disease node
+        const spreadAngle = Math.PI / 3; // Control the spread of the arc of allele nodes around the disease
+        // node
+        const baseRadius = 40; // Base radius for positioning allele nodes closer to the disease node
+
         alleleNodes.forEach((alleleNode, index) => {
-          // Calculate the angle for each allele node around the disease node based on the number of alleles and spread angle
+          // Adjust radius dynamically based on index and size
+          const adjustedRadius = baseRadius + (index / alleleNodes.length) * 40; // Smaller increment for radius to avoid excessive spacing
+
+          // Calculate the angle for each allele node around the disease node based on the number of alleles
+          // and spread angle
           const alleleAngle =
             diseaseAngle +
             (index - (alleleNodes.length - 1) / 2) *
-              (spreadAngle / alleleNodes.length);
+              (spreadAngle / Math.max(alleleNodes.length, 1));
 
-          // Set the radius for positioning allele nodes around disease nodes
-          const alleleRadius = 30; // Radius for positioning allele nodes around disease nodes
-          // Calculate the position of the allele node around the disease node with a staggered arc, taking into account the size of the nodes
-          const alleleX =
-            diseaseX +
-            (graph.getNodeAttribute(diseaseNode, "size") +
-              graph.getNodeAttribute(alleleNode, "size") +
-              alleleRadius) *
-              Math.cos(alleleAngle);
-          const alleleY =
-            diseaseY +
-            (graph.getNodeAttribute(diseaseNode, "size") +
-              graph.getNodeAttribute(alleleNode, "size") +
-              alleleRadius) *
-              Math.sin(alleleAngle);
+          // Calculate the position of the allele node around the disease node with a staggered arc
+          const alleleX = diseaseX + adjustedRadius * Math.cos(alleleAngle);
+          const alleleY = diseaseY + adjustedRadius * Math.sin(alleleAngle);
 
+          // Set the position of the allele node
           graph.setNodeAttribute(alleleNode, "x", alleleX);
           graph.setNodeAttribute(alleleNode, "y", alleleY);
 
@@ -561,15 +554,14 @@ class GraphHelper {
     } else if (node.node_type === "allele") {
       const pValue = node.p || 0.05; // Use p-value for sizing alleles
       baseSize = sizeScale(clamp(pValue, sizeScale.domain())); // Scale size based on clamped p-value
-
       // Determine border color based on odds ratio
       const oddsRatio = node.odds_ratio || 1; // Default to 1 if odds ratio is not defined
       borderColor = oddsRatio >= 1 ? "red" : "blue";
 
-      // Calculate border thickness based on deviation from OR = 1
-      const oddsRatioDeviation = Math.abs(oddsRatio - 1);
+      const oddsRatioDeviation = Math.abs(Math.log(oddsRatio)); // Symmetric deviation
       const borderScaleFactor = 0.5; // Factor to adjust border size relative to base size
-      borderSize = baseSize * borderScaleFactor * oddsRatioDeviation; // Thickness proportional to deviation
+      borderSize = baseSize * borderScaleFactor * oddsRatioDeviation; // Thickness proportional to
+      // log-transformed deviation
 
       // Clamp border size to avoid excessive or minimal borders
       borderSize = clamp(borderSize, [0.25, baseSize * 0.75]);
@@ -602,6 +594,21 @@ class GraphHelper {
    */
   hoverOffEdge(edge, graph) {
     graph.setEdgeAttribute(edge, "label", "");
+  }
+
+  /**
+   * Bring an edge to the front of the graph for increased visibility
+   * @param graph {Object} graph instance
+   * @param edge {string} edge key
+   */
+  bringEdgeToFront(graph, edge) {
+    // Get the source and target nodes of the edge
+    let attribs = graph.getEdgeAttributes(edge);
+    let source = graph.source(edge);
+    let target = graph.target(edge);
+    // Drop the edge and add it back to the graph to bring it to the front
+    graph.dropEdge(edge);
+    graph.addEdgeWithKey(edge, source, target, attribs);
   }
 }
 
