@@ -1,3 +1,4 @@
+import datetime
 import os
 import urllib.parse
 from datetime import datetime, timedelta
@@ -8,10 +9,9 @@ import pandas as pd
 from django.conf import settings
 from matplotlib import pyplot as plt
 from minisom import MiniSom
-
 from mainapp.models import HlaPheWasCatalog
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.preprocessing import MinMaxScaler
 
 # Set the transparent colour for the visualisation
@@ -363,3 +363,79 @@ def compute_combined_score(qe, te):
     combined_score = normalised_qe + normalised_te
 
     return combined_score
+
+
+def evaluate_som(positions, positions_df, som, x_normalised, som_type):
+    """
+    Helper function to evaluate the SOM using various metrics and save the results to a CSV file.
+    :param positions: The SOM positions
+    :param positions_df: The positions DataFrame
+    :param som: The trained SOM object
+    :param x_normalised: The normalised input data
+    :param som_type: Type of the SOM ('snp' or 'disease')
+    :return:
+    """
+    # Evaluate the SOM using various metrics
+    qe = som.quantization_error(x_normalised)
+    te = som.topographic_error(x_normalised)
+    silhouette = silhouette_score(positions, positions_df['cluster'], random_state=42)
+    dbi = davies_bouldin_score(positions, positions_df['cluster'])
+    ch = calinski_harabasz_score(positions, positions_df['cluster'])
+
+    # Save the results to a CSV file
+    results = {
+        'Quantization Error': qe,
+        'Topographic Error': te,
+        'Silhouette Score': silhouette,
+        'Davies-Bouldin Index': dbi,
+        'Calinski-Harabasz Index': ch
+    }
+    results_df = pd.DataFrame(results, index=[0])
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    results_df.to_csv(f'som_evaluation_results_{som_type}_{timestamp}.csv', index=False)
+
+
+def compute_mean_som_results(som_types=None):
+    """
+    Compute the mean of all the SOM evaluation results for each SOM type and save to a new CSV file.
+
+    :param som_types: List of SOM types (e.g., ['snp', 'disease'])
+    :return: Dictionary of DataFrames with mean results for each SOM type
+    """
+    # If no SOM types are provided, use the default list
+    if som_types is None:
+        som_types = ['snp', 'disease']
+    mean_results = {}
+
+    for som_type in som_types:
+        # Find all CSV files matching the pattern for the given som_type
+        file_pattern = f'som_evaluation_results_{som_type}_*.csv'
+        files = glob.glob(file_pattern)
+
+        # List to store dataframes for each file
+        dataframes = []
+
+        # Read each CSV file and add it to the list
+        for file in files:
+            df = pd.read_csv(file)
+            dataframes.append(df)
+
+        # If there are files to process, compute the mean
+        if dataframes:
+            # Concatenate all DataFrames into one
+            all_data = pd.concat(dataframes, ignore_index=True)
+
+            # Compute the mean for each column
+            mean_df = all_data.mean().to_frame().T
+
+            # Add the result to the dictionary
+            mean_results[som_type] = mean_df
+
+            # Save the mean results to a new CSV file
+            mean_df.to_csv(f'som_evaluation_results_{som_type}_mean.csv', index=False)
+        else:
+            print(f"No files found for SOM type '{som_type}'")
+
+    return mean_results
