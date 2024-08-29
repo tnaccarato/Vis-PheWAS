@@ -45,15 +45,18 @@
                 <h2 style="align-self: center">Filter by Disease Category</h2>
                 <div class="checkbox-container">
                     {% for category in categories %}
-                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                {% if not cleaned_filters %}
-                               checked
-                                {% else %}
-                                    {% if category in cleaned_filters %} checked {% endif %}
-                                {% endif %}
-                        >
-                        <!-- Check the checkbox if it is in the selected filters -->
-                        <label for="{{ category }}">{{ category }}</label>
+                        <div class="checkbox-item">
+                            <!-- Check the checkbox if it is in the selected filters (or if all categories are selected) -->
+                            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                    {% if cleaned_filters == "All Categories" %}
+                                   checked
+                                    {% else %}
+                                        {% if category in cleaned_filters %} checked {% endif %}
+                                    {% endif %}
+                            >
+                            <!-- Check the checkbox if it is in the selected filters -->
+                            <label for="{{ category }}">{{ category }}</label>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -62,15 +65,18 @@
                 <h2 style="align-self: center">Filter by Gene Name</h2>
                 <div class="checkbox-container">
                     {% for category in categories %}
-                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                {% if not cleaned_filters %}
-                               checked
-                                {% else %}
-                                    {% if category in cleaned_filters %} checked {% endif %}
-                                {% endif %}
-                        >
-                        <!-- Check the checkbox if it is in the selected filters -->
-                        <label for="{{ category }}">{{ category }}</label>
+                        <div class="checkbox-item" style="display: flex; flex-direction: column">
+                            <!-- Check the checkbox if it is in the selected filters (or if all genes are selected) -->
+                            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                    {% if cleaned_filters == "All Genes" %}
+                                   checked
+                                    {% else %}
+                                        {% if category in cleaned_filters %} checked {% endif %}
+                                    {% endif %}
+                            >
+                            <!-- Check the checkbox if it is in the selected filters -->
+                            <label for="{{ category }}">{{ category }}</label>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
