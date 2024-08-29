@@ -48,7 +48,6 @@ export function closeInfoContainer(
     });
     // Reset the thickness of the edges and set the color to darkgrey
     graph.edges().forEach((edge) => {
-      graph.setEdgeAttribute(edge, "size", 1);
         graph.setEdgeAttribute(edge, "color", "darkgrey");
 
     });

@@ -6,71 +6,51 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="{% static 'mainapp/js/som.js' %}"></script>
-    <style>
-        .checkbox-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center; /* Center the checkboxes horizontally */
-            gap: 20px; /* Add space between checkboxes */
-        }
+    <script src="{% static 'som/js/som.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'som/css/som_view.css' %}">
 
-        .checkbox-container label {
-            display: block;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        .allele-filters, .disease-filters {
-            align-items: center;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        #som-visualisation {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #80e5fa;
-        }
-
-    </style>
 {% endblock %}
 {% block content %}
     <div id="som-visualisation" style="display: flex; flex-direction: column; align-items: center">
         <h1>{% if type == 'disease' %}Disease {% else %} SNP {% endif %} SOM Visualisation</h1>
-        <form id="filter-form" style="display: flex; flex-direction: column" onsubmit="handleSubmit(event)">
+        <form id="filter-form" onsubmit="handleSubmit(event)">
             {% if type == 'disease' %}
-                <div class="disease-filters" style="display: flex; align-content: center; flex-direction: column">
+                <div class="disease-filters">
                 <h2 style="align-self: center">Filter by Disease Category</h2>
                 <div class="checkbox-container">
                     {% for category in categories %}
-                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                {% if not cleaned_filters %}
-                               checked
-                                {% else %}
-                                    {% if category in cleaned_filters %} checked {% endif %}
-                                {% endif %}
-                        >
-                        <!-- Check the checkbox if it is in the selected filters -->
-                        <label for="{{ category }}">{{ category }}</label>
+                        <div class="checkbox-item">
+                            <!-- Check the checkbox if it is in the selected filters (or if all categories are selected) -->
+                            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                    {% if "all categories" in cleaned_filters %}
+                                   checked
+                                    {% else %}
+                                        {% if category in cleaned_filters %} checked {% endif %}
+                                    {% endif %}
+                            >
+                            <!-- Check the checkbox if it is in the selected filters -->
+                            <label for="{{ category }}">{{ category }}</label>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
             {% if type == 'snp' %}
-                <div class="allele-filters" style="display: flex; align-content: center; flex-direction: column">
+                <div class="allele-filters">
                 <h2 style="align-self: center">Filter by Gene Name</h2>
                 <div class="checkbox-container">
                     {% for category in categories %}
-                        <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                {% if not cleaned_filters %}
-                               checked
-                                {% else %}
-                                    {% if category in cleaned_filters %} checked {% endif %}
-                                {% endif %}
-                        >
-                        <!-- Check the checkbox if it is in the selected filters -->
-                        <label for="{{ category }}">{{ category }}</label>
+                        <div class="checkbox-item">
+                            <!-- Check the checkbox if it is in the selected filters (or if all genes are selected) -->
+                            <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
+                                    {% if "all genes" in cleaned_filters %}
+                                   checked
+                                    {% else %}
+                                        {% if category in cleaned_filters %} checked {% endif %}
+                                    {% endif %}
+                            >
+                            <!-- Check the checkbox if it is in the selected filters -->
+                            <label for="{{ category }}">{{ category }}</label>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
