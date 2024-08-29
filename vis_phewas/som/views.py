@@ -12,9 +12,8 @@ from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from som.som_utils import cluster_results_to_csv, preprocess_temp_data, initialise_som, \
-    prepare_categories_for_context, create_title, style_visualisation,  plot_metrics_on_som, grid_search_som
+    prepare_categories_for_context, create_title, style_visualisation, evaluate_som, compute_mean_som_results
 from sklearn.decomposition import TruncatedSVD
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
 
 class SOMView(APIView):
@@ -30,18 +29,28 @@ class SOMView(APIView):
         # Get the parameters from the request
         data_id = request.GET.get('data_id')
         som_type = request.GET.get('type')
-        print(som_type)
         # Set the default number of clusters or get the number of clusters from the request
         num_clusters = request.GET.get('num_clusters', 4)
         # Get the filters from the request
         filters = request.GET.get('filters')
+        testing = request.GET.get('testing', False) # Testing flag for evaluation
 
-        # Process and visualise the SOM
-        context = self.process_and_visualise_som(data_id, num_clusters, filters, som_type)
+        # If testing flag is set
+        if testing:
+            # Process and visualise the SOM 5 times for testing
+            for _ in range(5):
+                self.process_and_visualise_som(data_id, num_clusters, filters, som_type, testing=True)
+                print("Processed SOM")
+            # Compute the mean results for the SOM evaluation
+            compute_mean_som_results()
+            return
+        # Process and visualise the SOM if not in testing mode
+        context = self.process_and_visualise_som(data_id, num_clusters, filters, som_type, testing=testing)
+
         # Render the template with the context
         return render(request, 'som/som_view.html', context)
 
-    def process_and_visualise_som(self, data_id, num_clusters, filters, som_type):
+    def process_and_visualise_som(self, data_id, num_clusters, filters, som_type, testing=False):
         """
         Method to process data and generate SOM visualisation.
 
@@ -49,6 +58,7 @@ class SOMView(APIView):
         :param num_clusters: Number of clusters
         :param filters: Filters string
         :param som_type: Type of the SOM (SNP or disease)
+        :param testing: Flag to indicate testing mode
         """
         # Retrieve the temporary CSV data object using the data_id
         temp_data = get_object_or_404(TemporaryCSVData, id=data_id)
@@ -73,7 +83,7 @@ class SOMView(APIView):
         if som_type == 'snp':
             som_params = {
                 'sigma': 1.5,
-                'learning_rate': 1.0,
+                'learning_rate': 0.1,
                 'num_iterations': 10000,
             }
         else:
@@ -104,13 +114,11 @@ class SOMView(APIView):
         file_name = cluster_results_to_csv(cluster_results)
 
         # Evaluate the metrics on the SOM
-        plot_metrics_on_som(positions, som_type)
-        print("SOM performance metrics:")
-        print("Quantisation Error: ", som.quantization_error(x_normalised))
-        print("Topographical Error: ", som.topographic_error(x_normalised))
-        print("Silhouette score:", silhouette_score(positions, positions_df['cluster'], random_state=42))
-        print("Davies-Bouldin score:", davies_bouldin_score(positions, positions_df['cluster']))
-        print("Calinski-Harabasz score:", calinski_harabasz_score(positions, positions_df['cluster']))
+        # plot_metrics_on_som(positions, som_type)
+        if testing:
+            # If testing flag is set, evaluate the SOM and return
+            evaluate_som(positions, positions_df, som, x_normalised, som_type)
+            return
 
         # Generate the SOM visualisation
         fig = go.Figure()
