@@ -42,7 +42,7 @@
                         <div class="checkbox-item">
                             <!-- Check the checkbox if it is in the selected filters (or if all genes are selected) -->
                             <input type="checkbox" id="{{ category }}" name="filters" value="{{ category }}"
-                                    {% if "all genes" in cleaned_filters %}
+                                    {% if "ALL GENES" in cleaned_filters %}
                                    checked
                                     {% else %}
                                         {% if category in cleaned_filters %} checked {% endif %}
@@ -70,7 +70,7 @@
 
                 <!-- Add a button to submit the form -->
                 <button type="submit" class="button btn btn-success" style="align-self: normal; border-radius: 20px">
-                    Generate SOM with Selection
+                    Generate New SOM with Selection
                 </button>
                 <!-- Add a button to download the cluster results CSV -->
                 <button class="btn btn-info dataAction" type="button">
@@ -121,6 +121,10 @@
             // Handle edge case where only DPA1 is selected
             if(filters === encodeURIComponent('gene_name:==:DPA1')){
                 alert("Insufficient data for this filter alone. Please select another filter.");
+                return;
+            }
+            if (filters === '') {
+                alert("Please select at least one filter.");
                 return;
             }
             // Call the generateSOM function with the filters, type and number of clusters
