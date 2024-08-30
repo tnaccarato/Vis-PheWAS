@@ -5,7 +5,6 @@
  * @param {number} [num_clusters] - The number of clusters to generate. Defaults to 5 for 'disease' and 7 for 'allele'.
  */
 function generateSOM(filters, type, num_clusters) {
-  console.log("Generating SOM with filters: " + filters + ", type: " + type + ", num_clusters: " + num_clusters);
   // Validate the type parameter
   if (type !== "snp" && type !== "disease") {
     alert("Invalid SOM type specified. Must be 'snp' or 'disease'.");
