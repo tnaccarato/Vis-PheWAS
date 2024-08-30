@@ -122,8 +122,8 @@ def initialise_som(x_normalised, som_x=None, som_y=None, sigma=1.0, learning_rat
     if som_y is None:
         som_y = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
 
-    print(
-        f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, num_iterations={num_iterations}")
+    print(f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, "
+          f"num_iterations={num_iterations}")
 
     # Initialise the SOM
     input_len = x_normalised.shape[1]
@@ -144,7 +144,6 @@ def clean_filters(filters, som_type):
     :param som_type: Type of the SOM (SNP or disease)
     :return: Cleaned and formatted filters string
     """
-    print(f"Filters: {filters}")
     # If no filters are provided, return "All Genes" or "All Categories" as appropriate
     if not filters:
         return "All Genes" if som_type == 'snp' else "All Categories"
@@ -265,6 +264,7 @@ def plot_metrics_on_som(positions, som_type):
     silhouette_scores = []
     range_n_clusters = range(2, 11)  # Trying 2 to 10 clusters
 
+    # Perform KMeans clustering for each number of clusters
     for n_clusters in range_n_clusters:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         cluster_labels = kmeans.fit_predict(positions)  # Use the SOM positions for clustering
