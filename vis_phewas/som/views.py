@@ -160,6 +160,9 @@ class SOMView(APIView):
         filter_list = cleaned_filters.lower()
         filter_list = filter_list.replace('<br>', ',').split(',')
         filter_list = [f.strip() for f in filter_list]
+        # Uppercase is type is SNP
+        if som_type == 'snp':
+            filter_list = [f.upper() for f in filter_list]
 
         # Render the visualisation
         graph_div = pio.to_html(fig, full_html=False)
