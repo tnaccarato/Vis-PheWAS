@@ -118,8 +118,11 @@
             const filters = getSelectedFilters();
             const num_clusters = document.getElementById('clusters').value;
             const type = "{{ type }}";
-            console.log("Number of clusters: ", num_clusters);
-            console.log("Type: ", type);
+            // Handle edge case where only DPA1 is selected
+            if(filters === encodeURIComponent('gene_name:==:DPA1')){
+                alert("Insufficient data for this filter alone. Please select another filter.");
+                return;
+            }
             // Call the generateSOM function with the filters, type and number of clusters
             generateSOM(filters, type, num_clusters);
         }
