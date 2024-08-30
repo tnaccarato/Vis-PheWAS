@@ -118,9 +118,9 @@ def initialise_som(x_normalised, som_x=None, som_y=None, sigma=1.0, learning_rat
     """
     # Use rule of 10 sqrt(n) for the number of neurons if not specified
     if som_x is None:
-        som_x = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
+        som_x = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
     if som_y is None:
-        som_y = int(np.sqrt(5 * np.sqrt(x_normalised.shape[0])))
+        som_y = int(np.sqrt(10 * np.sqrt(x_normalised.shape[0])))
 
     print(f"Training SOM with {som_x}x{som_y} grid, sigma={sigma}, learning_rate={learning_rate}, "
           f"num_iterations={num_iterations}")
