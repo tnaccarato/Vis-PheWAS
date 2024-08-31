@@ -80,11 +80,16 @@ def get_file_timestamp(file_path):
     file_name = os.path.basename(file_path)
     try:
         # Extract and parse the timestamp from the filename
-        timestamp_str = file_name.split('_')[2] + "_" + file_name.split('_')[3].split('.')[0]
-        return datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+        parts = file_name.split('_')
+        if len(parts) >= 4:  # Ensure there are enough parts to extract a valid timestamp
+            timestamp_str = parts[2] + "_" + parts[3].split('.')[0]
+            return datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
     except ValueError:
         # In case of any parsing error, return a very recent time to avoid accidental deletion
-        return datetime.now()
+        pass
+
+    # Return a recent time if filename format is invalid
+    return datetime.now()
 
 
 def preprocess_temp_data(temp_data):

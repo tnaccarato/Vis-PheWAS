@@ -72,7 +72,7 @@ class HlaPheWasCatalogTestCase(TestCase):
     def test_graph_data_view_diseases(self):
         url = reverse('graph_data')
         response = self.client.get(url, {'type': 'diseases', 'category_id': 'category-neurological',
-                                         'show_subtypes': 'true'})
+                                         'showSubtypes': 'true'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('nodes', response.data)
         self.assertIn('edges', response.data)
@@ -108,7 +108,7 @@ class HlaPheWasCatalogTestCase(TestCase):
             'disease_id': 'disease-brain_cancer',
             'filters': '',
             'clicked': 'true',
-            'show_subtypes': 'true'
+            'showSubtypes': 'true'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('nodes', response.data)
@@ -241,7 +241,7 @@ class HlaPheWasCatalogTestCase(TestCase):
 
     def test_combined_associations_view(self):
         url = reverse('combined_associations')
-        response = self.client.get(url, {'disease': 'Disease 1', 'show_subtypes': 'true'})
+        response = self.client.get(url, {'disease': 'Disease 1', 'showSubtypes': 'true'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, list)
 
