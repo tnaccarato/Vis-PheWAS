@@ -1,6 +1,5 @@
 import html
 import itertools
-import os
 import re
 import urllib.parse
 from datetime import timedelta
@@ -9,7 +8,6 @@ from typing import List
 
 import pandas as pd
 from api.models import TemporaryCSVData
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Count, QuerySet
 from django.http import HttpResponse, JsonResponse
@@ -51,8 +49,12 @@ class GraphDataView(APIView):
         data_type: str = request.GET.get('type', 'initial')
         filters = request.GET.get('filters')
         show_subtypes = request.GET.get('showSubtypes')
-        if show_subtypes == 'undefined':
+        # If the show_subtypes is not set, set it to False
+        if show_subtypes == 'undefined' or show_subtypes is None:
             show_subtypes = False
+        # Otherwise, convert the show_subtypes to a boolean
+        else:
+            show_subtypes = show_subtypes.lower() == 'true'
         if filters == ['']:
             filters = []
 
@@ -93,7 +95,7 @@ def normalise_snp_filter(filter_str):
         match = re.match(r'([A-Z]+\d?)[_\s-]?(\d{2})([:_\s-]?(\d{2}))?$', snp_value, flags=re.IGNORECASE)
         if match:
             gene_name = match.group(1).upper()  # Ensure gene name is uppercase
-            first_two_digits = match.group(2)   # Capture the first two digits
+            first_two_digits = match.group(2)  # Capture the first two digits
             next_two_digits = match.group(4) if match.group(4) else ""  # Capture the next two digits if present
             result = f'{gene_name}_{first_two_digits}{next_two_digits}'
             return f'HLA_{result}' if include_prefix else result
@@ -102,7 +104,8 @@ def normalise_snp_filter(filter_str):
             return f'HLA_{snp_value.upper()}' if include_prefix else snp_value.upper()
 
     # Identify the operator and SNP part
-    match = re.match(r'(snp\s*[:_-]?)((==|:==:|contains):?\s*)((?:HLA[-_ ]?)?[A-Z0-9-_\s/*:]+)', filter_str, flags=re.IGNORECASE)
+    match = re.match(r'(snp\s*[:_-]?)((==|:==:|contains):?\s*)((?:HLA[-_ ]?)?[A-Z0-9-_\s/*:]+)', filter_str,
+                     flags=re.IGNORECASE)
     if match:
         operator = match.group(3).strip().lower()
         snp_value = match.group(4).strip()
@@ -117,7 +120,6 @@ def normalise_snp_filter(filter_str):
         return f"{match.group(1)}{operator}:{normalised_snp}"
 
     return filter_str  # Return the filter as-is if no match
-
 
 
 def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, show_subtypes: bool = False,
@@ -138,10 +140,11 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
         queryset = queryset.filter(category_string=category_string)
     # If the export flag is set, return the queryset without any filters
     if not export and not initial:
-        # If the show_subtypes flag is set, filter the queryset to show only the main groups
-        if show_subtypes == 'false':
+        # If show_subtypes is not set, filter the queryset to show only the subtypes# If the show_subtypes flag is set, filter the queryset to show only the main groups
+        if not show_subtypes:
             queryset = queryset.filter(subtype='00')
-            # If show_subtypes is not set, filter the queryset to show only the subtypes
+
+        # If the show_subtypes flag is set, filter the queryset to show only the main groups
         else:
             queryset = queryset.exclude(subtype='00')
 
@@ -169,7 +172,6 @@ def apply_filters(queryset: QuerySet, filters: str, category_id: str = None, sho
             continue
         field, operator, value = parts
         value = value.rstrip(',')
-
 
         # Apply the filter based on the operator
         if operator == '==':
@@ -610,7 +612,7 @@ class GetDiseasesForCategoryView(APIView):
             # Apply SNP filter first
             filtered_queryset = apply_filters(diseases, filters, show_subtypes=show_subtypes, initial=True)
             # Then filter by category
-            category = category.replace('_', ' ') # Replace underscores with spaces to match the category_string
+            category = category.replace('_', ' ')  # Replace underscores with spaces to match the category_string
             category_filtered = filtered_queryset.filter(category_string=category)
             # Apply subtype filter last
             if not show_subtypes:
