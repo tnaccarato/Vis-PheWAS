@@ -2,6 +2,8 @@
 
 Vis-PheWAS is a visualisation platform designed to facilitate the exploration and interpretation of phenome-wide association studies (PheWAS). It provides researchers and students with an intuitive interface to examine associations between genetic variants and a wide range of phenotypes.
 
+Please note that as the web-hosted version was deployed at my own cost, it is not currently running. However, if you would like to view it, please contact me, and I will make it available 🙂.
+
 ## User Guide
 
 ### 🔍 Interactive Network Graph
