@@ -14,39 +14,10 @@ Please note that as the web-hosted version was deployed at my own cost, it is no
   - The border size of the node represents the magnitude of deviation of the odds ratio (OR) from one, indicating how strongly an allele is associated with increased or decreased disease risk.
   - The size of the node represents the p value of the allele in the disease selected, where lower values (stronger significance) are larger.
 - Users can **zoom**, **pan**, and **click** on nodes to navigate through associations interactively.
-
-![Network Graph](images/network_graph.png)
-
-### 🧬 Allele Information
-- Clicking on an **allele node** opens a **side panel** displaying detailed information.
-- The panel includes:
-  - **p-value** and **odds ratio (OR)** of the allele-disease association.
-  - Diseases where the allele has the **most significant contributory or protective effect**.
-  - Additional relevant genetic data.
-- Hovering over an allele highlights **shared associations** with multiple diseases.
-
 <div align="center">
-  <img src="images/allele_information.png" width="45%"> 
-  <img src="images/most_affected_mitigated.png" width="45%"> 
+  <img src="images/network_graph.png" width="60%">
+  <img src="images/allele_hover.png" width="37%"> 
 </div>
-
-### 🎚 Filter Panel
-# Vis-PheWAS
-
-Vis-PheWAS is a visualisation platform designed to facilitate the exploration and interpretation of phenome-wide association studies (PheWAS). It provides researchers and students with an intuitive interface to examine associations between genetic variants and a wide range of phenotypes.
-
-## User Guide
-
-### 🔍 Interactive Network Graph
-- The network starts with **disease categories** as the highest-level nodes.
-- Clicking on a **disease category** reveals the diseases associated with it. The diseases are coloured on a yellow-orange gradient representing how many alleles are associated with the disease.
-- Selecting a **disease** expands the graph to show the **alleles involved**. These are styled as such:
-  - Coloured according to whether they are protective (blue) or contributory (red) in the disease. 
-  - The border size of the node represents the magnitude of deviation of the odds ratio (OR) from one, indicating how strongly an allele is associated with increased or decreased disease risk.
-  - The size of the node represents the p value of the allele in the disease selected, where lower values (stronger significance) are larger.
-- Users can **zoom**, **pan**, and **click** on nodes to navigate through associations interactively.
-
-![Network Graph](images/network_graph.png)
 
 ### 🧬 Allele Information
 - Clicking on an **allele node** opens a **side panel** displaying detailed information.
